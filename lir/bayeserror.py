@@ -38,7 +38,7 @@ def plot(lrs, y, log_lr_threshold_range=None, add_misleading=0, step_size=.01, o
     plt.close(fig)
 
 
-def elub(lrs, y, add_misleading=1, step_size=.01):
+def elub(lrs, y, add_misleading=1, step_size=.01, substitute_for_extremes=(np.exp(-20), np.exp(20))):
     """
     Returns the empirical upper and lower bound LRs (ELUB LRs).
 
@@ -48,23 +48,35 @@ def elub(lrs, y, add_misleading=1, step_size=.01):
     :param add_misleading: the number of consequential misleading LRs to be added
         to both sides (labels 0 and 1)
     :param step_size: required accuracy on a natural logarithmic scale
+    :param substitute_for_extremes (tuple of scalars): substitute for extreme LRs, i.e.
+        LRs of 0 and inf are substituted by these values
     """
-    llrs = np.log(lrs)
-    log_lr_threshold_range = (np.min(llrs), np.max(llrs))
+
+    # remove LRs of 0 and infinity
+    sanitized_lrs = lrs
+    sanitized_lrs[sanitized_lrs == 0] = substitute_for_extremes[0]
+    sanitized_lrs[sanitized_lrs == np.inf] = substitute_for_extremes[1]
+
+    # determine the range of LRs to be considered
+    llrs = np.log(sanitized_lrs)
+    log_lr_threshold_range = (np.min(llrs), np.max(llrs)+step_size)
     lr_threshold = np.exp(np.arange(*log_lr_threshold_range, step_size))
 
-    eu_neutral = calculate_expected_utility(np.ones(len(lrs)), y, lr_threshold)
-    eu_system = calculate_expected_utility(lrs, y, lr_threshold, add_misleading)
+    eu_neutral = calculate_expected_utility(np.ones(len(sanitized_lrs)), y, lr_threshold)
+    eu_system = calculate_expected_utility(sanitized_lrs, y, lr_threshold, add_misleading)
     eu_ratio = eu_neutral / eu_system
 
     # find threshold LRs which have utility ratio < 1 (only utility ratio >= 1 is acceptable)
     eu_negative_left = lr_threshold[(lr_threshold <= 1) & (eu_ratio < 1)]
     eu_negative_right = lr_threshold[(lr_threshold >= 1) & (eu_ratio < 1)]
 
-    lower_bound = np.max(eu_negative_left * np.exp(step_size), initial=np.min(lrs))
-    upper_bound = np.min(eu_negative_right / np.exp(step_size), initial=np.max(lrs))
+    lower_bound = np.max(eu_negative_left * np.exp(step_size), initial=np.min(sanitized_lrs))
+    upper_bound = np.min(eu_negative_right / np.exp(step_size), initial=np.max(sanitized_lrs))
 
-    return lower_bound, upper_bound
+    if lower_bound < upper_bound:
+        return lower_bound, upper_bound
+    else:
+        return 1, 1
 
 
 def calculate_expected_utility(lrs, y, threshold_lrs, add_misleading=0):
