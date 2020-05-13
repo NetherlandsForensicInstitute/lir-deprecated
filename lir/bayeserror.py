@@ -38,7 +38,7 @@ def plot(lrs, y, log_lr_threshold_range=None, add_misleading=0, step_size=.01, o
     plt.close(fig)
 
 
-def elub(lrs, y, add_misleading=1, step_size=.01, substitute_for_extremes=(np.exp(-20), np.exp(20))):
+def elub(lrs, y, add_misleading=1, step_size=.01, substitute_extremes=(np.exp(-20), np.exp(20))):
     """
     Returns the empirical upper and lower bound LRs (ELUB LRs).
 
@@ -54,8 +54,8 @@ def elub(lrs, y, add_misleading=1, step_size=.01, substitute_for_extremes=(np.ex
 
     # remove LRs of 0 and infinity
     sanitized_lrs = lrs
-    sanitized_lrs[sanitized_lrs == 0] = substitute_for_extremes[0]
-    sanitized_lrs[sanitized_lrs == np.inf] = substitute_for_extremes[1]
+    sanitized_lrs[sanitized_lrs == 0] = substitute_extremes[0]
+    sanitized_lrs[sanitized_lrs == np.inf] = substitute_extremes[1]
 
     # determine the range of LRs to be considered
     llrs = np.log(sanitized_lrs)
