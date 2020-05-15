@@ -70,8 +70,8 @@ def elub(lrs, y, add_misleading=1, step_size=.01, substitute_extremes=(np.exp(-2
     eu_negative_left = lr_threshold[(lr_threshold <= 1) & (eu_ratio < 1)]
     eu_negative_right = lr_threshold[(lr_threshold >= 1) & (eu_ratio < 1)]
 
-    lower_bound = np.max(eu_negative_left * np.exp(step_size), initial=np.min(sanitized_lrs))
-    upper_bound = np.min(eu_negative_right / np.exp(step_size), initial=np.max(sanitized_lrs))
+    lower_bound = np.max(eu_negative_left * np.exp(step_size), initial=np.min(lr_threshold))
+    upper_bound = np.min(eu_negative_right / np.exp(step_size), initial=np.max(lr_threshold))
 
     # Check for bounds on the wrong side of 1. This may occur for badly
     # performing LR systems, e.g. if expected utility is always below neutral.
