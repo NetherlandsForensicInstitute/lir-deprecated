@@ -50,6 +50,10 @@ class TestElub(unittest.TestCase):
         y = np.concatenate([np.ones(10), np.zeros(1)])
         np.testing.assert_almost_equal((1, 1.8039884), lir.bayeserror.elub(lrs, y, add_misleading=1))
 
+        lrs = np.concatenate([np.ones(10) * 1000, np.ones(1) * 1.1])
+        y = np.concatenate([np.ones(10), np.zeros(1)])
+        np.testing.assert_almost_equal((1, 1), lir.bayeserror.elub(lrs, y, add_misleading=1))
+
 
 if __name__ == '__main__':
     unittest.main()
