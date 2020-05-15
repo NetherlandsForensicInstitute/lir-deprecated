@@ -59,7 +59,7 @@ def elub(lrs, y, add_misleading=1, step_size=.01, substitute_extremes=(np.exp(-2
 
     # determine the range of LRs to be considered
     llrs = np.log(sanitized_lrs)
-    log_lr_threshold_range = (np.min(llrs), np.max(llrs)+step_size)
+    log_lr_threshold_range = (min(0, np.min(llrs)), max(0, np.max(llrs))+step_size)
     lr_threshold = np.exp(np.arange(*log_lr_threshold_range, step_size))
 
     eu_neutral = calculate_expected_utility(np.ones(len(sanitized_lrs)), y, lr_threshold)
@@ -73,10 +73,12 @@ def elub(lrs, y, add_misleading=1, step_size=.01, substitute_extremes=(np.exp(-2
     lower_bound = np.max(eu_negative_left * np.exp(step_size), initial=np.min(sanitized_lrs))
     upper_bound = np.min(eu_negative_right / np.exp(step_size), initial=np.max(sanitized_lrs))
 
-    if lower_bound < upper_bound:
-        return lower_bound, upper_bound
-    else:
-        return 1, 1
+    # Check for bounds on the wrong side of 1. This may occur for badly
+    # performing LR systems, e.g. if expected utility is always below neutral.
+    lower_bound = min(lower_bound, 1)
+    upper_bound = max(upper_bound, 1)
+
+    return lower_bound, upper_bound
 
 
 def calculate_expected_utility(lrs, y, threshold_lrs, add_misleading=0):
