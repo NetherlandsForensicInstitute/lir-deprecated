@@ -419,16 +419,13 @@ def plot_score_distribution_and_calibrator_fit(calibrator, scores, y, savefig=No
     plt.figure(figsize=(10, 10), dpi=100)
     x = np.arange(0, 1, .01)
     calibrator.transform(x)
-    if len(set(y))==2:
-        points0, points1 = Xy_to_Xn(scores, y)
-        plt.hist(points0, bins=20, alpha=.25, density=True, label='class 0')
-        plt.hist(points1, bins=20, alpha=.25, density=True, label='class 1')
-        plt.plot(x, calibrator.p1, label='fit class 1')
-        plt.plot(x, calibrator.p0, label='fit class 0')
-    else:
-        plt.hist(scores, bins=20, alpha=.25, density=True, label='class x')
-        plt.plot(x, calibrator.p1, label='fit class 1')
-        plt.plot(x, calibrator.p0, label='fit class 0')
+
+    for cls in np.unique(y):
+        plt.hist(scores[y == cls], bins=20, alpha=.25, density=True,
+                 label=f'class {cls}')
+    plt.plot(x, calibrator.p1, label='fit class 1')
+    plt.plot(x, calibrator.p0, label='fit class 0')
+
     if savefig is not None:
         plt.savefig(savefig)
         plt.close()
