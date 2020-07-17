@@ -250,7 +250,7 @@ class DummyCalibrator(BaseEstimator, TransformerMixin):
     def transform(self, X):
         self.p0 = (1 - X)
         self.p1 =  X
-        return self.p1 / self.p0
+        return to_odds(self.p1)
 
 
 class ELUBbounder(BaseEstimator, TransformerMixin):

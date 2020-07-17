@@ -1,11 +1,15 @@
 import numpy as np
 import unittest
+import warnings
 
 from context import lir
 
 from lir.calibration import IsotonicCalibrator
 from lir.util import Xn_to_Xy, Xy_to_Xn
 import math
+
+
+warnings.simplefilter("error")
 
 
 def _cllr(lr0, lr1):

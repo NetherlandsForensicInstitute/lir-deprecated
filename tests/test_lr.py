@@ -1,5 +1,6 @@
 import numpy as np
 import unittest
+import warnings
 
 from sklearn.linear_model import LogisticRegression
 
@@ -7,6 +8,9 @@ from lir.calibration import FractionCalibrator, ScalingCalibrator
 from lir import metrics
 from lir.lr import scorebased_cllr
 from lir.util import Xn_to_Xy
+
+
+warnings.simplefilter("error")
 
 
 class TestLR(unittest.TestCase):

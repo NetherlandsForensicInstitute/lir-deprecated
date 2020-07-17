@@ -6,6 +6,14 @@ import numpy as np
 LR = collections.namedtuple('LR', ['lr', 'p0', 'p1'])
 
 
+def get_classes_from_Xy(X, y, classes=None):
+    assert len(X.shape) >= 1, f'expected: X has at least 1 dimensions; found: {len(X.shape)} dimensions'
+    assert len(y.shape) == 1, f'expected: y is a 1-dimensional array; found: {len(y.shape)} dimensions'
+    assert X.shape[0] == y.size, f'dimensions of X and y do not match; found: {X.shape[0]} != {y.size}'
+
+    return np.unique(y) if classes is None else np.asarray(classes)
+
+
 def Xn_to_Xy(*Xn):
     """
     Convert Xn to Xy format.
@@ -18,19 +26,15 @@ def Xn_to_Xy(*Xn):
     return X, y
 
 
-def Xy_to_Xn(X, y):
+def Xy_to_Xn(X, y, classes=[0, 1]):
     """
     Convert Xy to Xn format.
 
     Xn is a format where samples are divided into separate variables based on class.
     Xy is a format where all samples are concatenated, with an equal length variable y indicating class."""
-    X = np.asarray(X)
-    y = np.asarray(y).reshape(-1, 1)
-    assert X.shape[0] == y.shape[0], 'dimensions of X and y do not match'
-    assert y.shape[1] == 1
-    y_uniq = np.unique(y)
-    assert len(y_uniq) == 2, 'expected two classes; found: {}'.format(y_uniq)
-    return [X[(y == yvalue).reshape(-1)] for yvalue in y_uniq]
+
+    classes = get_classes_from_Xy(X, y, classes)
+    return [X[y == yvalue] for yvalue in classes]
 
 
 def to_probability(odds):
