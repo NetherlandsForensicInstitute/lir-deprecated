@@ -43,6 +43,14 @@ class TestLR(unittest.TestCase):
         self.assertAlmostEqual(1.0849625007211563, metrics.cllr(*Xn_to_Xy([2], [2]*2)))
         self.assertAlmostEqual(1.6699250014423126, metrics.cllr(*Xn_to_Xy([8], [8]*8)))
 
+    def test_extreme_cllr(self):
+        self.assertEqual(np.inf, metrics.cllr(*Xn_to_Xy([np.inf, 1], [1, 1])))
+        self.assertEqual(np.inf, metrics.cllr(*Xn_to_Xy([1, 1], [0, 1])))
+        self.assertAlmostEqual(.5, metrics.cllr(*Xn_to_Xy([0, 0], [1, 1])))
+        self.assertAlmostEqual(.5, metrics.cllr(*Xn_to_Xy([1, 1], [np.inf, np.inf])))
+        self.assertAlmostEqual(0, metrics.cllr(*Xn_to_Xy([0, 0], [np.inf, np.inf])))
+        self.assertAlmostEqual(np.inf, metrics.cllr(*Xn_to_Xy([np.inf, np.inf], [0, 0])))
+
     def test_classifier_cllr(self):
         np.random.seed(0)
         clf = LogisticRegression(solver='lbfgs')

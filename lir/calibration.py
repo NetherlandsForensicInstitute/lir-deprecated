@@ -165,7 +165,9 @@ class KDECalibrator(BaseEstimator, TransformerMixin, ):
         X = X.reshape(-1, 1)
         self.p0 = np.exp(self._kde0.score_samples(X))
         self.p1 = np.exp(self._kde1.score_samples(X))
-        return self.p1 / self.p0
+
+        with np.errstate(divide='ignore'):
+            return self.p1 / self.p0
 
 
 class LogitCalibrator(BaseEstimator, TransformerMixin):
