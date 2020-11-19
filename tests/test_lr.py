@@ -45,11 +45,18 @@ class TestLR(unittest.TestCase):
 
     def test_extreme_cllr(self):
         self.assertEqual(np.inf, metrics.cllr(*Xn_to_Xy([np.inf, 1], [1, 1])))
+        self.assertEqual(np.inf, metrics.cllr(*Xn_to_Xy([np.inf, 0], [1, 1])))
         self.assertEqual(np.inf, metrics.cllr(*Xn_to_Xy([1, 1], [0, 1])))
         self.assertAlmostEqual(.5, metrics.cllr(*Xn_to_Xy([0, 0], [1, 1])))
         self.assertAlmostEqual(.5, metrics.cllr(*Xn_to_Xy([1, 1], [np.inf, np.inf])))
         self.assertAlmostEqual(0, metrics.cllr(*Xn_to_Xy([0, 0], [np.inf, np.inf])))
         self.assertAlmostEqual(np.inf, metrics.cllr(*Xn_to_Xy([np.inf, np.inf], [0, 0])))
+        self.assertEqual(np.inf, metrics.cllr(*Xn_to_Xy([1], [1.e-317]))) # value near zero for which 1/value causes an overflow
+
+    def test_illegal_cllr(self):
+        self.assertTrue(np.isnan(metrics.cllr(*Xn_to_Xy([np.nan, 1], [1, 1]))))
+        self.assertTrue(np.isnan(metrics.cllr(*Xn_to_Xy([1, 1], [1, np.nan]))))
+        self.assertTrue(np.isnan(metrics.cllr(*Xn_to_Xy([np.nan, np.nan], [np.nan, np.nan]))))
 
     def test_classifier_cllr(self):
         np.random.seed(0)
