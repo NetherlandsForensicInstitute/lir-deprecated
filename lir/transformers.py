@@ -37,6 +37,18 @@ class AbsDiffTransformer(sklearn.base.TransformerMixin):
 class InstancePairing(sklearn.base.TransformerMixin):
     def __init__(self, same_source_limit=None, different_source_limit=None):
         """
+        Creates pairs of instances.
+
+        This transformer takes `X` and `y` as input, and returns `X_paired` and `y_paired`.
+        `X_paired` is the carthesian product of `X` and itself.
+        In other words, `X_paired` contains all possible pairs of feature vectors in `X`, meaning that
+        `X_paired.shape[0] == X.shape[0]*X.shape[0]`, except if their number exceeds the values of parameters
+        `same_source_limit` and `different_source_limit`, in which case pairs are randomly drawn from the full set of
+        pairs.
+
+        Not that this transformer may cause performance problems with large datasets, even if the number of instances in
+        the output is limited.
+
         Parameters:
             - same_source_limit (int or None): the maximum number of same source pairs (None = no limit)
             - different_source_limit (int or None or 'balanced'): the maximum number of different source pairs (None = no limit; 'balanced' = number of same source pairs)
@@ -53,7 +65,9 @@ class InstancePairing(sklearn.base.TransformerMixin):
             - X is of shape (n,f) with n=number of samples; f=number of features
             - y is of shape (n,)
         Returns:
-            - X, y; X has shape (m,f,2); y has shape (m,); with m=number of pairs
+            - X_paired, y_paired: X_paired has shape (m,f,2); y_paired has shape (m,); with m=number of pairs.
+                For example, `(X_paired[a,:,0], X_paired[a,:,1])` is the a^th pair of feature vectors, and `y_paired[a]`
+                is 1 if the labels of both vectors in `y` are equal (same source), or 0 otherwise (different source).
         Attributes:
             - self.pairing: an array of shape (m,2) with indexes of X input array which contribute to the pairs
         """
