@@ -2,19 +2,6 @@ import numpy as np
 import sklearn
 
 
-class SumNormalizer(sklearn.base.TransformerMixin):
-    """
-    Normalize samples individually to unit sum.
-
-    See also: sklearn.preprocessing.Normalizer which normalizes to unit norm
-    """
-    def fit(self, X, y=None):
-        return self
-
-    def transform(self, X):
-        return (X.T / np.sum(X, axis=1)).T
-
-
 class AbsDiffTransformer(sklearn.base.TransformerMixin):
     """
     Takes an array of sample pairs and returns the element-wise absolute difference.
