@@ -339,7 +339,7 @@ def makeplot_accuracy(scorer, density_function, X0_train, X1_train, X0_calibrate
         plt.show()
 
 
-def pav(ax, lrs, y, add_misleading=0, show_scatter=True):
+def pav(lrs, y, add_misleading=0, show_scatter=True, ax=plt):
     """
     Generates a plot of pre- versus post-calibrated LRs using Pool Adjacent
     Violators (PAV).
@@ -351,9 +351,11 @@ def pav(ax, lrs, y, add_misleading=0, show_scatter=True):
     y : numpy array
         Labels corresponding to lrs (0 for Hd and 1 for Hp)
     add_misleading : int
-        number of misleading evidence points to add on both sides
+        number of misleading evidence points to add on both sides (default: `0`)
     show_scatter : boolean
-        If True, show individual LRs
+        If True, show individual LRs (default: `True`)
+    ax : pyplot axes object
+        defaults to `matplotlib.pyplot`
     ----------
     """
     pav = IsotonicCalibrator(add_misleading=add_misleading)
@@ -434,7 +436,7 @@ class Canvas:
 
     def __getattr__(self, attr):
         if attr in globals():
-            return partial(globals()[attr], self.ax)
+            return partial(globals()[attr], ax=self.ax)
         else:
             return getattr(self.ax, attr)
 
@@ -449,6 +451,8 @@ def savefig(path):
     with savefig(filename) as ax:
         ax.pav(lrs, y)
     ```
+
+    A call to `savefig(path)` is identical to `axes(savefig=path)`.
 
     Parameters
     ----------
@@ -468,6 +472,8 @@ def show():
     with show() as ax:
         ax.pav(lrs, y)
     ```
+
+    A call to `show()` is identical to `axes(show=True)`.
     """
     return axes(show=True)
 
