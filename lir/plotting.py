@@ -1,8 +1,9 @@
 import collections
+from contextlib import contextmanager
+from functools import partial
 import logging
 import math
 import warnings
-from contextlib import contextmanager
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -337,30 +338,8 @@ def makeplot_accuracy(scorer, density_function, X0_train, X1_train, X0_calibrate
     if show or savefig is None:
         plt.show()
 
-@contextmanager
-def plot_pav(lrs, y, add_misleading=0, show_scatter=True, savefig=None, show=None, kw_figure={}):
-    """
-    Generates a plot of pre- versus post-calibrated LRs using Pool Adjacent
-    Violators (PAV).
 
-    Parameters
-    ----------
-    lrs : numpy array of floats
-        Likelihood ratios before PAV transform
-    y : numpy array
-        Labels corresponding to lrs (0 for Hd and 1 for Hp)
-    add_misleading : int
-        number of misleading evidence points to add on both sides
-    show_scatter : boolean
-        If True, show individual LRs
-    savefig : str
-        If not None, write the figure to a file
-    show : boolean
-        If True, show the plot on screen
-    kw_figure : dict
-        Keyword arguments that are passed to matplotlib.pyplot.figure()
-    ----------
-    """
+def _generate_pav(lrs, y, add_misleading, show_scatter, ax):
     pav = IsotonicCalibrator(add_misleading=add_misleading)
     pav_lrs = pav.fit_transform(lrs, y)
 
@@ -368,11 +347,10 @@ def plot_pav(lrs, y, add_misleading=0, show_scatter=True, savefig=None, show=Non
         llrs = np.log10(lrs)
         pav_llrs = np.log10(pav_lrs)
 
-    fig = plt.figure(**kw_figure)
     xrange = yrange = [llrs[llrs != -np.Inf].min() - .5, llrs[llrs != np.Inf].max() + .5]
 
     # plot line through origin
-    plt.plot(xrange, yrange)
+    ax.plot(xrange, yrange)
 
     # line pre pav llrs x and post pav llrs y
     line_x = np.arange(*xrange, .01)
@@ -385,7 +363,7 @@ def plot_pav(lrs, y, add_misleading=0, show_scatter=True, savefig=None, show=Non
 
     # some values of line_y go beyond the yrange which is problematic when there are infinite values
     mask_out_of_range = np.logical_and(line_y >= yrange[0], line_y <= yrange[1])
-    plt.plot(line_x[mask_out_of_range], line_y[mask_out_of_range])
+    ax.plot(line_x[mask_out_of_range], line_y[mask_out_of_range])
 
     # add points for infinite values
     if np.logical_or(np.isinf(pav_llrs), np.isinf(llrs)).any():
@@ -418,30 +396,112 @@ def plot_pav(lrs, y, add_misleading=0, show_scatter=True, savefig=None, show=Non
         x_inf = replace_values_out_of_range(llrs[mask_not_inf], xrange[0], xrange[1])
         y_inf = replace_values_out_of_range(pav_llrs[mask_not_inf], yrange[0], yrange[1])
 
-        plt.yticks(ticks_y, tick_labels_y)
-        plt.xticks(ticks_x, tick_labels_x)
+        ax.yticks(ticks_y, tick_labels_y)
+        ax.xticks(ticks_x, tick_labels_x)
 
-        plt.scatter(x_inf,
+        ax.scatter(x_inf,
                     y_inf, facecolors='none', edgecolors='#1f77b4', linestyle=':')
 
-    plt.axis(xrange + yrange)
+    ax.axis(xrange + yrange)
     # pre-/post-calibrated lr fit
 
     if show_scatter:
-        plt.scatter(llrs, pav_llrs)  # scatter plot of measured lrs
+        ax.scatter(llrs, pav_llrs)  # scatter plot of measured lrs
 
-    plt.xlabel("pre-calibrated 10log(lr)")
-    plt.ylabel("post-calibrated 10log(lr)")
+    ax.xlabel("pre-calibrated 10log(lr)")
+    ax.ylabel("post-calibrated 10log(lr)")
+
+
+def pav(lrs, y, add_misleading=0, show_scatter=True):
+    """
+    Generates a plot of pre- versus post-calibrated LRs using Pool Adjacent
+    Violators (PAV).
+
+    Parameters
+    ----------
+    lrs : numpy array of floats
+        Likelihood ratios before PAV transform
+    y : numpy array
+        Labels corresponding to lrs (0 for Hd and 1 for Hp)
+    add_misleading : int
+        number of misleading evidence points to add on both sides
+    show_scatter : boolean
+        If True, show individual LRs
+    ----------
+    """
+    return partial(_generate_pav, lrs, y, add_misleading, show_scatter)
+
+
+@contextmanager
+def axes(call, ax=None, savefig=None, show=None):
+    """
+    Creates a plot, given a plotting function. To be used within a context to
+    modify plotting parameters
+
+    Example
+    -------
+    ```py
+    with axes(pav(lrs, y)) as ax:
+        ax.xlabel("a custom X label")
+    ```
+
+    Parameters
+    ----------
+    call : callable
+        a callable to generate the plot
+    ax : a pyplot axes object
+        where the plot is generated
+    savefig : path to image file, or `None`
+        if not `None`, a PNG image is written to the path
+    show : boolean or None
+        the plot is presented on screen if this value is `True` or if both `savefig` and `show` are `None`
+    """
+    if ax is not None:
+        fig = None
+        _ax = ax
+    else:
+        fig = plt.figure()
+        _ax = plt
+
+    call(ax=_ax)
 
     try:
         yield plt
     finally:
         if savefig:
-            plt.savefig(savefig)
-        if show or savefig is None:
-            plt.show()
+            _ax.savefig(savefig)
+        if show:
+            _ax.show()
+        if show is None and savefig is None:
+            _ax.show()
 
-        plt.close(fig)
+        if fig is not None:
+            _ax.close(fig)
+
+
+def plot(call, ax=None, savefig=None, show=None):
+    """
+    Creates a plot, given a plotting function.
+
+    Example
+    -------
+    ```py
+    plot(pav(lrs, y))
+    ```
+
+    Parameters
+    ----------
+    call : callable
+        a callable to generate the plot
+    ax : a pyplot axes object
+        where the plot is generated
+    savefig : str
+        if not `None`, write a PNG image to this path
+    show : boolean
+        if `True`, show the plot on screen
+    """
+    with axes(call, ax, savefig, show) as ax:
+        pass
 
 
 def plot_log_lr_distributions_for_model(lr_system: CalibratedScorer, X, y, kind: str = 'histogram', savefig=None,
