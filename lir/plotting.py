@@ -472,8 +472,6 @@ def axes(call, ax=None, savefig=None, show=None):
             _ax.savefig(savefig)
         if show:
             _ax.show()
-        if show is None and savefig is None:
-            _ax.show()
 
         if fig is not None:
             _ax.close(fig)
