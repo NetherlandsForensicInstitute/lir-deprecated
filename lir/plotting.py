@@ -468,7 +468,7 @@ def axes(call, savefig=None, show=None):
         plt.close(fig)
 
 
-def plot(call, ax=None, savefig=None, show=None):
+def plot(call, savefig=None, show=None):
     """
     Creates a plot, given a plotting function.
 
@@ -482,20 +482,13 @@ def plot(call, ax=None, savefig=None, show=None):
     ----------
     call : callable
         a callable to generate the plot
-    ax : a pyplot axes object
-        where the plot is generated
     savefig : str
-        if not `None`, write a PNG image to this path (valid only if `ax` is None)
+        if not `None`, write a PNG image to this path
     show : boolean
-        if `True`, show the plot on screen (valid only if `ax` is None)
+        if `True`, show the plot on screen
     """
-    if ax is None:
-        with axes(call, savefig, show) as ax:
-            pass
-    else:
-        assert savefig is None, "both `ax` and `savefig` are provided"
-        assert show is None, "both `ax` and `show` are provided"
-        call(ax=ax)
+    with axes(call, savefig, show) as ax:
+        pass
 
 
 def plot_log_lr_distributions_for_model(lr_system: CalibratedScorer, X, y, kind: str = 'histogram', savefig=None,
