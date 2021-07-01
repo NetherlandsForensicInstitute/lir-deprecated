@@ -433,7 +433,7 @@ def pav(lrs, y, add_misleading=0, show_scatter=True):
 
 
 @contextmanager
-def axes(call, ax=None, savefig=None, show=None):
+def axes(call, savefig=None, show=None):
     """
     Creates a plot, given a plotting function. To be used within a context to
     modify plotting parameters
@@ -449,32 +449,23 @@ def axes(call, ax=None, savefig=None, show=None):
     ----------
     call : callable
         a callable to generate the plot
-    ax : a pyplot axes object
-        where the plot is generated
     savefig : path to image file, or `None`
         if not `None`, a PNG image is written to the path
     show : boolean or None
         the plot is presented on screen if this value is `True` or if both `savefig` and `show` are `None`
     """
-    if ax is not None:
-        fig = None
-        _ax = ax
-    else:
-        fig = plt.figure()
-        _ax = plt
-
-    call(ax=_ax)
+    fig = plt.figure()
+    call(ax=plt)
 
     try:
         yield plt
     finally:
         if savefig:
-            _ax.savefig(savefig)
+            plt.savefig(savefig)
         if show:
-            _ax.show()
+            plt.show()
 
-        if fig is not None:
-            _ax.close(fig)
+        plt.close(fig)
 
 
 def plot(call, ax=None, savefig=None, show=None):
@@ -494,12 +485,17 @@ def plot(call, ax=None, savefig=None, show=None):
     ax : a pyplot axes object
         where the plot is generated
     savefig : str
-        if not `None`, write a PNG image to this path
+        if not `None`, write a PNG image to this path (valid only if `ax` is None)
     show : boolean
-        if `True`, show the plot on screen
+        if `True`, show the plot on screen (valid only if `ax` is None)
     """
-    with axes(call, ax, savefig, show) as ax:
-        pass
+    if ax is None:
+        with axes(call, savefig, show) as ax:
+            pass
+    else:
+        assert savefig is None, "both `ax` and `savefig` are provided"
+        assert show is None, "both `ax` and `show` are provided"
+        call(ax=ax)
 
 
 def plot_log_lr_distributions_for_model(lr_system: CalibratedScorer, X, y, kind: str = 'histogram', savefig=None,

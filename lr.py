@@ -32,7 +32,7 @@ class Data:
         raise ValueError('not implemented')
 
     def plot_isotonic(self):
-        lir.plotting.plot(lir.plotting.pav(self.lrs, self.y))
+        lir.plotting.plot(lir.plotting.pav(self.lrs, self.y), show=True)
 
     def plot_ece(self):
         lir.ece.plot(self.lrs, self.y, on_screen=True)
