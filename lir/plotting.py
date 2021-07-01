@@ -339,7 +339,23 @@ def makeplot_accuracy(scorer, density_function, X0_train, X1_train, X0_calibrate
         plt.show()
 
 
-def _generate_pav(lrs, y, add_misleading, show_scatter, ax):
+def pav(ax, lrs, y, add_misleading=0, show_scatter=True):
+    """
+    Generates a plot of pre- versus post-calibrated LRs using Pool Adjacent
+    Violators (PAV).
+
+    Parameters
+    ----------
+    lrs : numpy array of floats
+        Likelihood ratios before PAV transform
+    y : numpy array
+        Labels corresponding to lrs (0 for Hd and 1 for Hp)
+    add_misleading : int
+        number of misleading evidence points to add on both sides
+    show_scatter : boolean
+        If True, show individual LRs
+    ----------
+    """
     pav = IsotonicCalibrator(add_misleading=add_misleading)
     pav_lrs = pav.fit_transform(lrs, y)
 
@@ -412,83 +428,71 @@ def _generate_pav(lrs, y, add_misleading, show_scatter, ax):
     ax.ylabel("post-calibrated 10log(lr)")
 
 
-def pav(lrs, y, add_misleading=0, show_scatter=True):
+class Canvas:
+    def __init__(self, ax):
+        self.ax = ax
+
+    def __getattr__(self, attr):
+        if attr in globals():
+            return partial(globals()[attr], self.ax)
+        else:
+            return getattr(self.ax, attr)
+
+
+def savefig(path):
     """
-    Generates a plot of pre- versus post-calibrated LRs using Pool Adjacent
-    Violators (PAV).
+    Creates a plotting context, write plot when closed.
+
+    Example
+    -------
+    ```py
+    with savefig(filename) as ax:
+        ax.pav(lrs, y)
+    ```
 
     Parameters
     ----------
-    lrs : numpy array of floats
-        Likelihood ratios before PAV transform
-    y : numpy array
-        Labels corresponding to lrs (0 for Hd and 1 for Hp)
-    add_misleading : int
-        number of misleading evidence points to add on both sides
-    show_scatter : boolean
-        If True, show individual LRs
-    ----------
+    path : str
+        write a PNG image to this path
     """
-    return partial(_generate_pav, lrs, y, add_misleading, show_scatter)
+    return axes(savefig=path)
+
+
+def show():
+    """
+    Creates a plotting context, show plot when closed.
+
+    Example
+    -------
+    ```py
+    with show() as ax:
+        ax.pav(lrs, y)
+    ```
+    """
+    return axes(show=True)
 
 
 @contextmanager
-def axes(call, savefig=None, show=None):
+def axes(savefig=None, show=None):
     """
-    Creates a plot, given a plotting function. To be used within a context to
-    modify plotting parameters
+    Creates a plotting context.
 
     Example
     -------
     ```py
-    with axes(pav(lrs, y)) as ax:
-        ax.xlabel("a custom X label")
+    with axes() as ax:
+        ax.pav(lrs, y)
     ```
-
-    Parameters
-    ----------
-    call : callable
-        a callable to generate the plot
-    savefig : path to image file, or `None`
-        if not `None`, a PNG image is written to the path
-    show : boolean or None
-        the plot is presented on screen if this value is `True` or if both `savefig` and `show` are `None`
     """
     fig = plt.figure()
-    call(ax=plt)
-
     try:
-        yield plt
+        yield Canvas(ax=plt)
     finally:
-        if savefig:
-            plt.savefig(savefig)
         if show:
             plt.show()
-
+        if savefig:
+            plt.savefig(savefig)
         plt.close(fig)
-
-
-def plot(call, savefig=None, show=None):
-    """
-    Creates a plot, given a plotting function.
-
-    Example
-    -------
-    ```py
-    plot(pav(lrs, y))
-    ```
-
-    Parameters
-    ----------
-    call : callable
-        a callable to generate the plot
-    savefig : str
-        if not `None`, write a PNG image to this path
-    show : boolean
-        if `True`, show the plot on screen
-    """
-    with axes(call, savefig, show) as ax:
-        pass
 
 
 def plot_log_lr_distributions_for_model(lr_system: CalibratedScorer, X, y, kind: str = 'histogram', savefig=None,
