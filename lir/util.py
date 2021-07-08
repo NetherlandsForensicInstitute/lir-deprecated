@@ -1,4 +1,6 @@
 import collections
+import inspect
+import warnings
 
 import numpy as np
 
@@ -63,3 +65,7 @@ def to_odds(p):
 def to_log_odds(p):
     odds = to_odds(p)
     return np.nan_to_num(np.log10(odds))
+
+
+def warn_deprecated():
+    warnings.warn(f'the function `{inspect.stack()[1].function}` is no longer maintained; please check documentation for alternatives')

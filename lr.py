@@ -3,8 +3,6 @@
 import argparse
 import logging
 
-import numpy as np
-
 import lir
 import lir.plotting
 from lir.data import AlcoholBreathAnalyser
@@ -36,15 +34,22 @@ class Data:
             ax.pav(self.lrs, self.y)
 
     def plot_ece(self):
-        lir.ece.plot(self.lrs, self.y, on_screen=True)
+        with lir.plotting.show() as ax:
+            ax.ece(self.lrs, self.y)
+
+    def plot_histogram(self):
+        with lir.plotting.show() as ax:
+            ax.lr_histogram(self.lrs, self.y)
 
     def plot_nbe(self):
         add_misleading = 1
         print('ELUB', *lir.bayeserror.elub(self.lrs, self.y, add_misleading=add_misleading))
-        lir.bayeserror.plot(self.lrs, self.y, add_misleading=add_misleading, on_screen=True)
+        with lir.plotting.show() as ax:
+            ax.nbe(self.lrs, self.y, add_misleading=add_misleading)
 
     def plot_tippett(self):
-        lir.plotting.plot_log_lr_distributions(np.log10(self.lrs), self.y, 'tippett', show=True)
+        with lir.plotting.show() as ax:
+            ax.tippett(self.lrs, self.y)
 
 
 if __name__ == '__main__':
@@ -52,6 +57,7 @@ if __name__ == '__main__':
     plotting = parser.add_argument_group('plotting')
     plotting.add_argument('--plot-isotonic', help='generate an Isotonic Regression plot', action='store_true')
     plotting.add_argument('--plot-ece', help='generate an ECE plot (empirical cross entropy)', action='store_true')
+    plotting.add_argument('--plot-histogram', help='generate a histogram', action='store_true')
     plotting.add_argument('--plot-nbe', help='generate an NBE plot (normalized bayes error rate)', action='store_true')
     plotting.add_argument('--plot-tippett', help='generate a Tippett plot', action='store_true')
 
@@ -76,6 +82,8 @@ if __name__ == '__main__':
         data.plot_isotonic()
     if args.plot_ece:
         data.plot_ece()
+    if args.plot_histogram:
+        data.plot_histogram()
     if args.plot_nbe:
         data.plot_nbe()
     if args.plot_tippett:

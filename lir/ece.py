@@ -17,11 +17,25 @@ See:
 import matplotlib.pyplot as plt
 import numpy as np
 
-from .calibration import IsotonicCalibrator
-from . import util
+from . import calibration, util
+from .util import warn_deprecated
 
 
 def plot(lrs, y, log_prior_odds_range=None, on_screen=False, path=None, kw_figure={}):
+    warn_deprecated()
+
+    fig = plt.figure(**kw_figure)
+    plot_ece(lrs, y, log_prior_odds_range)
+
+    if on_screen:
+        plt.show()
+    if path is not None:
+        plt.savefig(path)
+
+    plt.close(fig)
+
+
+def plot_ece(lrs, y, log_prior_odds_range=None, ax=plt):
     """
     Generates an ECE plot for a set of LRs and corresponding ground-truth
     labels.
@@ -36,10 +50,6 @@ def plot(lrs, y, log_prior_odds_range=None, on_screen=False, path=None, kw_figur
         must be of the same length as `lrs`
     :param log_prior_odds_range: the range of prior odds (tuple of two values,
         indicating both ends of the range on the x-axis)
-    :param on_screen: boolean, show plot on screen interactively
-    :param path: path name or None, write plot to file as PNG image (default
-        None)
-    :param kw_figure: dict of parameters to pass to `plt.figure()`
     """
     if log_prior_odds_range is None:
         log_prior_odds_range = (-3, 3)
@@ -47,30 +57,23 @@ def plot(lrs, y, log_prior_odds_range=None, on_screen=False, path=None, kw_figur
     log_prior_odds = np.arange(*log_prior_odds_range, .01)
     prior_odds = np.power(10, log_prior_odds)
 
-    fig = plt.figure(**kw_figure)
-
     # plot reference
-    plt.plot(log_prior_odds, calculate_ece(np.ones(len(lrs)), y, util.to_probability(prior_odds)), linestyle=':', label='reference')
+    ax.plot(log_prior_odds, calculate_ece(np.ones(len(lrs)), y, util.to_probability(prior_odds)), linestyle=':', label='reference')
 
     # plot LRs
-    plt.plot(log_prior_odds, calculate_ece(lrs, y, util.to_probability(prior_odds)), linestyle='-', label='LRs')
+    ax.plot(log_prior_odds, calculate_ece(lrs, y, util.to_probability(prior_odds)), linestyle='-', label='LRs')
 
     # plot PAV LRs
-    pav_lrs = IsotonicCalibrator().fit_transform(util.to_probability(lrs), y)
-    plt.plot(log_prior_odds, calculate_ece(pav_lrs, y, util.to_probability(prior_odds)), linestyle='--', label='PAV LRs')
+    pav_lrs = calibration.IsotonicCalibrator().fit_transform(util.to_probability(lrs), y)
+    ax.plot(log_prior_odds, calculate_ece(pav_lrs, y, util.to_probability(prior_odds)), linestyle='--', label='PAV LRs')
 
-    plt.xlabel("prior log10 odds")
-    plt.ylabel("empirical cross-entropy")
-    plt.ylim((0,None))
-    plt.xlim(log_prior_odds_range)
-    plt.legend()
-    plt.grid(True, linestyle=':')
-    if on_screen:
-        plt.show()
-    if path is not None:
-        plt.savefig(path)
-
-    plt.close(fig)
+    ax.xlabel("prior 10log odds")
+    ax.ylabel("empirical cross-entropy")
+    ax.ylim((0,None))
+    ax.xlim(log_prior_odds_range)
+    ax.legend()
+    ax.grid(True, linestyle=':')
+    ax.title("ECE")
 
 
 def calculate_ece(lrs, y, priors):

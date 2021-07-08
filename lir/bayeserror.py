@@ -10,8 +10,24 @@ See:
 import matplotlib.pyplot as plt
 import numpy as np
 
+from .util import warn_deprecated
+
 
 def plot(lrs, y, log_lr_threshold_range=None, add_misleading=0, step_size=.01, on_screen=False, path=None, kw_figure={}):
+    warn_deprecated()
+
+    fig = plt.figure(**kw_figure)
+    plot_nbe(lrs, y, log_lr_threshold_range, add_misleading, step_size)
+
+    if on_screen:
+        plt.show()
+    if path is not None:
+        plt.savefig(path)
+
+    plt.close(fig)
+
+
+def plot_nbe(lrs, y, log_lr_threshold_range=None, add_misleading=0, step_size=.01, ax=plt):
     if log_lr_threshold_range is None:
         llrs = np.log10(lrs)
         log_lr_threshold_range = (np.min(llrs) - .5, np.max(llrs) + .5)
@@ -19,23 +35,16 @@ def plot(lrs, y, log_lr_threshold_range=None, add_misleading=0, step_size=.01, o
     log_lr_threshold = np.arange(*log_lr_threshold_range, step_size)
     lr_threshold = np.power(10, log_lr_threshold)
 
-    fig = plt.figure(**kw_figure)
-
     eu_neutral = calculate_expected_utility(np.ones(len(lrs)), y, lr_threshold)
     eu_system = calculate_expected_utility(lrs, y, lr_threshold, add_misleading)
 
-    plt.plot(log_lr_threshold, np.log10(eu_neutral/eu_system))
+    ax.plot(log_lr_threshold, np.log10(eu_neutral/eu_system))
 
-    plt.xlabel("log10 threshold LR")
-    plt.ylabel("log10 expected utility ratio")
-    plt.xlim(log_lr_threshold_range)
-    plt.grid(True, linestyle=':')
-    if on_screen:
-        plt.show()
-    if path is not None:
-        plt.savefig(path)
-
-    plt.close(fig)
+    ax.xlabel("10log threshold LR")
+    ax.ylabel("10log expected utility ratio")
+    ax.title("Normalized Bayes Error-rate")
+    ax.xlim(log_lr_threshold_range)
+    ax.grid(True, linestyle=':')
 
 
 def elub(lrs, y, add_misleading=1, step_size=.01, substitute_extremes=(np.exp(-20), np.exp(20))):
