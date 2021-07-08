@@ -39,7 +39,8 @@ print('The discriminative power is', lir.cllr_min(lrs_test, y_test), '(lower is 
 
 # plot calibration
 import lir.plotting
-lir.plotting.plot_pav(lrs_test, y_test)
+with lir.plotting.show() as ax:
+    ax.pav(lrs_test, y_test)
 ```
 
 The log likelihood ratio cost (CLLR) may be used as a metric of performance.
