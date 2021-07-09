@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from functools import partial
 import logging
 
 import matplotlib.pyplot as plt
@@ -17,13 +18,13 @@ class Canvas:
     def __init__(self, ax):
         self.ax = ax
 
-        self.calibrator_fit = calibrator_fit
-        self.ece = ece
-        self.lr_histogram = lr_histogram
-        self.nbe = nbe
-        self.pav = pav
-        self.score_distribution = score_distribution
-        self.tippett = tippett
+        self.calibrator_fit = partial(calibrator_fit, ax=ax)
+        self.ece = partial(ece, ax=ax)
+        self.lr_histogram = partial(lr_histogram, ax=ax)
+        self.nbe = partial(nbe, ax=ax)
+        self.pav = partial(pav, ax=ax)
+        self.score_distribution = partial(score_distribution, ax=ax)
+        self.tippett = partial(tippett, ax=ax)
 
     def __getattr__(self, attr):
         return getattr(self.ax, attr)
