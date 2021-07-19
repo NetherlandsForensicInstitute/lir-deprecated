@@ -28,7 +28,7 @@ class TestIsotonicRegression(unittest.TestCase):
         score_class0 = np.arange(0, 1, .1)
         score_class1 = np.arange(0, 1, .1)
         X, y = Xn_to_Xy(score_class0, score_class1)
-        irc = IsotonicCalibrator(add_one=False)
+        irc = IsotonicCalibrator()
         lr0, lr1 = Xy_to_Xn(irc.fit_transform(X, y), y)
         self.assertEqual(score_class0.shape, lr0.shape)
         self.assertEqual(score_class1.shape, lr1.shape)
@@ -41,7 +41,7 @@ class TestIsotonicRegression(unittest.TestCase):
         X, y = Xn_to_Xy(lr0, lr1)
         cllr = _cllr(lr0, lr1)
 
-        irc = IsotonicCalibrator(add_one=False)
+        irc = IsotonicCalibrator()
         lrmin0, lrmin1 = Xy_to_Xn(irc.fit_transform(X / (X + 1), y), y)
         cllrmin = _cllr(lrmin0, lrmin1)
 
@@ -64,7 +64,7 @@ class TestIsotonicRegression(unittest.TestCase):
         score_class0 = np.arange(0, 1, .1)
         score_class1 = np.arange(.05, 1.05, .1)
         X, y = Xn_to_Xy(score_class0, score_class1)
-        irc = IsotonicCalibrator(add_one=False)
+        irc = IsotonicCalibrator()
         lr0, lr1 = Xy_to_Xn(irc.fit_transform(X, y), y)
         self.assertEqual(score_class0.shape, lr0.shape)
         self.assertEqual(score_class1.shape, lr1.shape)

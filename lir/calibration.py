@@ -259,9 +259,11 @@ class IsotonicCalibrator(BaseEstimator, TransformerMixin):
             warnings.warn('parameter `add_one` is deprecated; use `add_misleading=1` instead')
 
         self.add_misleading = (1 if add_one else 0) + add_misleading
-        self._ir = IsotonicRegressionInf()
+        self._ir = IsotonicRegressionInf(out_of_bounds='clip')
 
     def fit(self, X, y, **fit_params):
+        assert np.all(np.unique(y) == np.arange(2)), 'y labels must be 0 and 1'
+
         # prevent extreme LRs
         if 'add_misleading' in fit_params:
             n_misleading = fit_params['add_misleading']

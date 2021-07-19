@@ -34,8 +34,8 @@ calibrated_scorer.fit(X_train, y_train)
 lrs_test = calibrated_scorer.predict_lr(X_test)
 
 # print the quality of the system as log likelihood ratio cost (lower is better)
-print('The log likelihood ratio cost is', lir.cllr(lrs_test, y_test), '(lower is better)')
-print('The discriminative power is', lir.cllr_min(lrs_test, y_test), '(lower is better)')
+print('The log likelihood ratio cost is', lir.metrics.cllr(lrs_test, y_test), '(lower is better)')
+print('The discriminative power is', lir.metrics.cllr_min(lrs_test, y_test), '(lower is better)')
 
 # plot calibration
 import lir.plotting
