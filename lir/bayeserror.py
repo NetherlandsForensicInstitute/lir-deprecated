@@ -40,10 +40,9 @@ def plot_nbe(lrs, y, log_lr_threshold_range=None, add_misleading=0, step_size=.0
 
     ax.plot(log_lr_threshold, np.log10(eu_neutral/eu_system))
 
-    ax.xlabel("10log threshold LR")
-    ax.ylabel("10log expected utility ratio")
-    ax.title("Normalized Bayes Error-rate")
-    ax.xlim(log_lr_threshold_range)
+    ax.set_xlabel("10log threshold LR")
+    ax.set_ylabel("10log expected utility ratio")
+    ax.set_xlim(log_lr_threshold_range)
     ax.grid(True, linestyle=':')
 
 
