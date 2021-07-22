@@ -90,12 +90,15 @@ def calculate_ece(lrs, y, priors):
         from class 1 (values in range [0..1])
     :returns: an array of entropy values of the same length as `priors`
     """
-    
+    assert not np.any(np.isnan(lrs)), "invalid input for LR values"
+    assert np.all(np.unique(y) == np.array([0, 1])), "label set must be [0, 1]"
+    assert len(priors) == 2, "list 2 priors required"
+
     prior_odds = np.repeat(util.to_odds(priors), len(lrs)).reshape((len(priors), len(lrs)))
     posterior_odds = prior_odds * lrs
     posterior_p = util.to_probability(posterior_odds)
 
-    with np.errstate(invalid='ignore'):
+    with np.errstate(invalid='ignore', divide='ignore'):
         ece0 = - (1 - priors.reshape((len(priors),1))) * np.log2(1 - posterior_p[:,y == 0])
         ece1 = -      priors.reshape((len(priors),1))  * np.log2(    posterior_p[:,y == 1])
 
