@@ -29,13 +29,15 @@ class TestECE(unittest.TestCase):
 
     def test_invalid(self):
         data = [
-            (np.array([.1, 10, np.nan]), np.array([0, 1, 1])),
+            (np.array([.1, 10, np.nan]), np.array([0, 1, 1]), "invalid input for LR values"),
+            (np.array([.1, 10, -1]), np.array([0, 1, 0]), "invalid input for LR values"),
         ]
 
-        for lrs, y in data:
+        for lrs, y, msg in data:
             with self.assertRaises(AssertionError) as context:
                 lir.ece.calculate_ece(lrs, y, np.array([.5, .5]))
 
+            self.assertEqual(context.exception.args[0], msg)
 
 if __name__ == '__main__':
     unittest.main()
