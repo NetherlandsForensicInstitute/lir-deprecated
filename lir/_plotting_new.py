@@ -14,6 +14,13 @@ from . import util
 LOG = logging.getLogger(__name__)
 
 
+# make matplotlib.pyplot behave more like axes objects
+plt.set_xlabel = plt.xlabel
+plt.set_ylabel = plt.ylabel
+plt.set_xlim = plt.xlim
+plt.set_ylim = plt.ylim
+
+
 class Canvas:
     def __init__(self, ax):
         self.ax = ax
@@ -83,10 +90,10 @@ def axes(savefig=None, show=None):
     try:
         yield Canvas(ax=plt)
     finally:
+        if savefig:
+            fig.savefig(savefig)
         if show:
             plt.show()
-        if savefig:
-            plt.savefig(savefig)
         plt.close(fig)
 
 
@@ -177,9 +184,8 @@ def pav(lrs, y, add_misleading=0, show_scatter=True, ax=plt):
     if show_scatter:
         ax.scatter(llrs, pav_llrs)  # scatter plot of measured lrs
 
-    ax.xlabel("pre-calibrated 10log LR")
-    ax.ylabel("post-calibrated 10log LR")
-    ax.title("PAV")
+    ax.set_xlabel("pre-calibrated 10log LR")
+    ax.set_ylabel("post-calibrated 10log LR")
 
 
 def lr_histogram(lrs, y, bins=20, ax=plt):
@@ -192,9 +198,8 @@ def lr_histogram(lrs, y, bins=20, ax=plt):
     points0, points1 = util.Xy_to_Xn(log_lrs, y)
     ax.hist(points0, bins=bins, alpha=.25, density=True)
     ax.hist(points1, bins=bins, alpha=.25, density=True)
-    ax.xlabel('10log likelihood ratio')
-    ax.ylabel('count')
-    ax.title("LR histogram")
+    ax.set_xlabel('10log likelihood ratio')
+    ax.set_ylabel('count')
 
 
 def tippett(lrs, y, ax=plt):
@@ -211,10 +216,9 @@ def tippett(lrs, y, ax=plt):
     ax.plot(xplot, perc1, color='b', label='LRs given $\mathregular{H_1}$')
     ax.plot(xplot, perc0, color='r', label='LRs given $\mathregular{H_2}$')
     ax.axvline(x=0, color='k', linestyle='--')
-    ax.xlabel('10log likelihood ratio')
-    ax.ylabel('Cumulative proportion')
+    ax.set_xlabel('10log likelihood ratio')
+    ax.set_ylabel('Cumulative proportion')
     ax.legend()
-    ax.title("Tippett")
 
 
 def score_distribution(scores, y, bins=20, ax=plt):
@@ -268,8 +272,6 @@ def score_distribution(scores, y, bins=20, ax=plt):
         ax.hist(scores[y == cls], bins=bins, alpha=.25,
                  label=f'class {cls}', weights=weight)
 
-    ax.title("Score distribution")
-
 
 def calibrator_fit(calibrator, score_range=(0, 1), resolution=100, ax=plt):
     """
@@ -285,5 +287,3 @@ def calibrator_fit(calibrator, score_range=(0, 1), resolution=100, ax=plt):
 
     ax.plot(x, calibrator.p1, label='fit class 1')
     ax.plot(x, calibrator.p0, label='fit class 0')
-
-    ax.title("Calibrator fit")
