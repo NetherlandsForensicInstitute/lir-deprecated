@@ -91,7 +91,6 @@ def calculate_ece(lrs, y, priors):
     """
     assert np.all(lrs >= 0), "invalid input for LR values"
     assert np.all(np.unique(y) == np.array([0, 1])), "label set must be [0, 1]"
-    assert len(priors) == 2, "list 2 priors required"
 
     prior_odds = np.repeat(util.to_odds(priors), len(lrs)).reshape((len(priors), len(lrs)))
     posterior_odds = prior_odds * lrs
