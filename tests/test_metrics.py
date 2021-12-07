@@ -2,6 +2,7 @@ import numpy as np
 import unittest
 
 from context import lir
+assert lir  # so import optimizer doesn't remove the line above
 
 from lir.metrics import devpav_estimated as devpav, _devpavcalculator, calcsurface_f
 

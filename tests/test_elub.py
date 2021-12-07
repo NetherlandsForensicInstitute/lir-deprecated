@@ -1,6 +1,9 @@
 import numpy as np
 import unittest
 
+from context import lir
+assert lir  # so import optimizer doesn't remove the line above
+
 import lir.bayeserror
 from lir.data import AlcoholBreathAnalyser
 
