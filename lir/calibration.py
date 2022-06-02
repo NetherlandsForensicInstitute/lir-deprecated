@@ -370,7 +370,7 @@ class LogitCalibrator(BaseEstimator, TransformerMixin):
     two distributions. Uses logistic regression for interpolation.
     """
 
-    def fit(self, X, y, C=1.0):
+    def fit(self, X, y, **kwargs):
 
         # sanity check
         X = to_log_odds(X)
@@ -383,7 +383,7 @@ class LogitCalibrator(BaseEstimator, TransformerMixin):
 
         # train logistic regression
         X = X.reshape(-1, 1)
-        self._logit = LogisticRegression(class_weight='balanced', C=C)
+        self._logit = LogisticRegression(class_weight='balanced', **kwargs)
         self._logit.fit(X, y)
         return self
 
@@ -428,10 +428,10 @@ class LogitCalibratorInProbabilityDomain(BaseEstimator, TransformerMixin):
     two distributions. Uses logistic regression for interpolation.
     """
 
-    def fit(self, X, y, C=1.0):
+    def fit(self, X, y, **kwargs):
         # train logistic regression
         X = X.reshape(-1, 1)
-        self._logit = LogisticRegression(class_weight='balanced', C=C)
+        self._logit = LogisticRegression(class_weight='balanced', **kwargs)
         self._logit.fit(X, y)
         return self
 
