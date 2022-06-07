@@ -369,6 +369,9 @@ class LogitCalibrator(BaseEstimator, TransformerMixin):
     Calculates a likelihood ratio of a score value, provided it is from one of
     two distributions. Uses logistic regression for interpolation.
     """
+    
+    def __init__(self, **kwargs):
+        self._logit = LogisticRegression(class_weight='balanced', **kwargs)
 
     def fit(self, X, y, **kwargs):
 
@@ -383,7 +386,6 @@ class LogitCalibrator(BaseEstimator, TransformerMixin):
 
         # train logistic regression
         X = X.reshape(-1, 1)
-        self._logit = LogisticRegression(class_weight='balanced', **kwargs)
         self._logit.fit(X, y)
         return self
 
@@ -427,11 +429,12 @@ class LogitCalibratorInProbabilityDomain(BaseEstimator, TransformerMixin):
     Calculates a likelihood ratio of a score value, provided it is from one of
     two distributions. Uses logistic regression for interpolation.
     """
+    def __init__(self, **kwargs):
+        self._logit = LogisticRegression(class_weight='balanced', **kwargs)
 
     def fit(self, X, y, **kwargs):
         # train logistic regression
         X = X.reshape(-1, 1)
-        self._logit = LogisticRegression(class_weight='balanced', **kwargs)
         self._logit.fit(X, y)
         return self
 
