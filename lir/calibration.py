@@ -373,7 +373,7 @@ class LogitCalibrator(BaseEstimator, TransformerMixin):
     def __init__(self, **kwargs):
         self._logit = LogisticRegression(class_weight='balanced', **kwargs)
 
-    def fit(self, X, y, **kwargs):
+    def fit(self, X, y):
 
         # sanity check
         X = to_log_odds(X)
@@ -432,7 +432,7 @@ class LogitCalibratorInProbabilityDomain(BaseEstimator, TransformerMixin):
     def __init__(self, **kwargs):
         self._logit = LogisticRegression(class_weight='balanced', **kwargs)
 
-    def fit(self, X, y, **kwargs):
+    def fit(self, X, y):
         # train logistic regression
         X = X.reshape(-1, 1)
         self._logit.fit(X, y)
