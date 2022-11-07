@@ -293,7 +293,7 @@ def score_distribution(scores, y, bins=20, weighted=True, ax=plt):
                  label=f'class {cls}', weights=weight if weighted else None)
 
 
-def calibrator_fit(calibrator, score_range=(0, 1), resolution=100, ax=plt):
+def calibrator_fit(calibrator, score_range=(None, None), logscore_range=(-6, 6), resolution=100, ax=plt):
     """
     plots the fitted score distributions/score-to-posterior map
     (Note - for ELUBbounder calibrator is the firststepcalibrator)
@@ -302,8 +302,17 @@ def calibrator_fit(calibrator, score_range=(0, 1), resolution=100, ax=plt):
     """
     ax.rcParams.update({'font.size': 15})
 
-    x = np.linspace(score_range[0], score_range[1], resolution)
-    calibrator.transform(x)
+    if score_range[0] is not None and score_range[1] is not None:
+        x = np.linspace(score_range[0], score_range[1], resolution)
+        calibrator.transform(x)
 
-    ax.plot(x, calibrator.p1, label='fit class 1')
-    ax.plot(x, calibrator.p0, label='fit class 0')
+        ax.plot(x, calibrator.p1, label='fit class 1')
+        ax.plot(x, calibrator.p0, label='fit class 0')
+    else:
+        lower_bound, upper_bound = logscore_range
+        x = np.linspace(lower_bound, upper_bound, int(resolution*(upper_bound-lower_bound)))
+        calibrator.transform(util.to_probability(np.power(10, x)))
+
+        ax.plot(x, calibrator.p1, label='fit class 1')
+        ax.plot(x, calibrator.p0, label='fit class 0')
+
