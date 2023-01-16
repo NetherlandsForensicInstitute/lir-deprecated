@@ -17,6 +17,10 @@ class EstimatorTransformer(TransformerMixin):
     def __init__(self, estimator):
         self.estimator = estimator
 
+    def fit(self, X, y):
+        self.estimator.fit(X, y)
+        return self
+
     def transform(self, X):
         return self.estimator.predict_proba(X)[:, 1]
 
