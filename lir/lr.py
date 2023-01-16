@@ -28,28 +28,34 @@ class EstimatorTransformer(TransformerMixin):
         return getattr(self.estimator, item)
 
 
+def _create_transformer(scorer):
+    if hasattr(scorer, "transform"):
+        return scorer
+    elif hasattr(scorer, "predict_proba"):
+        return EstimatorTransformer(scorer)
+    elif callable(scorer):
+        return sklearn.preprocessing.FunctionTransformer(scorer)
+    else:
+        raise NotImplementedError("`scorer` argument must either be callable or implement at least one of `transform`, `predict_proba`")
+
+
 class CalibratedScorer:
     def __init__(self, scorer, calibrator):
-        if hasattr(scorer, "transform"):
-            self.scorer = scorer
-        elif hasattr(scorer, "predict_proba"):
-            self.scorer = EstimatorTransformer(scorer)
-        else:
-            raise NotImplementedError("`scorer` argument must implement either `transform` or `predict_proba`")
-
+        self.scorer = _create_transformer(scorer)
         self.calibrator = calibrator
         self.transformer = Pipeline([("scorer", self.scorer), ("calibrator", self.calibrator)])
 
     def fit(self, X, y):
         self.transformer.fit(X, y)
+        return self
 
     def predict_lr(self, X):
         return self.transformer.transform(X)
 
 
 class CalibratedScorerCV:
-    def __init__(self, scorer, calibrator, n_splits, scorer_is_estimator: bool = True):
-        self.scorer = EstimatorTransformer(scorer) if scorer_is_estimator else scorer
+    def __init__(self, scorer, calibrator, n_splits):
+        self.scorer = _create_transformer(scorer)
         self.calibrator = calibrator
         self.n_splits = n_splits
 
@@ -66,6 +72,7 @@ class CalibratedScorerCV:
         self.calibrator.fit(Xcal, ycal)
 
         self.scorer.fit(X, y)
+        return self
 
     def predict_lr(self, X):
         scores = self.scorer.transform(X)

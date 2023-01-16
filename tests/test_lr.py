@@ -109,7 +109,11 @@ class TestLR(unittest.TestCase):
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(1, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
-        calibrated_scorer = CalibratedScorer(sklearn.preprocessing.FunctionTransformer(lambda x: x), LogitCalibratorInProbabilityDomain())
+        calibrated_scorer = CalibratedScorer(sklearn.preprocessing.StandardScaler(), LogitCalibratorInProbabilityDomain())
+        calibrated_scorer.fit(X, y)
+        self.assertAlmostEqual(1, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
+
+        calibrated_scorer = CalibratedScorer(lambda x: x, LogitCalibratorInProbabilityDomain())
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(1, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
@@ -125,7 +129,11 @@ class TestLR(unittest.TestCase):
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
-        calibrated_scorer = CalibratedScorer(sklearn.preprocessing.FunctionTransformer(lambda x: x), LogitCalibratorInProbabilityDomain())
+        calibrated_scorer = CalibratedScorer(sklearn.preprocessing.StandardScaler(), LogitCalibratorInProbabilityDomain())
+        calibrated_scorer.fit(X, y)
+        self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
+
+        calibrated_scorer = CalibratedScorer(lambda x: x, LogitCalibratorInProbabilityDomain())
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
@@ -144,7 +152,11 @@ class TestLR(unittest.TestCase):
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(1, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
-        calibrated_scorer = CalibratedScorer(sklearn.preprocessing.FunctionTransformer(lambda x: x), LogitCalibratorInProbabilityDomain())
+        calibrated_scorer = CalibratedScorerCV(sklearn.preprocessing.StandardScaler(), LogitCalibratorInProbabilityDomain(), n_splits=5)
+        calibrated_scorer.fit(X, y)
+        self.assertAlmostEqual(1, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
+
+        calibrated_scorer = CalibratedScorerCV(lambda x: x, LogitCalibratorInProbabilityDomain(), n_splits=5)
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(1, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
@@ -160,7 +172,11 @@ class TestLR(unittest.TestCase):
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
-        calibrated_scorer = CalibratedScorer(sklearn.preprocessing.FunctionTransformer(lambda x: x), LogitCalibratorInProbabilityDomain())
+        calibrated_scorer = CalibratedScorerCV(sklearn.preprocessing.StandardScaler(), LogitCalibratorInProbabilityDomain(), n_splits=5)
+        calibrated_scorer.fit(X, y)
+        self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
+
+        calibrated_scorer = CalibratedScorerCV(lambda x: x, LogitCalibratorInProbabilityDomain(), n_splits=5)
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
