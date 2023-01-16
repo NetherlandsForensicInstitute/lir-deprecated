@@ -25,8 +25,14 @@ class EstimatorTransformer(TransformerMixin):
 
 
 class CalibratedScorer:
-    def __init__(self, scorer, calibrator, scorer_is_estimator: bool = True):
-        self.scorer = EstimatorTransformer(scorer) if scorer_is_estimator else scorer
+    def __init__(self, scorer, calibrator):
+        if hasattr(scorer, "transform"):
+            self.scorer = scorer
+        elif hasattr(scorer, "predict_proba"):
+            self.scorer = EstimatorTransformer(scorer)
+        else:
+            raise NotImplementedError("`scorer` argument must implement either `transform` or `predict_proba`")
+
         self.calibrator = calibrator
         self.transformer = Pipeline([("scorer", self.scorer), ("calibrator", self.calibrator)])
 
