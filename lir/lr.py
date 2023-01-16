@@ -3,41 +3,43 @@ import logging
 import numpy as np
 import sklearn
 import sklearn.mixture
+from sklearn.base import TransformerMixin
+from sklearn.pipeline import Pipeline
 
 from .metrics import calculate_lr_statistics
-from .util import Xn_to_Xy, LR, to_log_odds
+from .util import Xn_to_Xy, LR
 
 
 LOG = logging.getLogger(__name__)
 
 
+class EstimatorTransformer(TransformerMixin):
+    def __init__(self, estimator):
+        self.estimator = estimator
+
+    def transform(self, X):
+        return self.estimator.predict_proba(X)[:, 1]
+
+    def __getattr__(self, item):
+        return getattr(self.estimator, item)
+
+
 class CalibratedScorer:
-    def __init__(self, scorer, calibrator):
-        self.scorer = scorer
+    def __init__(self, scorer, calibrator, scorer_is_estimator: bool = True):
+        self.scorer = EstimatorTransformer(scorer) if scorer_is_estimator else scorer
         self.calibrator = calibrator
+        self.transformer = Pipeline([("scorer", self.scorer), ("calibrator", self.calibrator)])
 
     def fit(self, X, y):
-        self.fit_scorer(X, y)
-        self.fit_calibrator(X, y)
-
-    def fit_scorer(self, X, y):
-        self.scorer.fit(X, y)
-
-    def fit_calibrator(self, X, y):
-        p = self.scorer.predict_proba(X)
-        # tolerance = 1*10**-300
-        # p[np.where(np.logical_and(p[:,1] == 0, y==1)), 1] = 0+tolerance
-        # p[np.where(np.logical_and(p[:,1] == 1, y==0)), 1] = 1-tolerance
-        self.calibrator.fit(p[:, 1], y)
+        self.transformer.fit(X, y)
 
     def predict_lr(self, X):
-        X = self.scorer.predict_proba(X)[:,1]
-        return self.calibrator.transform(X)
+        return self.transformer.transform(X)
 
 
 class CalibratedScorerCV:
-    def __init__(self, scorer, calibrator, n_splits):
-        self.scorer = scorer
+    def __init__(self, scorer, calibrator, n_splits, scorer_is_estimator: bool = True):
+        self.scorer = EstimatorTransformer(scorer) if scorer_is_estimator else scorer
         self.calibrator = calibrator
         self.n_splits = n_splits
 
@@ -48,15 +50,15 @@ class CalibratedScorerCV:
         ycal = np.empty([0])
         for train_index, cal_index in kf.split(X, y):
             self.scorer.fit(X[train_index], y[train_index])
-            p = self.scorer.predict_proba(X[cal_index])
-            Xcal = np.append(Xcal, p[:,1])
+            p = self.scorer.transform(X[cal_index])
+            Xcal = np.append(Xcal, p)
             ycal = np.append(ycal, y[cal_index])
         self.calibrator.fit(Xcal, ycal)
 
         self.scorer.fit(X, y)
 
     def predict_lr(self, X):
-        scores = self.scorer.predict_proba(X)[:,1] # probability of class 1
+        scores = self.scorer.transform(X)
         return self.calibrator.transform(scores)
 
 
