@@ -14,6 +14,11 @@ LOG = logging.getLogger(__name__)
 
 
 class EstimatorTransformer(TransformerMixin):
+    """
+    A wrapper for an estimator to make it behave like a transformer.
+
+    In particular, it implements `transform` by calling `predict_proba` on the underlying estimator.
+    """
     def __init__(self, estimator):
         self.estimator = estimator
 
