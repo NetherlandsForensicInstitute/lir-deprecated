@@ -40,7 +40,28 @@ def _create_transformer(scorer):
 
 
 class CalibratedScorer:
+    """
+    LR system which produces calibrated LRs using a scorer and a calibrator.
+
+    The scorer is an object that transforms instance features into a scalar value (a "score"). The scorer may either
+    be:
+     - an estimator (e.g. `sklearn.linear_model.LogisticRegression`) object which implements `fit` and `predict_proba`;
+     - a transformer object which implements `transform` and optionally `fit`; or
+     - a callable that takes features as an argument and returns scores.
+
+    The scorer can also be a composite object such as a `sklearn.pipeline.Pipeline`.
+
+    The calibrator is an object that transforms instance scores to LRs.
+    """
     def __init__(self, scorer, calibrator):
+        """
+        Constructor.
+
+        Parameters
+        ----------
+        scorer an object that transforms features into scores.
+        calibrator an object that transforms scores into LRs.
+        """
         self.scorer = _create_transformer(scorer)
         self.calibrator = calibrator
         self.transformer = Pipeline([("scorer", self.scorer), ("calibrator", self.calibrator)])
@@ -54,6 +75,9 @@ class CalibratedScorer:
 
 
 class CalibratedScorerCV:
+    """
+    Variant of `CalibratedScorer` that uses cross-calibration to optimize for small data sets.
+    """
     def __init__(self, scorer, calibrator, n_splits):
         self.scorer = _create_transformer(scorer)
         self.calibrator = calibrator
