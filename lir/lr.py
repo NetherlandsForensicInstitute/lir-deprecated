@@ -72,7 +72,20 @@ class CalibratedScorer:
         """
         self.scorer = _create_transformer(scorer)
         self.calibrator = calibrator
-        self.pipeline = Pipeline([("scorer", self.scorer), ("calibrator", self.calibrator)])
+        self.pipeline = Pipeline([
+            ("scorer", self.scorer),
+            ("reshape", sklearn.preprocessing.FunctionTransformer(self._reshape)),
+            ("calibrator", self.calibrator)
+        ])
+
+    @staticmethod
+    def _reshape(X):
+        if len(X.shape) == 1:
+            return X
+        else:
+            assert len(X) == X.shape[0], f"array has bad dimensions: all dimensions but the first should be 1; found {X.shape}"
+            return X.reshape(-1)
+
 
     def fit(self, X, y):
         self.pipeline.fit(X, y)

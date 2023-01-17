@@ -289,7 +289,7 @@ class KDECalibratorInProbabilityDomain(BaseEstimator, TransformerMixin):
             of the first distribution (kde0) and the second entry for the second
             distribution (if value is None: Silverman's rule of thumb is used)
         """
-        warnings.warn(f"the class {type(self)} will be removed in the future")
+        warnings.warn(f"the class {type(self).__name__} will be removed in the future")
         self.bandwidth: Tuple[Optional[float], Optional[float]] = \
             self._parse_bandwidth(bandwidth)
         self._kde0: Optional[KernelDensity] = None
@@ -423,7 +423,7 @@ class LogitCalibratorInProbabilityDomain(BaseEstimator, TransformerMixin):
     two distributions. Uses logistic regression for interpolation.
     """
     def __init__(self, **kwargs):
-        warnings.warn(f"the class {type(self)} will be removed in the future")
+        warnings.warn(f"the class {type(self).__name__} will be removed in the future")
         self._logit = LogisticRegression(class_weight='balanced', **kwargs)
 
     def fit(self, X, y):
@@ -526,7 +526,7 @@ class GaussianCalibratorInProbabilityDomain(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_components_H0=1, n_components_H1=1):
-        warnings.warn(f"the class {type(self)} will be removed in the future")
+        warnings.warn(f"the class {type(self).__name__} will be removed in the future")
         self.n_components_H1 = n_components_H1
         self.n_components_H0 = n_components_H0
 

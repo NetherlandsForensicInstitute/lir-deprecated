@@ -5,12 +5,13 @@ import warnings
 import sklearn
 
 from context import lir
+
 assert lir  # so import optimizer doesn't remove the line above
 
 from sklearn.linear_model import LogisticRegression
 
 from lir.calibration import FractionCalibrator, ScalingCalibrator, KDECalibrator, FourParameterLogisticCalibrator, \
-    LogitCalibrator, LogitCalibratorInProbabilityDomain
+    LogitCalibrator
 from lir import metrics
 from lir.lr import scorebased_cllr, CalibratedScorer, CalibratedScorerCV
 from lir.util import Xn_to_Xy
@@ -105,15 +106,15 @@ class TestLR(unittest.TestCase):
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(1, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
-        calibrated_scorer = CalibratedScorer(LogisticRegression(), LogitCalibrator())
+        calibrated_scorer = CalibratedScorer(LogisticRegression(), FourParameterLogisticCalibrator())
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(1, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
-        calibrated_scorer = CalibratedScorer(sklearn.preprocessing.StandardScaler(), LogitCalibratorInProbabilityDomain())
+        calibrated_scorer = CalibratedScorer(sklearn.preprocessing.StandardScaler(), FourParameterLogisticCalibrator())
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(1, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
-        calibrated_scorer = CalibratedScorer(lambda x: x, LogitCalibratorInProbabilityDomain())
+        calibrated_scorer = CalibratedScorer(lambda x: x, FourParameterLogisticCalibrator())
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(1, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
@@ -125,15 +126,15 @@ class TestLR(unittest.TestCase):
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
-        calibrated_scorer = CalibratedScorer(LogisticRegression(), LogitCalibrator())
+        calibrated_scorer = CalibratedScorer(LogisticRegression(), FourParameterLogisticCalibrator())
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
-        calibrated_scorer = CalibratedScorer(sklearn.preprocessing.StandardScaler(), LogitCalibratorInProbabilityDomain())
+        calibrated_scorer = CalibratedScorer(sklearn.preprocessing.StandardScaler(), FourParameterLogisticCalibrator())
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
-        calibrated_scorer = CalibratedScorer(lambda x: x, LogitCalibratorInProbabilityDomain())
+        calibrated_scorer = CalibratedScorer(lambda x: x, FourParameterLogisticCalibrator())
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
@@ -152,11 +153,11 @@ class TestLR(unittest.TestCase):
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(1, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
-        calibrated_scorer = CalibratedScorerCV(sklearn.preprocessing.StandardScaler(), LogitCalibratorInProbabilityDomain(), n_splits=5)
+        calibrated_scorer = CalibratedScorerCV(sklearn.preprocessing.StandardScaler(), LogitCalibrator(), n_splits=5)
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(1, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
-        calibrated_scorer = CalibratedScorerCV(lambda x: x, LogitCalibratorInProbabilityDomain(), n_splits=5)
+        calibrated_scorer = CalibratedScorerCV(lambda x: x, LogitCalibrator(), n_splits=5)
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(1, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
@@ -172,11 +173,11 @@ class TestLR(unittest.TestCase):
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
-        calibrated_scorer = CalibratedScorerCV(sklearn.preprocessing.StandardScaler(), LogitCalibratorInProbabilityDomain(), n_splits=5)
+        calibrated_scorer = CalibratedScorerCV(sklearn.preprocessing.StandardScaler(), LogitCalibrator(), n_splits=5)
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
-        calibrated_scorer = CalibratedScorerCV(lambda x: x, LogitCalibratorInProbabilityDomain(), n_splits=5)
+        calibrated_scorer = CalibratedScorerCV(lambda x: x, LogitCalibrator(), n_splits=5)
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
