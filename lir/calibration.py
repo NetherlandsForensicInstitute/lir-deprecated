@@ -15,7 +15,7 @@ from typing import Optional, Tuple, Union
 from .bayeserror import elub
 from .loss_functions import negative_log_likelihood_balanced
 from .regression import IsotonicRegressionInf
-from .util import Xy_to_Xn, to_odds, to_log_odds, ln_to_log10, Bind
+from .util import Xy_to_Xn, to_odds, ln_to_log10, Bind
 
 LOG = logging.getLogger(__name__)
 
@@ -196,9 +196,6 @@ class KDECalibrator(BaseEstimator, TransformerMixin):
         raise
 
     def fit(self, X, y):
-        #transform to logodds
-        X = to_log_odds(X)
-
         # check if data is sane
         check_misleading_Inf_negInf(X, y)
 
@@ -222,9 +219,6 @@ class KDECalibrator(BaseEstimator, TransformerMixin):
         self.p1 = np.empty(np.shape(X))
         # initiate LRs_output
         LLRs_output = np.empty(np.shape(X))
-
-        # transform probs to log_odds
-        X = to_log_odds(X)
 
         # get inf and neginf
         wh_inf = np.isposinf(X)
@@ -277,95 +271,6 @@ class KDECalibrator(BaseEstimator, TransformerMixin):
             raise ValueError('Invalid input for bandwidth')
 
 
-class KDECalibratorInProbabilityDomain(BaseEstimator, TransformerMixin):
-    """
-    Calculates a likelihood ratio of a score value, provided it is from one of
-    two distributions. Uses kernel density estimation (KDE) for interpolation.
-    """
-
-    def __init__(self, bandwidth: Optional[Union[float, Tuple[Optional[float], Optional[float]]]] = None):
-        """
-
-        :param bandwidth:
-            * If None is provided the Silverman's rule of thumb is
-            used to calculate the bandwidth for both distributions (independently)
-            * If a single float is provided this is used as the bandwith for both
-            distributions
-            * If a tuple is provided, the first entry is used for the bandwidth
-            of the first distribution (kde0) and the second entry for the second
-            distribution (if value is None: Silverman's rule of thumb is used)
-        """
-        self.bandwidth: Tuple[Optional[float], Optional[float]] = \
-            self._parse_bandwidth(bandwidth)
-        self._kde0: Optional[KernelDensity] = None
-        self._kde1: Optional[KernelDensity] = None
-
-    @staticmethod
-    def bandwidth_silverman(X):
-        """
-        Estimates the optimal bandwidth parameter using Silverman's rule of
-        thumb.
-        """
-        assert len(X) > 0
-
-        std = np.std(X)
-        if std == 0:
-            # can happen eg if std(X) = 0
-            warnings.warn('silverman bandwidth cannot be calculated if standard deviation is 0', RuntimeWarning)
-            LOG.info('found a silverman bandwidth of 0 (using dummy value)')
-            std = 1
-
-        v = math.pow(std, 5) / len(X) * 4. / 3
-        return math.pow(v, .2)
-
-    @staticmethod
-    def bandwidth_scott(X):
-        """
-        Not implemented.
-        """
-        raise
-
-    def fit(self, X, y):
-        X0, X1 = Xy_to_Xn(X, y)
-        X0 = X0.reshape(-1, 1)
-        X1 = X1.reshape(-1, 1)
-
-        bandwidth0 = self.bandwidth[0] or self.bandwidth_silverman(X0)
-        bandwidth1 = self.bandwidth[1] or self.bandwidth_silverman(X1)
-
-        self._kde0 = KernelDensity(kernel='gaussian', bandwidth=bandwidth0).fit(X0)
-        self._kde1 = KernelDensity(kernel='gaussian', bandwidth=bandwidth1).fit(X1)
-        return self
-
-    def transform(self, X):
-        assert self._kde0 is not None, "KDECalibrator.transform() called before fit"
-
-        X = X.reshape(-1, 1)
-        self.p0 = np.exp(self._kde0.score_samples(X))
-        self.p1 = np.exp(self._kde1.score_samples(X))
-
-        with np.errstate(divide='ignore'):
-            return self.p1 / self.p0
-
-    @staticmethod
-    def _parse_bandwidth(bandwidth: Optional[Union[float, Tuple[float, float]]]) \
-            -> Tuple[Optional[float], Optional[float]]:
-        """
-        Returns bandwidth as a tuple of two (optional) floats.
-        Extrapolates a single bandwidth
-        :param bandwidth: provided bandwidth
-        :return: bandwidth used for kde0, bandwidth used for kde1
-        """
-        if bandwidth is None:
-            return None, None
-        elif isinstance(bandwidth, float):
-            return bandwidth, bandwidth
-        elif len(bandwidth) == 2:
-            return bandwidth
-        else:
-            raise ValueError('Invalid input for bandwidth')
-
-
 class LogitCalibrator(BaseEstimator, TransformerMixin):
     """
     Calculates a likelihood ratio of a score value, provided it is from one of
@@ -378,7 +283,6 @@ class LogitCalibrator(BaseEstimator, TransformerMixin):
     def fit(self, X, y):
 
         # sanity check
-        X = to_log_odds(X)
         check_misleading_Inf_negInf(X, y)
 
         # if data is sane, remove Inf under H1 and minInf under H2 from the data if present (if present, these prevent logistic regression to train while the loss is zero, so they can be safely removed)
@@ -397,9 +301,6 @@ class LogitCalibrator(BaseEstimator, TransformerMixin):
         LLRs_output = np.empty(np.shape(X))
         self.p0 = np.empty(np.shape(X))
         self.p1 = np.empty(np.shape(X))
-
-        # transform probs to log_odds
-        X = to_log_odds(X)
 
         # get boundary log_odds values
         zero_elements = np.where(X == -1 * np.inf)
@@ -426,33 +327,6 @@ class LogitCalibrator(BaseEstimator, TransformerMixin):
         return np.float_power(10, LLRs_output)
 
 
-class LogitCalibratorInProbabilityDomain(BaseEstimator, TransformerMixin):
-    """
-    Calculates a likelihood ratio of a score value, provided it is from one of
-    two distributions. Uses logistic regression for interpolation.
-    """
-    def __init__(self, **kwargs):
-        self._logit = LogisticRegression(class_weight='balanced', **kwargs)
-
-    def fit(self, X, y):
-        # train logistic regression
-        X = X.reshape(-1, 1)
-        self._logit.fit(X, y)
-        return self
-
-    def transform(self, X):
-
-        # calculation of self.p1 and self.p0 is redundant?
-        self.p1 = self._logit.predict_proba(X.reshape(-1, 1))[:, 1]  # probability of class 1
-        self.p0 = (1 - self.p1)
-
-        # get LLRs for X
-        LnLRs = np.add(self._logit.intercept_, np.multiply(self._logit.coef_, X))
-        LLRs = ln_to_log10(LnLRs)
-        LLRs = LLRs.reshape(len(X))
-        return np.float_power(10, LLRs)
-
-
 class GaussianCalibrator(BaseEstimator, TransformerMixin):
     """
     Calculates a likelihood ratio of a score value, provided it is from one of
@@ -465,11 +339,10 @@ class GaussianCalibrator(BaseEstimator, TransformerMixin):
         self.n_components_H0 = n_components_H0
         self.numerator = None
         self.denominator = None
+        self._model0: Optional[GaussianMixture] = None
+        self._model1: Optional[GaussianMixture] = None
 
     def fit(self, X, y):
-        #transform probs to logodds
-        X = to_log_odds(X)
-
         #check whether training data is sane
         check_misleading_Inf_negInf(X, y)
 
@@ -492,9 +365,6 @@ class GaussianCalibrator(BaseEstimator, TransformerMixin):
 
         # initiate LLRs_output
         LLRs_output = np.empty(np.shape(X))
-
-        # transform probs to log_odds
-        X = to_log_odds(X)
 
         # get inf and neginf
         wh_inf = np.isposinf(X)
@@ -527,33 +397,6 @@ class GaussianCalibrator(BaseEstimator, TransformerMixin):
         log10_compensator = np.add(np.log10(self.numerator), np.multiply(-1, np.log(self.denominator)))
         LLRs_output[el] = np.add(log10_compensator, log10_dif)
         return np.float_power(10, LLRs_output)
-
-
-class GaussianCalibratorInProbabilityDomain(BaseEstimator, TransformerMixin):
-    """
-    Calculates a likelihood ratio of a score value, provided it is from one of
-    two distributions. Uses a gaussian mixture model for interpolation.
-
-    Fits Gaussian on probabilities
-    """
-
-    def __init__(self, n_components_H0=1, n_components_H1=1):
-        self.n_components_H1 = n_components_H1
-        self.n_components_H0 = n_components_H0
-
-    def fit(self, X, y):
-        X0, X1 = Xy_to_Xn(X, y)
-        X0 = X0.reshape(-1, 1)
-        X1 = X1.reshape(-1, 1)
-        self._model0 = GaussianMixture(n_components=self.n_components_H0).fit(X0)
-        self._model1 = GaussianMixture(n_components=self.n_components_H1).fit(X1)
-        return self
-
-    def transform(self, X):
-        X = X.reshape(-1, 1)
-        self.p0 = np.exp(self._model0.score_samples(X))
-        self.p1 = np.exp(self._model1.score_samples(X))
-        return self.p1 / self.p0
 
 
 class IsotonicCalibrator(BaseEstimator, TransformerMixin):
@@ -611,7 +454,6 @@ class FourParameterLogisticCalibrator:
         self.coef_ = None
 
     def fit(self, X, y):
-        X = to_log_odds(X)
         # check for negative inf for '1'-labels or inf for '0'-labels
         estimate_c = np.any(np.isneginf(X[y == 1]))
         estimate_d = np.any(np.isposinf(X[y == 0]))
@@ -655,7 +497,6 @@ class FourParameterLogisticCalibrator:
         """
         Returns the odds ratio.
         """
-        X = to_log_odds(X)
         return to_odds(self.model(X, *self.coef_))
 
     @staticmethod
