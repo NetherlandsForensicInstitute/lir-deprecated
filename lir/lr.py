@@ -69,14 +69,14 @@ class CalibratedScorer:
         """
         self.scorer = _create_transformer(scorer)
         self.calibrator = calibrator
-        self.transformer = Pipeline([("scorer", self.scorer), ("calibrator", self.calibrator)])
+        self.pipeline = Pipeline([("scorer", self.scorer), ("calibrator", self.calibrator)])
 
     def fit(self, X, y):
-        self.transformer.fit(X, y)
+        self.pipeline.fit(X, y)
         return self
 
     def predict_lr(self, X):
-        return self.transformer.transform(X)
+        return self.pipeline.transform(X)
 
 
 class CalibratedScorerCV:
