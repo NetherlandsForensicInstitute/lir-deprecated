@@ -20,7 +20,7 @@ class EstimatorTransformer(TransformerMixin):
     In particular, it implements `transform` by calling `predict_proba` on the underlying estimator. Optionally, the
     probabilities produced by the estimator are transformed by a user specified function.
     """
-    def __init__(self, estimator, transform_probabilities: Optional[Callable] = lambda x: x):
+    def __init__(self, estimator, transform_probabilities: Optional[Callable] = to_log_odds):
         self.estimator = estimator
         self.transform_probabilities = transform_probabilities
 
@@ -39,7 +39,7 @@ def _create_transformer(scorer):
     if hasattr(scorer, "transform"):
         return scorer
     elif hasattr(scorer, "predict_proba"):
-        return EstimatorTransformer(scorer, transform_probabilities=to_log_odds)
+        return EstimatorTransformer(scorer)
     elif callable(scorer):
         return sklearn.preprocessing.FunctionTransformer(scorer)
     else:
