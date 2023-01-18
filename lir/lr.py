@@ -1,4 +1,5 @@
 import logging
+from typing import Callable, Optional
 
 import numpy as np
 import sklearn
@@ -7,8 +8,7 @@ from sklearn.base import TransformerMixin
 from sklearn.pipeline import Pipeline
 
 from .metrics import calculate_lr_statistics
-from .util import Xn_to_Xy, LR
-
+from .util import Xn_to_Xy, LR, to_log_odds
 
 LOG = logging.getLogger(__name__)
 
@@ -17,17 +17,20 @@ class EstimatorTransformer(TransformerMixin):
     """
     A wrapper for an estimator to make it behave like a transformer.
 
-    In particular, it implements `transform` by calling `predict_proba` on the underlying estimator.
+    In particular, it implements `transform` by calling `predict_proba` on the underlying estimator, and transforming
+    the probabilities to their corresponding log odds value. Optionally, an alternative transformation function can be
+    specified.
     """
-    def __init__(self, estimator):
+    def __init__(self, estimator, transform_probabilities: Optional[Callable] = to_log_odds):
         self.estimator = estimator
+        self.transform_probabilities = transform_probabilities
 
     def fit(self, X, y):
         self.estimator.fit(X, y)
         return self
 
     def transform(self, X):
-        return self.estimator.predict_proba(X)[:, 1]
+        return self.transform_probabilities(self.estimator.predict_proba(X)[:, 1])
 
     def __getattr__(self, item):
         return getattr(self.estimator, item)
@@ -54,7 +57,8 @@ class CalibratedScorer:
      - a transformer object which implements `transform` and optionally `fit`; or
      - a callable that takes features as an argument and returns scores.
 
-    The scorer can also be a composite object such as a `sklearn.pipeline.Pipeline`.
+    The scorer can also be a composite object such as a `sklearn.pipeline.Pipeline`. If the scorer is an estimator, the
+    probabilities it produces are transformed to their log odds.
 
     The calibrator is an object that transforms instance scores to LRs.
     """
@@ -69,7 +73,20 @@ class CalibratedScorer:
         """
         self.scorer = _create_transformer(scorer)
         self.calibrator = calibrator
-        self.pipeline = Pipeline([("scorer", self.scorer), ("calibrator", self.calibrator)])
+        self.pipeline = Pipeline([
+            ("scorer", self.scorer),
+            ("reshape", sklearn.preprocessing.FunctionTransformer(self._reshape)),
+            ("calibrator", self.calibrator)
+        ])
+
+    @staticmethod
+    def _reshape(X):
+        if len(X.shape) == 1:
+            return X
+        else:
+            assert len(X) == X.shape[0], f"array has bad dimensions: all dimensions but the first should be 1; found {X.shape}"
+            return X.reshape(-1)
+
 
     def fit(self, X, y):
         self.pipeline.fit(X, y)
