@@ -13,7 +13,7 @@ assert lir  # so import optimizer doesn't remove the line above
 from sklearn.linear_model import LogisticRegression
 
 from lir.calibration import FractionCalibrator, ScalingCalibrator, KDECalibrator, FourParameterLogisticCalibrator, \
-    LogitCalibrator, KDECalibratorInProbabilityDomain
+    LogitCalibrator
 from lir import metrics
 from lir.lr import scorebased_cllr, CalibratedScorer, CalibratedScorerCV
 from lir.util import Xn_to_Xy
