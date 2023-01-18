@@ -35,7 +35,7 @@ class EstimatorTransformer(TransformerMixin):
         return getattr(self.estimator, item)
 
 
-class DistanceFunctionTransformer(FunctionTransformer):
+class ComparisonFunctionTransformer(FunctionTransformer):
     """
     A wrapper for a distance function to make it behave like a transformer.
 
