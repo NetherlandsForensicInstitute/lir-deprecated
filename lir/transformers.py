@@ -1,8 +1,51 @@
+from typing import Callable
+
 import numpy as np
 import sklearn
 from scipy.interpolate import interp1d
 from scipy.stats import rankdata
 import warnings
+
+from sklearn.base import TransformerMixin
+from sklearn.preprocessing import FunctionTransformer
+
+
+class EstimatorTransformer(TransformerMixin):
+    """
+    A wrapper for an estimator to make it behave like a transformer.
+
+    In particular, it implements `transform` by calling `predict_proba` on the underlying estimator.
+    """
+    def __init__(self, estimator):
+        self.estimator = estimator
+
+    def fit(self, X, y):
+        self.estimator.fit(X, y)
+        return self
+
+    def transform(self, X):
+        return self.estimator.predict_proba(X)[:, 1]
+
+    def __getattr__(self, item):
+        return getattr(self.estimator, item)
+
+
+class DistanceFunctionTransformer(FunctionTransformer):
+    """
+    A wrapper for a distance function to make it behave like a transformer.
+
+    This is essentially a `FunctionTransformer` except that it expects a function takes two arguments of the same
+    dimensions: `X` and `Y`, where each row in `X` is compared to the row with the same index in `Y`.
+
+    See: the `paired_*` distance functions in `sklearn.metrics.pairwise`.
+    """
+    def __init__(self, distance_function: Callable):
+        self.distance_function = distance_function
+        super().__init__(self.transformer_function)
+
+    def transformer_function(self, X):
+        vectors = [X[:, :, i] for i in range(X.shape[2])]
+        return self.distance_function(*vectors)
 
 
 class AbsDiffTransformer(sklearn.base.TransformerMixin):

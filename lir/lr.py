@@ -1,36 +1,17 @@
 import logging
+from typing import Callable
 
 import numpy as np
 import sklearn
 import sklearn.mixture
-from sklearn.base import TransformerMixin
 from sklearn.pipeline import Pipeline
 
 from .metrics import calculate_lr_statistics
+from .transformers import EstimatorTransformer, DistanceFunctionTransformer
 from .util import Xn_to_Xy, LR
 
 
 LOG = logging.getLogger(__name__)
-
-
-class EstimatorTransformer(TransformerMixin):
-    """
-    A wrapper for an estimator to make it behave like a transformer.
-
-    In particular, it implements `transform` by calling `predict_proba` on the underlying estimator.
-    """
-    def __init__(self, estimator):
-        self.estimator = estimator
-
-    def fit(self, X, y):
-        self.estimator.fit(X, y)
-        return self
-
-    def transform(self, X):
-        return self.estimator.predict_proba(X)[:, 1]
-
-    def __getattr__(self, item):
-        return getattr(self.estimator, item)
 
 
 def _create_transformer(scorer):
@@ -39,7 +20,7 @@ def _create_transformer(scorer):
     elif hasattr(scorer, "predict_proba"):
         return EstimatorTransformer(scorer)
     elif callable(scorer):
-        return sklearn.preprocessing.FunctionTransformer(scorer)
+        return DistanceFunctionTransformer(scorer)
     else:
         raise NotImplementedError("`scorer` argument must either be callable or implement at least one of `transform`, `predict_proba`")
 
@@ -52,7 +33,7 @@ class CalibratedScorer:
     be:
      - an estimator (e.g. `sklearn.linear_model.LogisticRegression`) object which implements `fit` and `predict_proba`;
      - a transformer object which implements `transform` and optionally `fit`; or
-     - a callable that takes features as an argument and returns scores.
+     - a distance function (callable) that takes paired instances as its arguments and returns a distance for each pair.
 
     The scorer can also be a composite object such as a `sklearn.pipeline.Pipeline`.
 
