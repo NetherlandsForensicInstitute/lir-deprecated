@@ -44,8 +44,13 @@ class DistanceFunctionTransformer(FunctionTransformer):
         super().__init__(self.transformer_function)
 
     def transformer_function(self, X):
-        vectors = [X[:, :, i] for i in range(X.shape[2])]
-        return self.distance_function(*vectors)
+        if len(X.shape) == 2:
+            return self.distance_function(X)
+        elif len(X.shape) == 3:
+            vectors = [X[:, :, i] for i in range(X.shape[2])]
+            return self.distance_function(*vectors)
+        else:
+            raise ValueError(f"unexpected input shape; expected: (*, *) or (*, *, *); found: {X.shape}")
 
 
 class AbsDiffTransformer(sklearn.base.TransformerMixin):
