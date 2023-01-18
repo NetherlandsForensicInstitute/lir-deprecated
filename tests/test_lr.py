@@ -190,11 +190,11 @@ class TestLR(unittest.TestCase):
         X = np.concatenate([np.random.normal(loc=i, scale=.1, size=(1, 3)) for i in y])
         X, y = InstancePairing(ratio_limit=1, seed=0).transform(X, y)
 
-        calibrated_scorer = CalibratedScorer(paired_manhattan_distances, KDECalibrator())
+        calibrated_scorer = CalibratedScorer(paired_manhattan_distances, KDECalibrator(bandwidth="silverman"))
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=3)
 
-        calibrated_scorer = CalibratedScorerCV(paired_manhattan_distances, KDECalibrator(), n_splits=5)
+        calibrated_scorer = CalibratedScorerCV(paired_manhattan_distances, KDECalibrator(bandwidth="silverman"), n_splits=5)
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=3)
 
