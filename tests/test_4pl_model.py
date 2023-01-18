@@ -25,12 +25,13 @@ class TestFourParameterLogisticCalibrator(unittest.TestCase):
 
     def test_compare_to_logistic(self):
         X = np.concatenate([self.X_diff, self.X_same])
+        X = to_log_odds(X)
         y = np.concatenate([np.zeros(len(self.X_diff)), np.ones(len(self.X_same))])
         four_pl_model = FourParameterLogisticCalibrator()
         four_pl_model.fit(X, y)
 
         logistic = LogisticRegression(penalty='none', class_weight='balanced')
-        logistic.fit(to_log_odds(X[:, None]), y)
+        logistic.fit(X[:, None], y)
         logistic_coef = [logistic.coef_[0][0], logistic.intercept_[0]]
         np.testing.assert_almost_equal(four_pl_model.coef_, logistic_coef, decimal=5)
 
@@ -39,6 +40,7 @@ class TestFourParameterLogisticCalibrator(unittest.TestCase):
         X_diff = np.concatenate([self.X_diff, [0]])
         y = np.concatenate([np.zeros(len(X_diff)), np.ones(len(X_same))])
         X = np.concatenate([X_diff, X_same])
+        X = to_log_odds(X)
 
         four_pl_model = FourParameterLogisticCalibrator()
         four_pl_model.fit(X, y)
@@ -51,6 +53,7 @@ class TestFourParameterLogisticCalibrator(unittest.TestCase):
         X_diff = np.concatenate([self.X_diff, [1, 1 - 10 ** -10]])
         y = np.concatenate([np.zeros(len(X_diff)), np.ones(len(X_same))])
         X = np.concatenate([X_diff, X_same])
+        X = to_log_odds(X)
 
         four_pl_model = FourParameterLogisticCalibrator()
         four_pl_model.fit(X, y)
@@ -63,6 +66,7 @@ class TestFourParameterLogisticCalibrator(unittest.TestCase):
         X_diff = np.concatenate([self.X_diff, [0, 10 ** -10, 1, 1 - 10 ** -10]])
         y = np.concatenate([np.zeros(len(X_diff)), np.ones(len(X_same))])
         X = np.concatenate([X_diff, X_same])
+        X = to_log_odds(X)
 
         four_pl_model = FourParameterLogisticCalibrator()
         four_pl_model.fit(X, y)

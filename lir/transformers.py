@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Optional
 
 import numpy as np
 import sklearn
@@ -9,22 +9,27 @@ import warnings
 from sklearn.base import TransformerMixin
 from sklearn.preprocessing import FunctionTransformer
 
+from lir.util import to_log_odds
+
 
 class EstimatorTransformer(TransformerMixin):
     """
     A wrapper for an estimator to make it behave like a transformer.
 
-    In particular, it implements `transform` by calling `predict_proba` on the underlying estimator.
+    In particular, it implements `transform` by calling `predict_proba` on the underlying estimator, and transforming
+    the probabilities to their corresponding log odds value. Optionally, an alternative transformation function can be
+    specified.
     """
-    def __init__(self, estimator):
+    def __init__(self, estimator, transform_probabilities: Optional[Callable] = to_log_odds):
         self.estimator = estimator
+        self.transform_probabilities = transform_probabilities
 
     def fit(self, X, y):
         self.estimator.fit(X, y)
         return self
 
     def transform(self, X):
-        return self.estimator.predict_proba(X)[:, 1]
+        return self.transform_probabilities(self.estimator.predict_proba(X)[:, 1])
 
     def __getattr__(self, item):
         return getattr(self.estimator, item)
