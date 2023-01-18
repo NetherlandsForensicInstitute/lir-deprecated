@@ -10,7 +10,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.mixture import GaussianMixture
 from sklearn.neighbors import KernelDensity
-from typing import Optional, Tuple, Union, Iterable, Callable
+from typing import Optional, Tuple, Union, Iterable, Callable, Sized
 
 from .bayeserror import elub
 from .loss_functions import negative_log_likelihood_balanced
@@ -153,7 +153,7 @@ class KDECalibrator(BaseEstimator, TransformerMixin):
     two distributions. Uses kernel density estimation (KDE) for interpolation.
     """
 
-    def __init__(self, bandwidth: Union[Callable, str, float, Tuple[float, float]]):
+    def __init__(self, bandwidth: Union[Callable, str, float, Tuple[float, float]] = None):
         """
 
         :param bandwidth:
@@ -165,6 +165,9 @@ class KDECalibrator(BaseEstimator, TransformerMixin):
             * If bandwidth is callable, it should accept two arguments, `X` and `y`, and return a tuple of two values
               which are the bandwidths for the two distributions.
         """
+        if bandwidth is None:
+            warnings.warn("missing bandwidth argument for KDE, defaulting to 1 (default argument will be removed in the future)")
+            bandwidth = (1, 1)
         self.bandwidth: Callable = self._parse_bandwidth(bandwidth)
         self._kde0: Optional[KernelDensity] = None
         self._kde1: Optional[KernelDensity] = None
@@ -280,8 +283,8 @@ class KDECalibrator(BaseEstimator, TransformerMixin):
             return KDECalibrator.bandwidth_scott
         elif isinstance(bandwidth, str):
             raise ValueError(f"invalid input for bandwidth: {bandwidth}")
-        elif isinstance(bandwidth, Iterable):
-            assert len(bandwidth) == 2, f"bandwidth should have two elements; found {len(bandwidth)}"
+        elif isinstance(bandwidth, Sized):
+            assert len(bandwidth) == 2, f"bandwidth should have two elements; found {len(bandwidth)}; bandwidth = {bandwidth}"
             return lambda X, y: bandwidth
         else:
             return lambda X, y: (0+bandwidth, bandwidth)
