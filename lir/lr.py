@@ -17,8 +17,9 @@ class EstimatorTransformer(TransformerMixin):
     """
     A wrapper for an estimator to make it behave like a transformer.
 
-    In particular, it implements `transform` by calling `predict_proba` on the underlying estimator. Optionally, the
-    probabilities produced by the estimator are transformed by a user specified function.
+    In particular, it implements `transform` by calling `predict_proba` on the underlying estimator, and transforming
+    the probabilities to their corresponding log odds value. Optionally, an alternative transformation function can be
+    specified.
     """
     def __init__(self, estimator, transform_probabilities: Optional[Callable] = to_log_odds):
         self.estimator = estimator
