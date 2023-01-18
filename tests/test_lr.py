@@ -3,8 +3,10 @@ import unittest
 import warnings
 
 import sklearn
+from sklearn.metrics.pairwise import paired_manhattan_distances
 
 from context import lir
+from lir.transformers import InstancePairing
 
 assert lir  # so import optimizer doesn't remove the line above
 
@@ -180,6 +182,21 @@ class TestLR(unittest.TestCase):
         calibrated_scorer = CalibratedScorerCV(lambda x: x, LogitCalibrator(), n_splits=5)
         calibrated_scorer.fit(X, y)
         self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
+
+    def test_calibrated_scorer_with_distance_function(self):
+        np.random.seed(0)
+
+        y = np.concatenate([range(1000), range(1000)])
+        X = np.concatenate([np.random.normal(loc=i, scale=.1, size=(1, 3)) for i in y])
+        X, y = InstancePairing(ratio_limit=1, seed=0).transform(X, y)
+
+        calibrated_scorer = CalibratedScorer(paired_manhattan_distances, KDECalibrator())
+        calibrated_scorer.fit(X, y)
+        self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=3)
+
+        calibrated_scorer = CalibratedScorerCV(paired_manhattan_distances, KDECalibrator(), n_splits=5)
+        calibrated_scorer.fit(X, y)
+        self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=3)
 
 
 if __name__ == '__main__':

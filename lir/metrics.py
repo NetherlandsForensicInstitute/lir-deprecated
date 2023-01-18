@@ -1,10 +1,12 @@
 import collections
 import warnings
+from typing import List
 
 import numpy as np
 
 from .calibration import IsotonicCalibrator
 from .util import Xn_to_Xy, Xy_to_Xn, to_probability, LR
+
 
 LrStats = collections.namedtuple('LrStats',
                                  ['avg_log2lr', 'avg_log2lr_class0', 'avg_log2lr_class1', 'avg_p0_class0', 'avg_p1_class0',
@@ -238,7 +240,7 @@ def devpav(lrs, y):
     return _devpavcalculator(lrs, pavlrs, y)
 
 
-def calculate_lr_statistics(lr_class0, lr_class1):
+def calculate_lr_statistics(lr_class0: List[LR], lr_class1: List[LR]) -> LrStats:
     """
     Calculates various statistics for a collection of likelihood ratios.
 
