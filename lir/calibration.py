@@ -15,7 +15,7 @@ from typing import Optional, Tuple, Union, Iterable, Callable, Sized
 from .bayeserror import elub
 from .loss_functions import negative_log_likelihood_balanced
 from .regression import IsotonicRegressionInf
-from .util import Xy_to_Xn, to_odds, to_log_odds, ln_to_log10, Bind
+from .util import Xy_to_Xn, to_odds, ln_to_log10, Bind
 
 LOG = logging.getLogger(__name__)
 
@@ -204,9 +204,6 @@ class KDECalibrator(BaseEstimator, TransformerMixin):
         raise
 
     def fit(self, X, y):
-        #transform to logodds
-        X = to_log_odds(X)
-
         # check if data is sane
         check_misleading_Inf_negInf(X, y)
 
@@ -229,9 +226,6 @@ class KDECalibrator(BaseEstimator, TransformerMixin):
         self.p1 = np.empty(np.shape(X))
         # initiate LRs_output
         LLRs_output = np.empty(np.shape(X))
-
-        # transform probs to log_odds
-        X = to_log_odds(X)
 
         # get inf and neginf
         wh_inf = np.isposinf(X)
@@ -296,7 +290,7 @@ class KDECalibratorInProbabilityDomain(BaseEstimator, TransformerMixin):
     two distributions. Uses kernel density estimation (KDE) for interpolation.
     """
 
-    def __init__(self, bandwidth: Union[Callable, str, float, Tuple[float, float]]):
+    def __init__(self, bandwidth: Union[Callable, str, float, Tuple[float, float]] = None):
         """
 
         :param bandwidth:
@@ -308,6 +302,11 @@ class KDECalibratorInProbabilityDomain(BaseEstimator, TransformerMixin):
             of the first distribution (kde0) and the second entry for the second
             distribution (if value is None: Silverman's rule of thumb is used)
         """
+
+        warnings.warn(f"the class {type(self).__name__} will be removed in the future")
+        if bandwidth is None:
+            warnings.warn("missing bandwidth argument for KDE, defaulting to 1 (default argument will be removed in the future)")
+            bandwidth = (1, 1)
         self.bandwidth: Callable = KDECalibrator._parse_bandwidth(bandwidth)
         self._kde0: Optional[KernelDensity] = None
         self._kde1: Optional[KernelDensity] = None
@@ -345,7 +344,6 @@ class LogitCalibrator(BaseEstimator, TransformerMixin):
     def fit(self, X, y):
 
         # sanity check
-        X = to_log_odds(X)
         check_misleading_Inf_negInf(X, y)
 
         # if data is sane, remove Inf under H1 and minInf under H2 from the data if present (if present, these prevent logistic regression to train while the loss is zero, so they can be safely removed)
@@ -364,9 +362,6 @@ class LogitCalibrator(BaseEstimator, TransformerMixin):
         LLRs_output = np.empty(np.shape(X))
         self.p0 = np.empty(np.shape(X))
         self.p1 = np.empty(np.shape(X))
-
-        # transform probs to log_odds
-        X = to_log_odds(X)
 
         # get boundary log_odds values
         zero_elements = np.where(X == -1 * np.inf)
@@ -399,6 +394,7 @@ class LogitCalibratorInProbabilityDomain(BaseEstimator, TransformerMixin):
     two distributions. Uses logistic regression for interpolation.
     """
     def __init__(self, **kwargs):
+        warnings.warn(f"the class {type(self).__name__} will be removed in the future")
         self._logit = LogisticRegression(class_weight='balanced', **kwargs)
 
     def fit(self, X, y):
@@ -432,11 +428,10 @@ class GaussianCalibrator(BaseEstimator, TransformerMixin):
         self.n_components_H0 = n_components_H0
         self.numerator = None
         self.denominator = None
+        self._model0: Optional[GaussianMixture] = None
+        self._model1: Optional[GaussianMixture] = None
 
     def fit(self, X, y):
-        #transform probs to logodds
-        X = to_log_odds(X)
-
         #check whether training data is sane
         check_misleading_Inf_negInf(X, y)
 
@@ -459,9 +454,6 @@ class GaussianCalibrator(BaseEstimator, TransformerMixin):
 
         # initiate LLRs_output
         LLRs_output = np.empty(np.shape(X))
-
-        # transform probs to log_odds
-        X = to_log_odds(X)
 
         # get inf and neginf
         wh_inf = np.isposinf(X)
@@ -505,6 +497,7 @@ class GaussianCalibratorInProbabilityDomain(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_components_H0=1, n_components_H1=1):
+        warnings.warn(f"the class {type(self).__name__} will be removed in the future")
         self.n_components_H1 = n_components_H1
         self.n_components_H0 = n_components_H0
 
@@ -578,7 +571,6 @@ class FourParameterLogisticCalibrator:
         self.coef_ = None
 
     def fit(self, X, y):
-        X = to_log_odds(X)
         # check for negative inf for '1'-labels or inf for '0'-labels
         estimate_c = np.any(np.isneginf(X[y == 1]))
         estimate_d = np.any(np.isposinf(X[y == 0]))
@@ -622,7 +614,6 @@ class FourParameterLogisticCalibrator:
         """
         Returns the odds ratio.
         """
-        X = to_log_odds(X)
         return to_odds(self.model(X, *self.coef_))
 
     @staticmethod

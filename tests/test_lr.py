@@ -2,14 +2,18 @@ import numpy as np
 import unittest
 import warnings
 
+import sklearn
+
 from context import lir
+
 assert lir  # so import optimizer doesn't remove the line above
 
 from sklearn.linear_model import LogisticRegression
 
-from lir.calibration import FractionCalibrator, ScalingCalibrator
+from lir.calibration import FractionCalibrator, ScalingCalibrator, KDECalibrator, FourParameterLogisticCalibrator, \
+    LogitCalibrator
 from lir import metrics
-from lir.lr import scorebased_cllr
+from lir.lr import scorebased_cllr, CalibratedScorer, CalibratedScorerCV
 from lir.util import Xn_to_Xy
 
 
@@ -90,6 +94,92 @@ class TestLR(unittest.TestCase):
 
         X = np.random.normal(loc=[0]*3, size=(400, 3))
         self.assertAlmostEqual(1.3742926488365286, scorebased_cllr(clf, cal, X[:100], X[100:200], X[200:300], X[300:400]).cllr)
+
+    def test_calibrated_scorer(self):
+        np.random.seed(0)
+
+        X0 = np.random.normal(loc=0, scale=1, size=(1000, 1))
+        X1 = np.random.normal(loc=0, scale=1, size=(1000, 1))
+        X, y = Xn_to_Xy(X0, X1)
+
+        calibrated_scorer = CalibratedScorer(LogisticRegression(), KDECalibrator(bandwidth=(1, 1)))
+        calibrated_scorer.fit(X, y)
+        self.assertAlmostEqual(1, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
+
+        calibrated_scorer = CalibratedScorer(LogisticRegression(), FourParameterLogisticCalibrator())
+        calibrated_scorer.fit(X, y)
+        self.assertAlmostEqual(1, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
+
+        calibrated_scorer = CalibratedScorer(sklearn.preprocessing.StandardScaler(), FourParameterLogisticCalibrator())
+        calibrated_scorer.fit(X, y)
+        self.assertAlmostEqual(1, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
+
+        calibrated_scorer = CalibratedScorer(lambda x: x, FourParameterLogisticCalibrator())
+        calibrated_scorer.fit(X, y)
+        self.assertAlmostEqual(1, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
+
+        X0 = np.random.normal(loc=-10, scale=1, size=(1000, 1))
+        X1 = np.random.normal(loc=10, scale=1, size=(1000, 1))
+        X, y = Xn_to_Xy(X0, X1)
+
+        calibrated_scorer = CalibratedScorer(LogisticRegression(), KDECalibrator(bandwidth=(1, 1)))
+        calibrated_scorer.fit(X, y)
+        self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
+
+        calibrated_scorer = CalibratedScorer(LogisticRegression(), FourParameterLogisticCalibrator())
+        calibrated_scorer.fit(X, y)
+        self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
+
+        calibrated_scorer = CalibratedScorer(sklearn.preprocessing.StandardScaler(), FourParameterLogisticCalibrator())
+        calibrated_scorer.fit(X, y)
+        self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
+
+        calibrated_scorer = CalibratedScorer(lambda x: x, FourParameterLogisticCalibrator())
+        calibrated_scorer.fit(X, y)
+        self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
+
+    def test_calibrated_scorer_cv(self):
+        np.random.seed(0)
+
+        X0 = np.random.normal(loc=0, scale=1, size=(1000, 1))
+        X1 = np.random.normal(loc=0, scale=1, size=(1000, 1))
+        X, y = Xn_to_Xy(X0, X1)
+
+        calibrated_scorer = CalibratedScorerCV(LogisticRegression(), KDECalibrator(bandwidth=(1, 1)), n_splits=5)
+        calibrated_scorer.fit(X, y)
+        self.assertAlmostEqual(1, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
+
+        calibrated_scorer = CalibratedScorerCV(LogisticRegression(), LogitCalibrator(), n_splits=5)
+        calibrated_scorer.fit(X, y)
+        self.assertAlmostEqual(1, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
+
+        calibrated_scorer = CalibratedScorerCV(sklearn.preprocessing.StandardScaler(), LogitCalibrator(), n_splits=5)
+        calibrated_scorer.fit(X, y)
+        self.assertAlmostEqual(1, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
+
+        calibrated_scorer = CalibratedScorerCV(lambda x: x, LogitCalibrator(), n_splits=5)
+        calibrated_scorer.fit(X, y)
+        self.assertAlmostEqual(1, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
+
+        X0 = np.random.normal(loc=-10, scale=1, size=(1000, 1))
+        X1 = np.random.normal(loc=10, scale=1, size=(1000, 1))
+        X, y = Xn_to_Xy(X0, X1)
+
+        calibrated_scorer = CalibratedScorerCV(LogisticRegression(), KDECalibrator(bandwidth=(1, 1)), n_splits=5)
+        calibrated_scorer.fit(X, y)
+        self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
+
+        calibrated_scorer = CalibratedScorerCV(LogisticRegression(), LogitCalibrator(), n_splits=5)
+        calibrated_scorer.fit(X, y)
+        self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
+
+        calibrated_scorer = CalibratedScorerCV(sklearn.preprocessing.StandardScaler(), LogitCalibrator(), n_splits=5)
+        calibrated_scorer.fit(X, y)
+        self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
+
+        calibrated_scorer = CalibratedScorerCV(lambda x: x, LogitCalibrator(), n_splits=5)
+        calibrated_scorer.fit(X, y)
+        self.assertAlmostEqual(0, metrics.cllr(calibrated_scorer.predict_lr(X), y), places=2)
 
 
 if __name__ == '__main__':
