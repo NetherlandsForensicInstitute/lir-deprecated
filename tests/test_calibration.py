@@ -90,7 +90,7 @@ class TestKDECalibrator(unittest.TestCase):
         X = to_probability(X)
         X = to_log_odds(X)
         desired = [3.59562799e-02, 1.75942116e-11, 2.59633540e-12, 1.36799721e-12, 8.15673411e-03, 2.10030624e-02, 3.70456430e-05, 1.40710861e-18, 1.04459592e-10, 3.14589737e+03, 2.59568527e+02, 1.08519904e+02, 8.56459139e+01, 3.81243702e+00, 6.23873841e+01, 1.43844114e+02, 2.64913149e+02, 1.49097168e+05]
-        calibrator = KDECalibrator()
+        calibrator = KDECalibrator(bandwidth="silverman")
         calibrator.fit(X, y)
         lrs_cal = calibrator.transform(X)
         np.testing.assert_allclose(lrs_cal, desired)
@@ -100,7 +100,7 @@ class TestKDECalibrator(unittest.TestCase):
         X = to_log_odds(X)
         y = np.concatenate((np.zeros(12), np.ones(12)))
         desired = [6.148510640582358, 0.10548096579142373, 0.07571171879632102, 0.06774859414831141, 4.408883097248305, 5.446103603204983, 1.4258427450086562, 0.006102474459494191, 0.14360453961912525, 0.0, 0.0, 0.0, 17.786943105214274, 21.248067409078676, 21.10676921763807, 20.955468109356307, 16.029054988277238, 20.689727349181517, 21.22851434841379, 21.24246276550688, 11.31919250180751, math.inf, 2.846712755553574, math.inf]
-        calibrator = KDECalibrator()
+        calibrator = KDECalibrator(bandwidth="silverman")
         calibrator.fit(X, y)
         lrs_cal = calibrator.transform(X)
         np.testing.assert_allclose(lrs_cal, desired)

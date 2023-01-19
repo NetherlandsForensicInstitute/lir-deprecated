@@ -1,5 +1,4 @@
 import logging
-from typing import Callable, Optional
 
 import numpy as np
 import sklearn
@@ -7,7 +6,7 @@ import sklearn.mixture
 from sklearn.pipeline import Pipeline
 
 from .metrics import calculate_lr_statistics, LrStats
-from .transformers import EstimatorTransformer, DistanceFunctionTransformer
+from .transformers import EstimatorTransformer, ComparisonFunctionTransformer
 
 from .util import Xn_to_Xy, LR
 
@@ -20,7 +19,7 @@ def _create_transformer(scorer):
     elif hasattr(scorer, "predict_proba"):
         return EstimatorTransformer(scorer)
     elif callable(scorer):
-        return DistanceFunctionTransformer(scorer)
+        return ComparisonFunctionTransformer(scorer)
     else:
         raise NotImplementedError("`scorer` argument must either be callable or implement at least one of `transform`, `predict_proba`")
 
