@@ -1,43 +1,85 @@
 import logging
+from typing import Callable, Optional
 
 import numpy as np
 import sklearn
 import sklearn.mixture
+from sklearn.pipeline import Pipeline
 
-from .metrics import calculate_lr_statistics
-from .util import Xn_to_Xy, LR, to_log_odds
+from .metrics import calculate_lr_statistics, LrStats
+from .transformers import EstimatorTransformer, DistanceFunctionTransformer
 
+from .util import Xn_to_Xy, LR
 
 LOG = logging.getLogger(__name__)
 
 
+def _create_transformer(scorer):
+    if hasattr(scorer, "transform"):
+        return scorer
+    elif hasattr(scorer, "predict_proba"):
+        return EstimatorTransformer(scorer)
+    elif callable(scorer):
+        return DistanceFunctionTransformer(scorer)
+    else:
+        raise NotImplementedError("`scorer` argument must either be callable or implement at least one of `transform`, `predict_proba`")
+
+
 class CalibratedScorer:
+    """
+    LR system which produces calibrated LRs using a scorer and a calibrator.
+
+    The scorer is an object that transforms instance features into a scalar value (a "score"). The scorer may either
+    be:
+     - an estimator (e.g. `sklearn.linear_model.LogisticRegression`) object which implements `fit` and `predict_proba`;
+     - a transformer object which implements `transform` and optionally `fit`; or
+     - a distance function (callable) that takes paired instances as its arguments and returns a distance for each pair.
+
+    The scorer can also be a composite object such as a `sklearn.pipeline.Pipeline`. If the scorer is an estimator, the
+    probabilities it produces are transformed to their log odds.
+
+    The calibrator is an object that transforms instance scores to LRs.
+    """
     def __init__(self, scorer, calibrator):
-        self.scorer = scorer
+        """
+        Constructor.
+
+        Parameters
+        ----------
+        scorer an object that transforms features into scores.
+        calibrator an object that transforms scores into LRs.
+        """
+        self.scorer = _create_transformer(scorer)
         self.calibrator = calibrator
+        self.pipeline = Pipeline([
+            ("scorer", self.scorer),
+            ("reshape", sklearn.preprocessing.FunctionTransformer(self._reshape)),
+            ("calibrator", self.calibrator)
+        ])
+
+    @staticmethod
+    def _reshape(X):
+        if len(X.shape) == 1:
+            return X
+        else:
+            assert len(X) == X.shape[0], f"array has bad dimensions: all dimensions but the first should be 1; found {X.shape}"
+            return X.reshape(-1)
+
 
     def fit(self, X, y):
-        self.fit_scorer(X, y)
-        self.fit_calibrator(X, y)
-
-    def fit_scorer(self, X, y):
-        self.scorer.fit(X, y)
-
-    def fit_calibrator(self, X, y):
-        p = self.scorer.predict_proba(X)
-        # tolerance = 1*10**-300
-        # p[np.where(np.logical_and(p[:,1] == 0, y==1)), 1] = 0+tolerance
-        # p[np.where(np.logical_and(p[:,1] == 1, y==0)), 1] = 1-tolerance
-        self.calibrator.fit(p[:, 1], y)
+        self.pipeline.fit(X, y)
+        return self
 
     def predict_lr(self, X):
-        X = self.scorer.predict_proba(X)[:,1]
-        return self.calibrator.transform(X)
+        return self.pipeline.transform(X)
 
 
 class CalibratedScorerCV:
+    """
+    Variant of `CalibratedScorer` that uses cross-calibration to optimize for small data sets.
+    """
     def __init__(self, scorer, calibrator, n_splits):
-        self.scorer = scorer
+        self.scorer = _create_transformer(scorer)
         self.calibrator = calibrator
         self.n_splits = n_splits
 
@@ -48,15 +90,16 @@ class CalibratedScorerCV:
         ycal = np.empty([0])
         for train_index, cal_index in kf.split(X, y):
             self.scorer.fit(X[train_index], y[train_index])
-            p = self.scorer.predict_proba(X[cal_index])
-            Xcal = np.append(Xcal, p[:,1])
+            p = self.scorer.transform(X[cal_index])
+            Xcal = np.append(Xcal, p)
             ycal = np.append(ycal, y[cal_index])
         self.calibrator.fit(Xcal, ycal)
 
         self.scorer.fit(X, y)
+        return self
 
     def predict_lr(self, X):
-        scores = self.scorer.predict_proba(X)[:,1] # probability of class 1
+        scores = self.scorer.transform(X)
         return self.calibrator.transform(scores)
 
 
@@ -127,7 +170,7 @@ def scorebased_lr(scorer, calibrator, X0_train, X1_train, X0_calibrate, X1_calib
     return scorer.predict_lr(X_disputed)
 
 
-def calibrated_cllr(calibrator, class0_calibrate, class1_calibrate, class0_test=None, class1_test=None):
+def calibrated_cllr(calibrator, class0_calibrate, class1_calibrate, class0_test=None, class1_test=None) -> LrStats:
     Xcal, ycal = Xn_to_Xy(class0_calibrate, class1_calibrate)
     calibrator.fit(Xcal, ycal)
 
@@ -145,7 +188,7 @@ def calibrated_cllr(calibrator, class0_calibrate, class1_calibrate, class0_test=
     return calculate_lr_statistics(lrs0, lrs1)
 
 
-def scorebased_cllr(scorer, calibrator, X0_train, X1_train, X0_calibrate, X1_calibrate, X0_test=None, X1_test=None):
+def scorebased_cllr(scorer, calibrator, X0_train, X1_train, X0_calibrate, X1_calibrate, X0_test=None, X1_test=None) -> LrStats:
     """
     Trains a classifier on a training set, calibrates the outcome with a
     calibration set, and calculates a LR (likelihood ratio) for all samples in
@@ -159,9 +202,6 @@ def scorebased_cllr(scorer, calibrator, X0_train, X1_train, X0_calibrate, X1_cal
     ----------
     scorer : classifier
         A model to be trained. Must support probability output.
-    density_function : function
-        A density function which is used to deterimine the density of
-        a classifier outcome when sampled from either of both classes.
     X0_train : numpy array
         Training set for class 0
     X1_train : numpy array
@@ -199,7 +239,7 @@ def scorebased_lr_kfold(scorer, calibrator, n_splits, X0_train, X1_train, X_disp
     return scorer.predict_lr(X_disputed)
 
 
-def scorebased_cllr_kfold(scorer, calibrator, n_splits, X0_train, X1_train, X0_test, X1_test):
+def scorebased_cllr_kfold(scorer, calibrator, n_splits, X0_train, X1_train, X0_test, X1_test) -> LrStats:
     LOG.debug('scorebased_cllr_kfold: training_size: {train0}/{train1}; test size: {test0}/{test1}'.format(train0=X0_train.shape[0], train1=X1_train.shape[0], test0=X0_test.shape[0], test1=X1_test.shape[0]))
 
     X_disputed = np.concatenate([X0_test, X1_test])
