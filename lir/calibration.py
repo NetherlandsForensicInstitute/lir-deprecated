@@ -161,7 +161,7 @@ class KDECalibrator(BaseEstimator, TransformerMixin):
             * If bandwidth is a tuple, it should contain two floating point values: the bandwidth for the distribution
               of the classes with labels 0 and 1, respectively.
             * If bandwidth has the str value "silverman", Silverman's rule of thumb is used as the bandwidth for both
-              distributions.
+              distributions separately.
             * If bandwidth is callable, it should accept two arguments, `X` and `y`, and return a tuple of two values
               which are the bandwidths for the two distributions.
         """
