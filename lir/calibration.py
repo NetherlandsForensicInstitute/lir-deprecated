@@ -166,8 +166,8 @@ class KDECalibrator(BaseEstimator, TransformerMixin):
               which are the bandwidths for the two distributions.
         """
         if bandwidth is None:
-            warnings.warn("missing bandwidth argument for KDE, defaulting to 1 (default argument will be removed in the future)")
-            bandwidth = (1, 1)
+            warnings.warn("missing bandwidth argument for KDE, defaulting to silverman (default argument will be removed in the future)")
+            bandwidth = "silverman"
         self.bandwidth: Callable = self._parse_bandwidth(bandwidth)
         self._kde0: Optional[KernelDensity] = None
         self._kde1: Optional[KernelDensity] = None
