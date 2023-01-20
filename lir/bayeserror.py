@@ -62,8 +62,8 @@ def elub(lrs, y, add_misleading=1, step_size=.01, substitute_extremes=(np.exp(-2
 
     # remove LRs of 0 and infinity
     sanitized_lrs = lrs
-    sanitized_lrs[sanitized_lrs == 0] = substitute_extremes[0]
-    sanitized_lrs[sanitized_lrs == np.inf] = substitute_extremes[1]
+    sanitized_lrs[sanitized_lrs < substitute_extremes[0]] = substitute_extremes[0]
+    sanitized_lrs[sanitized_lrs > substitute_extremes[1]] = substitute_extremes[1]
 
     # determine the range of LRs to be considered
     llrs = np.log(sanitized_lrs)
