@@ -12,7 +12,7 @@ setup(
     author="Netherlands Forensic Institute",
     author_email="fbda@nfi.nl",
     packages=find_packages(),
-    setup_requires=["nose"],
+    setup_requires=["nose", "pre-commit", "jupyter"],
     test_suite="nose.collector",
     install_requires=["matplotlib", "numpy", "scipy", "scikit-learn", "tqdm"],
     classifiers=[
