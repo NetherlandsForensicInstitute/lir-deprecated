@@ -38,6 +38,10 @@ class CalibratedScorer:
     probabilities it produces are transformed to their log odds.
 
     The calibrator is an object that transforms instance scores to LRs.
+
+    This class supports `fit`, which fits the scorer and the calibrator on the same data. If only the calibrator is to
+    be fit, use `fit_calibrator`. Both the scorer and the calibrator can be accessed by their attributes `scorer` and
+    `calibrator`.
     """
     def __init__(self, scorer, calibrator):
         """
@@ -64,12 +68,55 @@ class CalibratedScorer:
             assert len(X) == X.shape[0], f"array has bad dimensions: all dimensions but the first should be 1; found {X.shape}"
             return X.reshape(-1)
 
-
     def fit(self, X, y):
+        """
+        Fits both the scorer and the calibrator on the same data.
+
+        Parameters
+        ----------
+        X the feature vectors of the instances
+        y the instance labels
+
+        Returns
+        -------
+        `self`
+        """
         self.pipeline.fit(X, y)
         return self
 
+    def fit_calibrator(self, X, y):
+        """
+        Fits the calibrator without modifying the scorer.
+
+        The arguments are the same as in `fit`. Before calibrating, this method transforms the feature vectors into
+        scores by calling `transform` on the scorer.
+
+        Parameters
+        ----------
+        X the feature vectors of the instances
+        y the instance labels
+
+        Returns
+        -------
+        `self`
+        """
+        X = self.scorer.transform(X)
+        X = self._reshape(X)
+        self.calibrator.fit(X, y)
+        return self
+
     def predict_lr(self, X):
+        """
+        Compute LRs for instances.
+
+        Parameters
+        ----------
+        X the feature vector of the instances
+
+        Returns
+        -------
+        a vector of LRs
+        """
         return self.pipeline.transform(X)
 
 
