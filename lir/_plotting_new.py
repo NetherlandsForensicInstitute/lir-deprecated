@@ -1,18 +1,16 @@
+import logging
 from contextlib import contextmanager
 from functools import partial
-import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
 
+from . import util
 from .bayeserror import plot_nbe as nbe
 from .calibration import IsotonicCalibrator
 from .ece import plot_ece as ece
-from . import util
-
 
 LOG = logging.getLogger(__name__)
-
 
 # make matplotlib.pyplot behave more like axes objects
 plt.set_xlabel = plt.xlabel
@@ -143,13 +141,12 @@ def pav(lrs, y, add_misleading=0, show_scatter=True, ax=plt):
 
     # add points for infinite values
     if np.logical_or(np.isinf(pav_llrs), np.isinf(llrs)).any():
-
         def adjust_ticks_labels_and_range(neg_inf, pos_inf, axis_range):
             ticks = np.linspace(axis_range[0], axis_range[1], 6).tolist()
             tick_labels = [str(round(tick, 1)) for tick in ticks]
             step_size = ticks[2] - ticks[1]
 
-            axis_range = [axis_range[0] - (step_size * neg_inf),axis_range[1] + (step_size * pos_inf)]
+            axis_range = [axis_range[0] - (step_size * neg_inf), axis_range[1] + (step_size * pos_inf)]
             ticks = [axis_range[0]] * neg_inf + ticks + [axis_range[1]] * pos_inf
             tick_labels = ['-∞'] * neg_inf + tick_labels + ['+∞'] * pos_inf
 
@@ -176,7 +173,7 @@ def pav(lrs, y, add_misleading=0, show_scatter=True, ax=plt):
         ax.xticks(ticks_x, tick_labels_x)
 
         ax.scatter(x_inf,
-                    y_inf, facecolors='none', edgecolors='#1f77b4', linestyle=':')
+                   y_inf, facecolors='none', edgecolors='#1f77b4', linestyle=':')
 
     ax.axis(xrange + yrange)
     # pre-/post-calibrated lr fit
@@ -210,7 +207,7 @@ def lr_histogram(lrs, y, bins=20, weighted=True, ax=plt):
     ax.hist(points0, bins=bins, alpha=.25, weights=weights0)
     ax.hist(points1, bins=bins, alpha=.25, weights=weights1)
     ax.set_xlabel('10log likelihood ratio')
-    ax.set_ylabel('count')
+    ax.set_ylabel('count' if not weighted else 'relative frequency')
 
 
 def tippett(lrs, y, plot_type=1, ax=plt):
@@ -234,13 +231,13 @@ def tippett(lrs, y, plot_type=1, ax=plt):
     xplot0 = np.linspace(np.min(lr_0), np.max(lr_0), 100)
     xplot1 = np.linspace(np.min(lr_1), np.max(lr_1), 100)
     perc0 = (sum(i >= xplot0 for i in lr_0) / len(lr_0)) * 100
-    if plot_type==1:
+    if plot_type == 1:
         perc1 = (sum(i >= xplot1 for i in lr_1) / len(lr_1)) * 100
-    elif plot_type==2:
+    elif plot_type == 2:
         perc1 = (sum(i <= xplot1 for i in lr_1) / len(lr_1)) * 100
     else:
         raise ValueError("plot_type must be either 1 or 2.")
-    
+
     ax.plot(xplot1, perc1, color='b', label='LRs given $\mathregular{H_1}$')
     ax.plot(xplot0, perc0, color='r', label='LRs given $\mathregular{H_2}$')
     ax.axvline(x=0, color='k', linestyle='--')
@@ -307,7 +304,7 @@ def score_distribution(scores, y, bins=20, weighted=True, ax=plt):
 
     for cls, weight in zip(np.unique(y), weights):
         ax.hist(scores[y == cls], bins=bins, alpha=.25,
-                 label=f'class {cls}', weights=weight if weighted else None)
+                label=f'class {cls}', weights=weight if weighted else None)
 
 
 def calibrator_fit(calibrator, score_range=(0, 1), resolution=100, ax=plt):
