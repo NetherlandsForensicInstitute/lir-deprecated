@@ -634,10 +634,10 @@ class FourParameterLogisticCalibrator:
 
 class DummyProbabilityCalibrator(BaseEstimator, TransformerMixin):
     """
-    Calculates a likelihood ratio of a score value, provided it is from one of
-    two distributions. No calibration is applied. Instead, the score value is
-    interpreted as a posterior probability of the value being sampled from
-    class 1.
+    Dummy calibrator class which can be used to skip calibration. No
+    calibration is applied. Instead, a prior probability of 0.5 is assumed, and
+    the input values are interpreted as posterior probabilities. Under these
+    circumstances this class returns a likelihood ratio for each input value.
     """
 
     def fit(self, X, y=None, **fit_params):
@@ -651,10 +651,10 @@ class DummyProbabilityCalibrator(BaseEstimator, TransformerMixin):
 
 class DummyLogOddsCalibrator(BaseEstimator, TransformerMixin):
     """
-    Calculates a likelihood ratio of a score value, provided it is from one of
-    two distributions. No calibration is applied. Instead, the score value is
-    interpreted as the posterior log odds of the value being sampled from
-    class 1 versus class 0.
+    Dummy calibrator class which can be used to skip calibration. No
+    calibration is applied. Instead, prior odds of 1 are assumed, and the input
+    values are interpreted as posterior odds. Under these circumstances this
+    class returns a likelihood ratio for each input value.
     """
 
     def fit(self, X, y=None, **fit_params):
