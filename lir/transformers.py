@@ -103,21 +103,20 @@ class PercentileRankTransformer(sklearn.base.TransformerMixin):
         self.rank_functions = None
 
     def fit(self, X, y=None):
-        assert len(X.shape) == 2
-        ranks_X = rankdata(X, method='max', axis=0)/len(X)
-        # if a feature is a constant int value, interp1d returns nan -> convert to float
-        X = X.astype(float)
+        X = X.reshape(X.shape[0], -1)
+        ranks_X = rankdata(X, method='max', axis=0)/X.shape[0]
         self.rank_functions = [interp1d(X[:, i], ranks_X[:, i], bounds_error=False,
                                         fill_value=(0, 1)) for i in range(X.shape[1])]
         return self
 
     def transform(self, X):
         assert self.rank_functions, "transform() called before fit()"
-        assert len(X.shape) == 2
+        original_shape = X.shape
+        X = X.reshape(X.shape[0], -1)
         assert X.shape[1] == len(self.rank_functions),\
-            "number of features used for fit() and transform() should be equal"
+            f"number of features {X.shape[1]} does not match the number of features {len(self.rank_functions)} used for fit()"
         ranks = [self.rank_functions[i](X[:, i]) for i in range(X.shape[1])]
-        return np.stack(ranks, axis=1)
+        return np.stack(ranks, axis=1).reshape(*original_shape)
 
 
 class InstancePairing(sklearn.base.TransformerMixin):
