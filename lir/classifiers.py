@@ -16,8 +16,8 @@ def TLM_calc_MSwithin(X, y):
     grouped = filtered.groupby(axis='index', by='label')
     covars = grouped.cov(ddof=1)
     # add index names to allow grouping by element, group by element and get mean covariance matrix
-    covars.index.names = ["Window", "Element"]
-    grouped_by_element = covars.groupby(["Element"])
+    covars.index.names = ["Source", "Variable"]
+    grouped_by_element = covars.groupby(["Variable"])
     mean_covars = grouped_by_element.mean()
     return np.array(mean_covars)
 
