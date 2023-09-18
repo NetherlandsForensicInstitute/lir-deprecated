@@ -46,13 +46,11 @@ def TLM_calc_kappa(X, y):
     """
     # use pandas functionality to allow easy calculation
     df = pd.DataFrame(X, index=pd.Index(y, name="label"))
-    # filter out single-repetitions,since they do not contribute to covariance calculations
+    # group per source
     grouped = df.groupby(axis='index', by='label')
+    # get the number of repetitions per source
     reps = grouped.size()
+    # calculate sum_reps_sq and kappa
     sum_reps_sq = sum([rep ** 2 for rep in reps])
     kappa = (reps.sum() - sum_reps_sq/reps.sum())/(len(reps)-1)
     return kappa
-
-
-
-
