@@ -37,20 +37,39 @@ def TLM_calc_means(X, y):
     return np.array(means)
 
 
-def TLM_calc_kappa(X, y):
+def TLM_calc_T0(X, y):
     """
     X np.array of measurements, rows are objects, columns are variables
     y np 1d-array of labels. labels from {1, ..., n} with n the number of objects. Repetitions get the same label.
     returns: kappa (float). Kappa is used in cacluation of T0, where T0 is between variance of means. Kappa converts
         variance at measurement level to variance at means level.
     """
+    # calculate MSwithin
+    MSwithin = TLM_calc_MSwithin(X, y)
+
     # use pandas functionality to allow easy calculation
     df = pd.DataFrame(X, index=pd.Index(y, name="label"))
     # group per source
     grouped = df.groupby(axis='index', by='label')
     # get the number of repetitions per source
-    reps = grouped.size()
+    reps = np.array(grouped.size()).reshape((-1,1))
     # calculate sum_reps_sq and kappa
-    sum_reps_sq = sum([rep ** 2 for rep in reps])
-    kappa = (reps.sum() - sum_reps_sq/reps.sum())/(len(reps)-1)
-    return kappa
+    sum_reps_sq = sum(reps**2)
+    n_sources = len(reps)
+    kappa = (reps.sum() - sum_reps_sq/reps.sum())/(n_sources-1)
+
+    # calculate grand mean
+    grand_mean = np.array(df.mean()).reshape((1,-1))
+    # calculate mean per source
+    means = TLM_calc_means(X, y)
+    # calculate squared differences
+    differences = (means - grand_mean)
+    n_variables = differences.shape[1]
+
+    differences = differences.reshape((n_variables, 1, n_variables))
+    differences_t = differences.reshape((1, n_variables, n_variables))
+    result = np.matmul(differences, differences_t)
+    # calculate sum of squares between
+    SSQ_between = np.sum(sq_differences * reps, axis=0)
+    T0 = (SSQ_between/(n_sources -1) - MSwithin)/kappa
+    return T0
