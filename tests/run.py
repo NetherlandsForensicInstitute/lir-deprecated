@@ -4,10 +4,11 @@
 
 import os
 import numpy as np
-from lir.classifiers import TLM_calc_MSwithin, TLM_calc_means_z
+from lir.classifiers import TLM_calc_MSwithin, TLM_calc_means, TLM_calc_h_sq
 
 dirname = os.path.dirname(__file__)
 dataZ = np.loadtxt(os.path.join(dirname, 'data/TLM/input/ZDATA.csv'), delimiter=",", dtype="float", skiprows=1, usecols=range(1,12))
 MSwithin = TLM_calc_MSwithin(dataZ[:,1:], dataZ[:,0])
-means_z = TLM_calc_means_z(dataZ[:,1:], dataZ[:,0])
+means_z = TLM_calc_means(dataZ[:,1:], dataZ[:,0])
+h_sq = TLM_calc_h_sq(dataZ[:,1:], dataZ[:,0])
 print("t")
