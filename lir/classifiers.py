@@ -90,15 +90,15 @@ def TLM_calc_T0(X, y):
 
 
 '''Functions for predict'''
-def TLM_calc_U(X, y, MSwithin, means, h_sq, T0):
+def TLM_calc_U(X_tr, X_ref, MSwithin, h_sq, T0):
     """
-    X np.array of measurements of paired objects, rows are objects, columns are variables
-    y np 1d-array of labels. labels {0, 1} meaning same source or different source
-    returns: U_h0 and U_hx ...
+    X_tr np.array of measurements of trace object, rows are repetitions, columns are variables
+    X_ref no.array of measurments of reference object, rows are repetitions, columns are variables
+    returns: U_h0 and U_hx, covariance matrices needed for LR calculation, one for trace, one for ref
     """
-    n_traces = 5
-    n_references = 30
-    U_h0 = h_sq * T0 + MSwithin/n_traces
-    U_hx = h_sq * T0 + MSwithin/n_references
+    n_trace = len(X_tr)
+    n_reference = len(X_ref)
+    U_h0 = h_sq * T0 + MSwithin/n_trace
+    U_hx = h_sq * T0 + MSwithin/n_reference
 
     return U_h0, U_hx
