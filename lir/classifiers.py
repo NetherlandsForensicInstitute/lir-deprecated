@@ -36,6 +36,20 @@ def TLM_calc_means(X, y):
     means = grouped.mean()
     return np.array(means)
 
+def TLM_calc_h_sq(X, y):
+    """
+    X np.array of measurements, rows are objects, columns are variables
+    y np 1d-array of labels. labels from {1, ..., n} with n the number of objects. Repetitions get the same label.
+    returns: h^2, squared kernel bandwidth
+    """
+
+    # get parameters
+    m = len(np.unique(y))
+    p = X.shape[1]
+    # calculate h and h_square
+    h = (4/((p+2)*m))**(1/(p+4))
+    h_sq = h**2
+    return h_sq
 
 def TLM_calc_T0(X, y):
     """

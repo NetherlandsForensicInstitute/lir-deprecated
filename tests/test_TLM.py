@@ -2,7 +2,7 @@ import csv
 import os
 import unittest
 import numpy as np
-from lir.classifiers import TLM_calc_MSwithin, TLM_calc_means, TLM_calc_T0
+from lir.classifiers import TLM_calc_MSwithin, TLM_calc_means, TLM_calc_h_sq, TLM_calc_T0
 
 class TestTLM(unittest.TestCase):
     dirname = os.path.dirname(__file__)
@@ -22,6 +22,11 @@ class TestTLM(unittest.TestCase):
         means_z_P = TLM_calc_means(self.dataZ[:, 1:], self.dataZ[:, 0])
         np.testing.assert_almost_equal(means_z_P, means_z_R, decimal=14)
 
+    def test_h_sq(self):
+        h_sq_R = np.loadtxt(os.path.join(self.dirname, 'data/TLM/R_output/h2.csv'), delimiter=","
+                               , dtype="float", skiprows=1)
+        h_sq_P = TLM_calc_h_sq(self.dataZ[:, 1:], self.dataZ[:, 0])
+        np.testing.assert_almost_equal(h_sq_P, h_sq_R, decimal=16)
     def test_T0(self):
         T0_R = np.loadtxt(os.path.join(self.dirname, 'data/TLM/R_output/T0.csv'), delimiter=","
                                , dtype="float", skiprows=1)
