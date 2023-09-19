@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.base import BaseEstimator
 
+'''Functions for model fit'''
 
 def TLM_calc_MSwithin(X, y):
     """
@@ -86,3 +87,18 @@ def TLM_calc_T0(X, y):
     # calculate T0: prior between variance
     T0 = (SSQ_between/(n_sources -1) - MSwithin)/kappa
     return T0
+
+
+'''Functions for predict'''
+def TLM_calc_U(X, y, MSwithin, means, h_sq, T0):
+    """
+    X np.array of measurements of paired objects, rows are objects, columns are variables
+    y np 1d-array of labels. labels {0, 1} meaning same source or different source
+    returns: U_h0 and U_hx ...
+    """
+    n_traces = 5
+    n_references = 30
+    U_h0 = h_sq * T0 + MSwithin/n_traces
+    U_hx = h_sq * T0 + MSwithin/n_references
+
+    return U_h0, U_hx
