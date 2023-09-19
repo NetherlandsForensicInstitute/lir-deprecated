@@ -26,7 +26,7 @@ class TestTLM(unittest.TestCase):
         T0_R = np.loadtxt(os.path.join(self.dirname, 'data/TLM/R_output/T0.csv'), delimiter=","
                                , dtype="float", skiprows=1)
         T0_P = TLM_calc_T0(self.dataZ[:, 1:], self.dataZ[:, 0])
-        np.testing.assert_almost_equal(T0_P, T0_R, decimal=14)
+        np.testing.assert_almost_equal(T0_P, T0_R, decimal=15)
 
 
 if __name__ == '__main__':

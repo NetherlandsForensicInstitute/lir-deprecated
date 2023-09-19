@@ -51,25 +51,24 @@ def TLM_calc_T0(X, y):
     df = pd.DataFrame(X, index=pd.Index(y, name="label"))
     # group per source
     grouped = df.groupby(axis='index', by='label')
+
+    # calculate kappa
     # get the number of repetitions per source
-    reps = np.array(grouped.size()).reshape((-1,1))
-    # calculate sum_reps_sq and kappa
+    reps = np.array(grouped.size()).reshape((-1, 1))
+    # calculate the sum of the repetitions squared and kappa;
+    #   kappa represents the average number of repetitions per source
     sum_reps_sq = sum(reps**2)
     n_sources = len(reps)
-    kappa = (reps.sum() - sum_reps_sq/reps.sum())/(n_sources-1)
+    kappa = float((reps.sum() - sum_reps_sq/reps.sum())/(n_sources-1))
 
-    # calculate grand mean
-    grand_mean = np.array(df.mean()).reshape((1,-1))
-    # calculate mean per source
-    means = TLM_calc_means(X, y)
-    # calculate squared differences
-    differences = (means - grand_mean)
-    n_variables = differences.shape[1]
+    # calculate sum_of_squares between
+    # substitute rows with their corresponding group means
+    group_means = grouped.transform('mean')
+    # calculate covariance
+    cov_between = group_means.cov(ddof=0)
+    # get Sum of Squares Between between
+    SSQ_between = cov_between * len(group_means)
 
-    differences = differences.reshape((n_variables, 1, n_variables))
-    differences_t = differences.reshape((1, n_variables, n_variables))
-    result = np.matmul(differences, differences_t)
-    # calculate sum of squares between
-    SSQ_between = np.sum(sq_differences * reps, axis=0)
+    # calculate T0: prior between variance
     T0 = (SSQ_between/(n_sources -1) - MSwithin)/kappa
     return T0
