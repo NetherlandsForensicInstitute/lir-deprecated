@@ -91,7 +91,7 @@ def TLM_calc_T0(X, y):
 
 
 '''Functions for predict'''
-def TLM_calc_U(X_tr, X_ref, MSwithin, h_sq, T0):
+def TLM_calc_U(X_trace, X_ref, MSwithin, h_sq, T0):
     """
     X_tr np.array of measurements of trace object, rows are repetitions, columns are variables
     X_ref no.array of measurments of reference object, rows are repetitions, columns are variables
@@ -99,7 +99,7 @@ def TLM_calc_U(X_tr, X_ref, MSwithin, h_sq, T0):
         one for ...
     """
     # calculate number of trace and reference measurements
-    n_trace = len(X_tr)
+    n_trace = len(X_trace)
     n_reference = len(X_ref)
     # Calculate covariance matrices U_h0 and U_hx
     U_h0 = h_sq * T0 + MSwithin/n_trace
@@ -112,3 +112,20 @@ def TLM_calc_U(X_tr, X_ref, MSwithin, h_sq, T0):
     U_hn = T_hn + MSwithin / n_trace
     return U_h0, U_hx, U_hn
 
+def TLM_calc_mu(X_trace, X_ref, MSwithin, means_train, h_sq, T0):
+
+    # some fixed values
+    n_trace = len(X_ref)
+    n_train_sources = len(means_train)
+    n_features = X_ref.shape[1]
+    # calculate the mean for the reference data
+    mean_ref = pd.DataFrame(X_ref).mean().to_numpy() #only for single source
+    U_hx_inv = np.linalg.inv(TLM_calc_U(X_trace, X_ref, MSwithin, h_sq, T0))[1]
+    # set empty array
+    mu_h = np.empty(shape=(n_train_sources, n_features))
+    # calculate each row of the array
+    for source in range(n_train_sources):
+        mu_h[source, :] = np.matmul(np.matmul(h_sq * T0, U_hx_inv), mean_ref) + \
+                np.matmul(np.matmul(MSwithin/n_trace, U_hx_inv), means_train[source, :])
+
+    return mu_h
