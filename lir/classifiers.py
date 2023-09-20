@@ -95,14 +95,20 @@ def TLM_calc_U(X_tr, X_ref, MSwithin, h_sq, T0):
     """
     X_tr np.array of measurements of trace object, rows are repetitions, columns are variables
     X_ref no.array of measurments of reference object, rows are repetitions, columns are variables
-    returns: U_h0 and U_hx, covariance matrices needed for LR calculation, one for trace, one for ref
+    returns: U_h0, U_hx and U_hn, covariance matrices needed for LR calculation, one for trace, one for ref and
+        one for ...
     """
+    # calculate number of trace and reference measurements
     n_trace = len(X_tr)
     n_reference = len(X_ref)
+    # Calculate covariance matrices U_h0 and U_hx
     U_h0 = h_sq * T0 + MSwithin/n_trace
     U_hx = h_sq * T0 + MSwithin/n_reference
+    # Take the inverse
     U_hx_inv = np.linalg.inv(U_hx)
+    # Calculate T_hn
     T_hn = h_sq * T0 - np.matmul(np.matmul((h_sq * T0), U_hx_inv), (h_sq * T0))
+    # Culculate U_hn
     U_hn = T_hn + MSwithin / n_trace
     return U_h0, U_hx, U_hn
 
