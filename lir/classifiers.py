@@ -86,6 +86,7 @@ def TLM_calc_T0(X, y):
 
     # calculate T0: prior between variance
     T0 = (SSQ_between/(n_sources -1) - MSwithin)/kappa
+    T0 = T0.to_numpy()
     return T0
 
 
@@ -100,5 +101,8 @@ def TLM_calc_U(X_tr, X_ref, MSwithin, h_sq, T0):
     n_reference = len(X_ref)
     U_h0 = h_sq * T0 + MSwithin/n_trace
     U_hx = h_sq * T0 + MSwithin/n_reference
+    U_hx_inv = np.linalg.inv(U_hx)
+    T_hn = h_sq * T0 - np.matmul(np.matmul((h_sq * T0), U_hx_inv), (h_sq * T0))
+    U_hn = T_hn + MSwithin / n_trace
+    return U_h0, U_hx, U_hn
 
-    return U_h0, U_hx

@@ -53,9 +53,14 @@ class TestTLM(unittest.TestCase):
     def test_U_hx(self):
         U_hx_R  = np.loadtxt(os.path.join(self.dirname, 'data/TLM/R_output/U_hx.csv'), delimiter=","
                                , dtype="float", skiprows=1)
-        U_hx_P =  TLM_calc_U(self.dataY[[0, 1, 2], 1:], self.dataX, self.MSwithin_P, self.h_sq_P, self.T0_P)[1]
+        U_hx_P = TLM_calc_U(self.dataY[[0, 1, 2], 1:], self.dataX, self.MSwithin_P, self.h_sq_P, self.T0_P)[1]
         np.testing.assert_almost_equal(U_hx_P, U_hx_R, decimal=16)
 
+    def test_U_hn(self):
+        U_hn_R  = np.loadtxt(os.path.join(self.dirname, 'data/TLM/R_output/U_hn.csv'), delimiter=","
+                               , dtype="float", skiprows=1)
+        U_hn_P = TLM_calc_U(self.dataY[[0, 1, 2], 1:], self.dataX, self.MSwithin_P, self.h_sq_P, self.T0_P)[2]
+        np.testing.assert_almost_equal(U_hn_P, U_hn_R, decimal=15)
 
 if __name__ == '__main__':
     unittest.main()
