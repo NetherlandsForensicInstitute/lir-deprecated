@@ -1,7 +1,4 @@
-from sklearn.base import ClassifierMixin, BaseEstimator
-
-
-class TwoLevelModel(BaseEstimator, ClassifierMixin):
+class TwoLevelModel:
     def __init__(self):
         """
         An implementation of the two-level model as outlined in ... .
@@ -18,19 +15,12 @@ class TwoLevelModel(BaseEstimator, ClassifierMixin):
         """
         self.dummy_score = 0.5
 
-    def predict_proba(self, X):
+    def transform(self, X):
         """
-        Predict probability-like scores, making use of the parameters constructed during `self.fit()` (which should
+        Predict log-odds scores, making use of the parameters constructed during `self.fit()` (which should
         now be stored in `self`).
-
-        Alternatively we can implement `transform()` if we want to output log-odds instead of probabilities.
         """
         if self.dummy_score is None:
-            raise ValueError("The model is not fitted; fit is before you use it for predicting")
+            raise ValueError("The model is not fitted; fit it before you use it for predicting")
         return self.dummy_score
 
-    def predict(self, X):
-        """
-        To comply with sklearn pipelines, TODO check if this is really necessary
-        """
-        return self.predict_proba(X)
