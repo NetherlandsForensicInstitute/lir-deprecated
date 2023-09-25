@@ -3,7 +3,7 @@ import os
 import unittest
 import numpy as np
 from lir.classifiers import TLM_calc_MSwithin, TLM_calc_means, TLM_calc_h_sq, TLM_calc_T0, TLM_calc_U, TLM_calc_mu_h, \
-    TLM_calc_ln_num, TLM_calc_ln_den_term, TLM_calc_log10_LR
+    TLM_calc_ln_num, TLM_calc_ln_den_term, TLM_calc_log10_LR, TLM_predict_log10_LR
 
 
 class TestTLM(unittest.TestCase):
@@ -106,6 +106,20 @@ class TestTLM(unittest.TestCase):
         ln_den_right_P = TLM_calc_ln_den_term(self.dataX, U_h0_inv_P, self.dataZ[:, 1:], self.dataZ[:, 0])
         log10_LR_P = TLM_calc_log10_LR(U_h0, U_hn, ln_num_P, ln_den_left_P, ln_den_right_P, self.dataZ[:, 0])
         np.testing.assert_almost_equal(log10_LR_R, log10_LR_P, decimal=12)
+    def test_predict_10log_LR(self):
+        log10_LR_R = np.loadtxt(os.path.join(self.dirname, 'data/TLM/R_output/log10_MLRs.csv'), delimiter=","
+                                , dtype="float", skiprows=1)
+        log10_LR_R = np.array(log10_LR_R)
+        log10_LR_P = []
+        for label in np.unique(self.dataY[:, 0]):
+            dataY_selected = self.dataY[self.dataY[:, 0] == label, 1:]
+            log10_LR_P_temp = [TLM_predict_log10_LR(dataY_selected, self.dataX, self.MSwithin_P, self.h_sq_P, \
+                                          self.T0_P, self.dataZ[:, 1:], self.dataZ[:, 0])]
+            log10_LR_P = log10_LR_P + log10_LR_P_temp
+        log10_LR_P = np.array(log10_LR_P)
+        # replace too negative log10_LR_P since log10_LR_R gives -Inf after -300
+        log10_LR_P[log10_LR_P < -300] = np.NINF
+        np.testing.assert_almost_equal(log10_LR_R, log10_LR_P, decimal=10)
 
 
 if __name__ == '__main__':

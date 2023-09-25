@@ -195,10 +195,10 @@ def TLM_calc_ln_den_term(X_ref_or_trace, U_inv, X, y):
 def TLM_calc_log10_LR(U_h0, U_hn, ln_num, ln_den_left, ln_den_right, y):
     """
         X_trace np.array of measurements of trace object, rows are repetitions, columns are variables
-        U_h0_inv, np.arrays as calculated by TLM_calc_U
+        U_h0, U_hn, np.arrays as calculated by TLM_calc_U
         X: measurements of background data
         y: labels of background data
-        returns: ln_den_right, natural log of right denominator term of the LR-formula in Bolck et al.
+        returns: log10_LR, 10log of LR according to the LR-formula in Bolck et al.
     """
     # get number of sources in y
     m = len(np.unique(y))
@@ -207,3 +207,20 @@ def TLM_calc_log10_LR(U_h0, U_hn, ln_num, ln_den_left, ln_den_right, y):
     log10_LR = ln_LR/np.log(10)
     return log10_LR
 
+def TLM_predict_log10_LR(X_trace, X_ref, MSwithin, h_sq, T0, X, y):
+    """
+        X_trace np.array of measurements of trace object, rows are repetitions, columns are variables
+        U_h0_inv, np.arrays as calculated by TLM_calc_U
+        X: measurements of background data
+        y: labels of background data
+        returns: ln_den_right, natural log of right denominator term of the LR-formula in Bolck et al.
+    """
+    # do intermediatr calculations
+    U_h0_inv, U_hx_inv, U_hn_inv, U_h0, U_hn = TLM_calc_U(X_trace, X_ref, MSwithin, h_sq, T0)
+    mu_h = TLM_calc_mu_h(X_ref, MSwithin, T0, h_sq, X, y)
+    ln_num = TLM_calc_ln_num(X_trace, X_ref, U_hx_inv, U_hn_inv, mu_h, X, y)
+    ln_den_left = TLM_calc_ln_den_term(X_trace, U_h0_inv, X, y)
+    ln_den_right = TLM_calc_ln_den_term(X_ref, U_h0_inv, X, y)
+    # calculate log10_LR
+    log10_LR = TLM_calc_log10_LR(U_h0, U_hn, ln_num, ln_den_left, ln_den_right, y)
+    return log10_LR
