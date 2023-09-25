@@ -95,8 +95,11 @@ def TLM_calc_U(X_tr, X_ref, MSwithin, h_sq, T0):
     """
     X_tr np.array of measurements of trace object, rows are repetitions, columns are variables
     X_ref no.array of measurments of reference object, rows are repetitions, columns are variables
+    MSwithin np.array: mean within covariance matrix, as calculated by TLM_clc_MSwithin
+    h_sq flout: square of kernel bandwith
+    T0 np.array: between covariance matrix as calculated by TLM_calc_t0
     returns: U_h0, U_hx and U_hn, covariance matrices needed for LR calculation, one for trace, one for ref and
-        one for ...
+        one for bayesian update of reference means given KDE background means
     """
     # calculate number of trace and reference measurements
     n_trace = len(X_tr)
@@ -112,3 +115,25 @@ def TLM_calc_U(X_tr, X_ref, MSwithin, h_sq, T0):
     U_hn = T_hn + MSwithin / n_trace
     return U_h0, U_hx, U_hn
 
+def TLM_calc_mu_h(X_ref, MSwithin, T0, h_sq, X, y):
+    """
+        X_ref no.array of measurments of reference object, rows are repetitions, columns are variables
+        MSwithin = mean within covariance matrix, as calculated by TLM_clc_MSwithin
+        h_sq = square of kernel bandwith
+        T0 = between covariance matrix as calculated by TLM_calc_t0
+        X = measurements of background data
+        returns: mu_h, bayesian update of reference mean given KDE background means
+        """
+    # calculate number of reference measurements
+    n_reference = len(X_ref)
+    # calculate mean of reference measurements
+    mean_X_reference = np.mean(X_ref, axis=0)
+    # calculate precision term
+    between_precision_X_ref_mean = np.linalg.inv(h_sq * T0 + MSwithin/n_reference)
+    # calculate means of background data
+    means_z = TLM_calc_means(X, y)
+    # calculate the two terms for mu_h and add
+    mu_h_1 = np.matmul(np.matmul(h_sq * T0, between_precision_X_ref_mean), mean_X_reference).reshape(-1,1)
+    mu_h_2 = np.matmul(np.matmul(MSwithin/n_reference, between_precision_X_ref_mean), means_z.transpose())
+    mu_h = mu_h_1 + mu_h_2
+    return mu_h

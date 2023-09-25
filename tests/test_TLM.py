@@ -2,7 +2,7 @@ import csv
 import os
 import unittest
 import numpy as np
-from lir.classifiers import TLM_calc_MSwithin, TLM_calc_means, TLM_calc_h_sq, TLM_calc_T0, TLM_calc_U
+from lir.classifiers import TLM_calc_MSwithin, TLM_calc_means, TLM_calc_h_sq, TLM_calc_T0, TLM_calc_U, TLM_calc_mu_h
 
 
 class TestTLM(unittest.TestCase):
@@ -61,6 +61,12 @@ class TestTLM(unittest.TestCase):
                                , dtype="float", skiprows=1)
         U_hn_P = TLM_calc_U(self.dataY[[0, 1, 2], 1:], self.dataX, self.MSwithin_P, self.h_sq_P, self.T0_P)[2]
         np.testing.assert_almost_equal(U_hn_P, U_hn_R, decimal=15)
+
+    def test_mu_h(self):
+        mu_h_R  = np.loadtxt(os.path.join(self.dirname, 'data/TLM/R_output/mu_h.csv'), delimiter=","
+                               , dtype="float", skiprows=1)
+        mu_h_P = TLM_calc_mu_h(self.dataX, self.MSwithin_P, self.T0_P, self.h_sq_P, self.dataZ[:, 1:], self.dataZ[:, 0])
+        np.testing.assert_almost_equal(mu_h_P, mu_h_R, decimal=14)
 
 if __name__ == '__main__':
     unittest.main()
