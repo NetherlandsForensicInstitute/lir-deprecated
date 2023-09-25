@@ -128,7 +128,7 @@ def TLM_calc_mu_h(X_ref, MSwithin, T0, h_sq, X, y):
     n_reference = len(X_ref)
     # calculate mean of reference measurements
     mean_X_reference = np.mean(X_ref, axis=0)
-    # calculate precision term
+    # calculate precision term, see Bolck et al
     between_precision_X_ref_mean = np.linalg.inv(h_sq * T0 + MSwithin/n_reference)
     # calculate means of background data
     means_z = TLM_calc_means(X, y)
