@@ -111,11 +111,13 @@ class TestTLM(unittest.TestCase):
                                 , dtype="float", skiprows=1)
         log10_LR_R = np.array(log10_LR_R)
         log10_LR_P = []
+        # loop over all traces and calculate LLRs
         for label in np.unique(self.dataY[:, 0]):
             dataY_selected = self.dataY[self.dataY[:, 0] == label, 1:]
             log10_LR_P_temp = [TLM_predict_log10_LR(dataY_selected, self.dataX, self.MSwithin_P, self.h_sq_P, \
                                           self.T0_P, self.dataZ[:, 1:], self.dataZ[:, 0])]
             log10_LR_P = log10_LR_P + log10_LR_P_temp
+        # convert to np.array and prepare for comparison with R-result
         log10_LR_P = np.array(log10_LR_P)
         # replace too negative log10_LR_P since log10_LR_R gives -Inf after -300
         log10_LR_P[log10_LR_P < -300] = np.NINF
