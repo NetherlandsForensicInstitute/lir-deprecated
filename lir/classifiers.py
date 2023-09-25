@@ -203,7 +203,7 @@ def TLM_calc_log10_LR(U_h0, U_hn, ln_num, ln_den_left, ln_den_right, y):
     # get number of sources in y
     m = len(np.unique(y))
     # ln LR
-    ln_LR = np.log(m * np.linalg.det(U_hn)**(-0.5)/np.linalg.det(U_h0)**(-0.5)) + ln_num - ln_den_left - ln_den_right
+    ln_LR = np.log(m) - 0.5 * np.log(np.linalg.det(U_hn)) + 0.5 * np.log(np.linalg.det(U_h0)) + ln_num - ln_den_left - ln_den_right
     log10_LR = ln_LR/np.log(10)
     return log10_LR
 
