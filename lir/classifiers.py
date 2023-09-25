@@ -196,6 +196,7 @@ def TLM_calc_log10_LR(U_h0, U_hn, ln_num, ln_den_left, ln_den_right, y):
     """
         X_trace np.array of measurements of trace object, rows are repetitions, columns are variables
         U_h0, U_hn, np.arrays as calculated by TLM_calc_U
+        ln_num, ln_den_leftm ln_den_right: terms in big fraction in Bolck et al
         X: measurements of background data
         y: labels of background data
         returns: log10_LR, 10log of LR according to the LR-formula in Bolck et al.
