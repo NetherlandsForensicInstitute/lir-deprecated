@@ -86,6 +86,14 @@ class TestTLM(unittest.TestCase):
         ln_den_left_P = TLM_calc_ln_den_left(self.dataY[[0, 1, 2], 1:], U_hx_inv_P, self.dataZ[:, 1:], self.dataZ[:, 0])
         np.testing.assert_almost_equal(ln_den_left_R, ln_den_left_P, decimal=14)
 
+    def test_ln_den_right(self):
+        ln_den_right_R = np.loadtxt(os.path.join(self.dirname, 'data/TLM/R_output/ln_den.csv'), delimiter=","
+                               , dtype="float", skiprows=1)
+        U_h0_inv_P, U_hx_inv_P, U_hn_inv_P = TLM_calc_U(self.dataY[[0, 1, 2], 1:], self.dataX, self.MSwithin_P,
+                                                        self.h_sq_P, self.T0_P)
+        ln_den_right_P = TLM_calc_ln_den_left(self.dataX, U_h0_inv_P, self.dataZ[:, 1:], self.dataZ[:, 0])
+        np.testing.assert_almost_equal(ln_den_right_R, ln_den_right_P, decimal=14)
+
 
 if __name__ == '__main__':
     unittest.main()
