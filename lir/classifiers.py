@@ -81,7 +81,7 @@ def TLM_calc_T0(X, y):
     group_means = grouped.transform('mean')
     # calculate covariance
     cov_between = group_means.cov(ddof=0)
-    # get Sum of Squares Between between
+    # get Sum of Squares Between
     SSQ_between = cov_between * len(group_means)
 
     # calculate T0: prior between variance
