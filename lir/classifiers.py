@@ -210,12 +210,13 @@ def TLM_calc_log10_LR(U_h0, U_hn, ln_num, ln_den_left, ln_den_right, y):
 def TLM_predict_log10_LR(X_trace, X_ref, MSwithin, h_sq, T0, X, y):
     """
         X_trace np.array of measurements of trace object, rows are repetitions, columns are variables
-        U_h0_inv, np.arrays as calculated by TLM_calc_U
+        X_ref np.array of measurements of reference object, rows are repetitions, columns are variables
+        MSwithin, h_sq, T0: calculated through TLM_fit functions
         X: measurements of background data
         y: labels of background data
         returns: ln_den_right, natural log of right denominator term of the LR-formula in Bolck et al.
     """
-    # do intermediatr calculations
+    # do intermediate calculations
     U_h0_inv, U_hx_inv, U_hn_inv, U_h0, U_hn = TLM_calc_U(X_trace, X_ref, MSwithin, h_sq, T0)
     mu_h = TLM_calc_mu_h(X_ref, MSwithin, T0, h_sq, X, y)
     ln_num = TLM_calc_ln_num(X_trace, X_ref, U_hx_inv, U_hn_inv, mu_h, X, y)
