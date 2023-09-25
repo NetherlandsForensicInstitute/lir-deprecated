@@ -2,7 +2,8 @@ import csv
 import os
 import unittest
 import numpy as np
-from lir.classifiers import TLM_calc_MSwithin, TLM_calc_means, TLM_calc_h_sq, TLM_calc_T0, TLM_calc_U, TLM_calc_mu_h
+from lir.classifiers import TLM_calc_MSwithin, TLM_calc_means, TLM_calc_h_sq, TLM_calc_T0, TLM_calc_U, TLM_calc_mu_h, \
+    TLM_calc_ln_num
 
 
 class TestTLM(unittest.TestCase):
@@ -47,26 +48,36 @@ class TestTLM(unittest.TestCase):
     def test_U_h0(self):
         U_h0_R = np.loadtxt(os.path.join(self.dirname, 'data/TLM/R_output/U_h0.csv'), delimiter=","
                                , dtype="float", skiprows=1)
-        U_h0_P =  TLM_calc_U(self.dataY[[0, 1, 2], 1:], self.dataX, self.MSwithin_P, self.h_sq_P, self.T0_P)[0]
-        np.testing.assert_almost_equal(U_h0_P, U_h0_R, decimal=16)
+        U_h0_inv_P = TLM_calc_U(self.dataY[[0, 1, 2], 1:], self.dataX, self.MSwithin_P, self.h_sq_P, self.T0_P)[0]
+        np.testing.assert_almost_equal(U_h0_inv_P, np.linalg.inv(U_h0_R), decimal=11)
 
     def test_U_hx(self):
         U_hx_R  = np.loadtxt(os.path.join(self.dirname, 'data/TLM/R_output/U_hx.csv'), delimiter=","
                                , dtype="float", skiprows=1)
-        U_hx_P = TLM_calc_U(self.dataY[[0, 1, 2], 1:], self.dataX, self.MSwithin_P, self.h_sq_P, self.T0_P)[1]
-        np.testing.assert_almost_equal(U_hx_P, U_hx_R, decimal=16)
+        U_hx_inv_P = TLM_calc_U(self.dataY[[0, 1, 2], 1:], self.dataX, self.MSwithin_P, self.h_sq_P, self.T0_P)[1]
+        np.testing.assert_almost_equal(U_hx_inv_P, np.linalg.inv(U_hx_R), decimal=11)
 
     def test_U_hn(self):
         U_hn_R  = np.loadtxt(os.path.join(self.dirname, 'data/TLM/R_output/U_hn.csv'), delimiter=","
                                , dtype="float", skiprows=1)
-        U_hn_P = TLM_calc_U(self.dataY[[0, 1, 2], 1:], self.dataX, self.MSwithin_P, self.h_sq_P, self.T0_P)[2]
-        np.testing.assert_almost_equal(U_hn_P, U_hn_R, decimal=15)
+        U_hn_inv_P = TLM_calc_U(self.dataY[[0, 1, 2], 1:], self.dataX, self.MSwithin_P, self.h_sq_P, self.T0_P)[2]
+        np.testing.assert_almost_equal(U_hn_inv_P, np.linalg.inv(U_hn_R), decimal=8)
 
     def test_mu_h(self):
         mu_h_R  = np.loadtxt(os.path.join(self.dirname, 'data/TLM/R_output/mu_h.csv'), delimiter=","
                                , dtype="float", skiprows=1)
         mu_h_P = TLM_calc_mu_h(self.dataX, self.MSwithin_P, self.T0_P, self.h_sq_P, self.dataZ[:, 1:], self.dataZ[:, 0])
-        np.testing.assert_almost_equal(mu_h_P, mu_h_R, decimal=14)
+        np.testing.assert_almost_equal(mu_h_P.transpose(), mu_h_R, decimal=14)
+
+
+    def test_ln_num(self):
+        ln_num1_R = np.loadtxt(os.path.join(self.dirname, 'data/TLM/R_output/ln_num1.csv'), delimiter=","
+                            , dtype="float", skiprows=1)
+        U_h0_inv_P, U_hx_inv_P, U_hn_inv_P = TLM_calc_U(self.dataY[[0, 1, 2], 1:], self.dataX, self.MSwithin_P, self.h_sq_P, self.T0_P)
+        mu_h_P = TLM_calc_mu_h(self.dataX, self.MSwithin_P, self.T0_P, self.h_sq_P, self.dataZ[:, 1:], self.dataZ[:, 0])
+        ln_num_P = TLM_calc_ln_num(self.dataX, self.dataY[[0, 1, 2], 1:], U_hx_inv_P, U_hn_inv_P, mu_h_P, self.dataZ[:, 1:], self.dataZ[:, 0])
+        np.testing.assert_almost_equal(ln_num1_R, ln_num_P, decimal=14)
+
 
 if __name__ == '__main__':
     unittest.main()

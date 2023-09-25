@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 from sklearn.base import BaseEstimator
+from scipy.special import logsumexp
+
 
 '''Functions for model fit'''
 
@@ -96,7 +98,7 @@ def TLM_calc_U(X_tr, X_ref, MSwithin, h_sq, T0):
     X_tr np.array of measurements of trace object, rows are repetitions, columns are variables
     X_ref no.array of measurments of reference object, rows are repetitions, columns are variables
     MSwithin np.array: mean within covariance matrix, as calculated by TLM_clc_MSwithin
-    h_sq flout: square of kernel bandwith
+    h_sq float: square of kernel bandwith
     T0 np.array: between covariance matrix as calculated by TLM_calc_t0
     returns: U_h0, U_hx and U_hn, covariance matrices needed for LR calculation, one for trace, one for ref and
         one for bayesian update of reference means given KDE background means
@@ -106,20 +108,24 @@ def TLM_calc_U(X_tr, X_ref, MSwithin, h_sq, T0):
     n_reference = len(X_ref)
     # Calculate covariance matrices U_h0 and U_hx
     U_h0 = h_sq * T0 + MSwithin/n_trace
+    # take the inverse
+    U_h0_inv = np.linalg.inv(U_h0)
     U_hx = h_sq * T0 + MSwithin/n_reference
     # Take the inverse
     U_hx_inv = np.linalg.inv(U_hx)
     # Calculate T_hn
     T_hn = h_sq * T0 - np.matmul(np.matmul((h_sq * T0), U_hx_inv), (h_sq * T0))
-    # Culculate U_hn
+    # Calculate U_hn
     U_hn = T_hn + MSwithin / n_trace
-    return U_h0, U_hx, U_hn
+    # take the inverse
+    U_hn_inv = np.linalg.inv(U_hn)
+    return U_h0_inv, U_hx_inv, U_hn_inv
 
 def TLM_calc_mu_h(X_ref, MSwithin, T0, h_sq, X, y):
     """
-        X_ref no.array of measurments of reference object, rows are repetitions, columns are variables
+        X_ref np.array of measurements of reference object, rows are repetitions, columns are variables
         MSwithin = mean within covariance matrix, as calculated by TLM_clc_MSwithin
-        h_sq = square of kernel bandwith
+        h_sq = square of kernel bandwidth
         T0 = between covariance matrix as calculated by TLM_calc_t0
         X = measurements of background data
         returns: mu_h, bayesian update of reference mean given KDE background means
@@ -136,4 +142,29 @@ def TLM_calc_mu_h(X_ref, MSwithin, T0, h_sq, X, y):
     mu_h_1 = np.matmul(np.matmul(h_sq * T0, between_precision_X_ref_mean), mean_X_reference).reshape(-1,1)
     mu_h_2 = np.matmul(np.matmul(MSwithin/n_reference, between_precision_X_ref_mean), means_z.transpose())
     mu_h = mu_h_1 + mu_h_2
-    return mu_h
+    return mu_h.transpose()
+
+def TLM_calc_ln_num(X_trace, X_ref, U_hx_inv, U_hn_inv, mu_h, X, y):
+    """
+        X_trace np.array of measurements of trace object, rows are repetitions, columns are variables
+        X_ref np.array of measurements of reference object, rows are repetitions, columns are variables
+        U_hx_inv, U_hn_inv, np.arrays as calculated by TLM_calc_U
+        mu_h np.array with same dimensions as X, calculated by TLM_calc_mu_h
+        X: measurements of background data
+        y: labels of background data
+        returns: ln_num1, natural log of numerator of the LR-formula in Bolck et al.
+    """
+    # calculate mean of reference and trace measurements
+    mean_X_trace = np.mean(X_trace, axis=0).reshape(1,-1)
+    mean_X_reference = np.mean(X_ref, axis=0).reshape(1, -1)
+    # calculate means of background data
+    means_z = TLM_calc_means(X, y)
+    # calculate difference matrices
+    dif_trace = mean_X_trace - mu_h
+    dif_ref = mean_X_reference - means_z
+    # calculate matrix products and sums
+    ln_num_terms = -0.5 * np.sum(np.matmul(dif_trace, U_hn_inv) * dif_trace, axis=1) + \
+        -0.5 * np.sum(np.matmul(dif_ref, U_hx_inv) * dif_ref, axis=1)
+    # exponentiate, sum and take log again
+    ln_num = logsumexp(ln_num_terms)
+    return ln_num
