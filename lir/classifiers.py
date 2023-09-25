@@ -119,7 +119,7 @@ def TLM_calc_U(X_tr, X_ref, MSwithin, h_sq, T0):
     U_hn = T_hn + MSwithin / n_trace
     # take the inverse
     U_hn_inv = np.linalg.inv(U_hn)
-    return U_h0_inv, U_hx_inv, U_hn_inv
+    return U_h0_inv, U_hx_inv, U_hn_inv, U_h0, U_hn
 
 def TLM_calc_mu_h(X_ref, MSwithin, T0, h_sq, X, y):
     """
@@ -169,7 +169,7 @@ def TLM_calc_ln_num(X_trace, X_ref, U_hx_inv, U_hn_inv, mu_h, X, y):
     ln_num = logsumexp(ln_num_terms)
     return ln_num
 
-def TLM_calc_ln_den_left(X_ref, U_hx_inv, X, y):
+def TLM_calc_ln_den_term(X_ref_or_trace, U_inv, X, y):
     """
         X_trace np.array of measurements of trace object, rows are repetitions, columns are variables
         X_ref np.array of measurements of reference object, rows are repetitions, columns are variables
@@ -180,18 +180,19 @@ def TLM_calc_ln_den_left(X_ref, U_hx_inv, X, y):
         returns: ln_den_left, natural log of left denominator term of the LR-formula in Bolck et al.
     """
     # calculate mean of reference and trace measurements
-    mean_X_reference = np.mean(X_ref, axis=0).reshape(1, -1)
+    mean_X_ref_or_trace = np.mean(X_ref_or_trace, axis=0).reshape(1, -1)
     # calculate means of background data
     means_z = TLM_calc_means(X, y)
     # calculate difference matrices
-    dif_ref = mean_X_reference - means_z
+    dif_ref = mean_X_ref_or_trace - means_z
     # calculate matrix products and sums
-    ln_den_left_terms = -0.5 * np.sum(np.matmul(dif_ref, U_hx_inv) * dif_ref, axis=1)
+    ln_den_left_terms = -0.5 * np.sum(np.matmul(dif_ref, U_inv) * dif_ref, axis=1)
     # exponentiate, sum and take log again
     ln_den_left = logsumexp(ln_den_left_terms)
     return ln_den_left
 
-def TLM_calc_ln_den_right(X_trace, U_h0_inv, X, y):
+
+def TLM_calc_log10_LR(U_h0, U_hn, ln_num, ln_den_left, ln_den_right, y):
     """
         X_trace np.array of measurements of trace object, rows are repetitions, columns are variables
         U_h0_inv, np.arrays as calculated by TLM_calc_U
@@ -199,15 +200,10 @@ def TLM_calc_ln_den_right(X_trace, U_h0_inv, X, y):
         y: labels of background data
         returns: ln_den_right, natural log of right denominator term of the LR-formula in Bolck et al.
     """
-    # calculate mean of reference and trace measurements
-    mean_X_trace = np.mean(X_trace, axis=0).reshape(1,-1)
-    # calculate means of background data
-    means_z = TLM_calc_means(X, y)
-    # calculate difference matrices
-    dif_trace = mean_X_trace - means_z
-    # calculate matrix products and sums
-    ln_den_right_terms = -0.5 * np.sum(np.matmul(dif_trace, U_h0_inv) * dif_trace, axis=1)
-    # exponentiate, sum and take log again
-    ln_den_right = logsumexp(ln_den_right_terms)
-    return ln_den_right
+    # get number of sources in y
+    m = len(np.unique(y))
+    # ln LR
+    ln_LR = np.log(m * np.linalg.det(U_hn)**(-0.5)/np.linalg.det(U_h0)**(-0.5)) + ln_num - ln_den_left - ln_den_right
+    log10_LR = ln_LR/np.log(10)
+    return log10_LR
 
