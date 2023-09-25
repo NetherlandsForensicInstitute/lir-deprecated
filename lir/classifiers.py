@@ -186,10 +186,10 @@ def TLM_calc_ln_den_term(X_ref_or_trace, U_inv, X, y):
     # calculate difference matrices
     dif_ref = mean_X_ref_or_trace - means_z
     # calculate matrix products and sums
-    ln_den_left_terms = -0.5 * np.sum(np.matmul(dif_ref, U_inv) * dif_ref, axis=1)
+    ln_den_terms = -0.5 * np.sum(np.matmul(dif_ref, U_inv) * dif_ref, axis=1)
     # exponentiate, sum and take log again
-    ln_den_left = logsumexp(ln_den_left_terms)
-    return ln_den_left
+    ln_den_term = logsumexp(ln_den_terms)
+    return ln_den_term
 
 
 def TLM_calc_log10_LR(U_h0, U_hn, ln_num, ln_den_left, ln_den_right, y):
