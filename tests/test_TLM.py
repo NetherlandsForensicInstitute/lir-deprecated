@@ -3,7 +3,7 @@ import os
 import unittest
 import numpy as np
 from lir.classifiers import TLM_calc_MSwithin, TLM_calc_means, TLM_calc_h_sq, TLM_calc_T0, TLM_calc_U, TLM_calc_mu_h, \
-    TLM_calc_ln_num
+    TLM_calc_ln_num, TLM_calc_ln_den_left
 
 
 class TestTLM(unittest.TestCase):
@@ -77,6 +77,14 @@ class TestTLM(unittest.TestCase):
         mu_h_P = TLM_calc_mu_h(self.dataX, self.MSwithin_P, self.T0_P, self.h_sq_P, self.dataZ[:, 1:], self.dataZ[:, 0])
         ln_num_P = TLM_calc_ln_num(self.dataX, self.dataY[[0, 1, 2], 1:], U_hx_inv_P, U_hn_inv_P, mu_h_P, self.dataZ[:, 1:], self.dataZ[:, 0])
         np.testing.assert_almost_equal(ln_num1_R, ln_num_P, decimal=14)
+
+    def test_ln_den_left(self):
+        ln_den_left_R = np.loadtxt(os.path.join(self.dirname, 'data/TLM/R_output/ln_num2.csv'), delimiter=","
+                               , dtype="float", skiprows=1)
+        U_h0_inv_P, U_hx_inv_P, U_hn_inv_P = TLM_calc_U(self.dataY[[0, 1, 2], 1:], self.dataX, self.MSwithin_P,
+                                                        self.h_sq_P, self.T0_P)
+        ln_den_left_P = TLM_calc_ln_den_left(self.dataY[[0, 1, 2], 1:], U_hx_inv_P, self.dataZ[:, 1:], self.dataZ[:, 0])
+        np.testing.assert_almost_equal(ln_den_left_R, ln_den_left_P, decimal=14)
 
 
 if __name__ == '__main__':

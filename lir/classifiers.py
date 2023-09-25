@@ -168,3 +168,25 @@ def TLM_calc_ln_num(X_trace, X_ref, U_hx_inv, U_hn_inv, mu_h, X, y):
     # exponentiate, sum and take log again
     ln_num = logsumexp(ln_num_terms)
     return ln_num
+
+def TLM_calc_ln_den_left(X_ref, U_hx_inv, X, y):
+    """
+        X_trace np.array of measurements of trace object, rows are repetitions, columns are variables
+        X_ref np.array of measurements of reference object, rows are repetitions, columns are variables
+        U_hx_inv, U_hn_inv, np.arrays as calculated by TLM_calc_U
+        mu_h np.array with same dimensions as X, calculated by TLM_calc_mu_h
+        X: measurements of background data
+        y: labels of background data
+        returns: ln_den_left, natural log of left denominator term of the LR-formula in Bolck et al.
+    """
+    # calculate mean of reference and trace measurements
+    mean_X_reference = np.mean(X_ref, axis=0).reshape(1, -1)
+    # calculate means of background data
+    means_z = TLM_calc_means(X, y)
+    # calculate difference matrices
+    dif_ref = mean_X_reference - means_z
+    # calculate matrix products and sums
+    ln_den_left_terms = -0.5 * np.sum(np.matmul(dif_ref, U_hx_inv) * dif_ref, axis=1)
+    # exponentiate, sum and take log again
+    ln_den_left = logsumexp(ln_den_left_terms)
+    return ln_den_left
