@@ -46,6 +46,7 @@ class TwoLevelModel:
         self.mean_covars = None
         self.means_per_source = None
         self.kernel_bandwidth_sq = None
+        self.between_covars = None
 
     def fit(self, X, y):
         """
@@ -61,6 +62,7 @@ class TwoLevelModel:
         self.mean_covars = self.fit_mean_covariance_within(self.X, self.y)
         self.means_per_source = self.fit_means_per_source(self.X, self.y)
         self.kernel_bandwidth_sq = self.fit_kernel_bandwidth_squared(self.X, self.y)
+        self.between_covars = self.fit_between_covariance(self.X, self.y)
 
 
     def transform(self, X):
@@ -123,10 +125,10 @@ class TwoLevelModel:
         X np.array of measurements, rows are sources/repetitions, columns are features
         y np 1d-array of labels. For each source a unique identifier (label). Repetitions get the same label.
         returns: squared kernel bandwidth for the kernel density estimator with a normal kernel
-        (using Silverman's rule for multivariate data)
+            (using Silverman's rule for multivariate data)
 
         Reference: 'Density estimation for statistics and data analysis', B.W. Silverman,
-        page 86 formula 4.14 with A(K) the second row in the table on page 87
+            page 86 formula 4.14 with A(K) the second row in the table on page 87
         """
         # get number of sources and number of features
         n_sources = len(np.unique(y))
@@ -135,3 +137,39 @@ class TwoLevelModel:
         kernel_bandwidth = (4 / ((n_features + 2) * n_sources)) ** (1 / (n_features + 4))
         kernel_bandwidth_sq = kernel_bandwidth ** 2
         return kernel_bandwidth_sq
+
+    def fit_between_covariance(self, X, y):
+        """
+        X np.array of measurements, rows are objects, columns are variables
+        y np 1d-array of labels. labels from {1, ..., n} with n the number of objects. Repetitions get the same label.
+        returns: estimated covariance of true mean of the features between sources in the population in a np.array
+            square matrix with number of features^2 as dimension
+        """
+
+        # use pandas functionality to allow easy calculation
+        df = pd.DataFrame(X, index=pd.Index(y, name="label"))
+        # group per source
+        grouped = df.groupby(axis='index', by='label')
+
+        # calculate kappa; kappa represents the "average" number of repetitions per source
+        # get the repetitions per source
+        reps = np.array(grouped.size()).reshape((-1, 1))
+        # calculate the sum of the repetitions squared and kappa
+        sum_reps_sq = sum(reps ** 2)
+        n_sources = len(reps)
+        kappa = float((reps.sum() - sum_reps_sq / reps.sum()) / (n_sources - 1))
+
+        # calculate sum_of_squares between
+        # substitute rows with their corresponding group means
+        group_means = grouped.transform('mean')
+        # calculate covariance of measurements
+        cov_between_measurement = group_means.cov(ddof=0)
+        # get Sum of Squares Between
+        SSQ_between = cov_between_measurement * len(group_means)
+
+        # calculate between covariance matrix
+        # Kappa converts within variance at measurement level to within variance at mean of source level and
+        #   scales the SSQ_between to a mean between variance
+        between_covars = (SSQ_between / (n_sources - 1) - self.mean_covars) / kappa
+        between_covars = between_covars.to_numpy()
+        return between_covars

@@ -32,5 +32,11 @@ class TestTwoLevelModel(unittest.TestCase):
         kernel_bandwidth_sq_P = self.two_level_model.fit_kernel_bandwidth_squared(self.data_train[:, 1:], self.data_train[:, 0])
         np.testing.assert_almost_equal(kernel_bandwidth_sq_P, kernel_bandwidth_sq_R, decimal=16)
 
+    def test_between_covars(self):
+        between_covars_R = np.loadtxt(os.path.join(self.dirname, 'data/TLM/R_output/T0.csv'), delimiter=","
+                               , dtype="float", skiprows=1)
+        between_covars_P = self.two_level_model.fit_between_covariance(self.data_train[:, 1:], self.data_train[:, 0])
+        np.testing.assert_almost_equal(between_covars_P, between_covars_R, decimal=15)
+
 if __name__ == '__main__':
     unittest.main()
