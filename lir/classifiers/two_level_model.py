@@ -35,21 +35,30 @@ class TwoLevelModel:
 
         sigma_within and h (and other parameters) are estimated from repeated measurements of background data.
         """
-        self.dummy_score = None
+        self.model_fitted = False
 
     def fit(self, X, y):
         """
         Construct the necessary matrices/scores/etc based on test data (X) so that we can predict a score later on.
         Store any calculated parameters in `self`.
         """
-        self.dummy_score = 0.5
+        self.model_fitted = True
 
     def transform(self, X):
         """
-        Predict log-odds scores, making use of the parameters constructed during `self.fit()` (which should
+        Predict odds scores, making use of the parameters constructed during `self.fit()` (which should
         now be stored in `self`).
         """
-        if self.dummy_score is None:
+        if self.model_fitted:
             raise ValueError("The model is not fitted; fit it before you use it for predicting")
-        return self.dummy_score
+        return self.model_fitted
+
+    def predict_proba(self, X):
+        """
+        Predict probability scores, making use of the parameters constructed during `self.fit()` (which should
+        now be stored in `self`).
+        """
+        if self.model_fitted:
+            raise ValueError("The model is not fitted; fit it before you use it for predicting")
+        return self.model_fitted
 
