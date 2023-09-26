@@ -41,17 +41,24 @@ class TwoLevelModel:
         sigma_within and h (and other parameters) are estimated from repeated measurements of background data.
         """
         self.model_fitted = False
-        self.mean_covars = None
+        self.X = None
         self.y = None
+        self.mean_covars = None
+        self.means_per_source = None
 
     def fit(self, X, y):
         """
+        X np.array of measurements, rows are sources/repetitions, columns are features
+        y np 1d-array of labels. For each source a unique identifier (label). Repetitions get the same label.
+
         Construct the necessary matrices/scores/etc based on test data (X) so that we can predict a score later on.
         Store any calculated parameters in `self`.
         """
         self.model_fitted = True
+        self.X = X
         self.y = y
-        self.mean_covars = self.fit_mean_covariance_within(X, self.y)
+        self.mean_covars = self.fit_mean_covariance_within(self.X, self.y)
+        self.means_per_source = self.fit_means_per_source(self.X, self.y)
 
 
     def transform(self, X):
@@ -94,3 +101,17 @@ class TwoLevelModel:
         grouped_by_feature = covars.groupby(["Feature"])
         mean_covars = np.array(grouped_by_feature.mean())
         return mean_covars
+
+    def fit_means_per_source(self, X, y):
+        """
+        X np.array of measurements, rows are sources/repetitions, columns are features
+        y np 1d-array of labels. For each source a unique identifier (label). Repetitions get the same label.
+        returns: means per source in a np.array matrix of size: number of sources * number of features
+        """
+        # use pandas functionality to allow easy calculation
+        # Group by source
+        df = pd.DataFrame(X, index=pd.Index(y, name="label"))
+        grouped = df.groupby(by='label')
+        # Calculate mean per source and convert to numpy array
+        means = np.array(grouped.mean())
+        return means
