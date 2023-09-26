@@ -83,7 +83,7 @@ class TwoLevelModel:
             raise ValueError("The model is not fitted; fit it before you use it for predicting")
         return self.model_fitted
 
-    def fit_mean_covariance_within(self, X, y):
+    def _fit_mean_covariance_within(self, X, y):
         """
         X np.array of measurements, rows are sources/repetitions, columns are features
         y np 1d-array of labels. labels from {1, ..., n} with n the number of sources. Repetitions get the same label.
@@ -106,7 +106,7 @@ class TwoLevelModel:
         mean_covars = np.array(grouped_by_feature.mean())
         return mean_covars
 
-    def fit_means_per_source(self, X, y):
+    def _fit_means_per_source(self, X, y):
         """
         X np.array of measurements, rows are sources/repetitions, columns are features
         y np 1d-array of labels. For each source a unique identifier (label). Repetitions get the same label.
@@ -120,7 +120,7 @@ class TwoLevelModel:
         means = np.array(grouped.mean())
         return means
 
-    def fit_kernel_bandwidth_squared(self, X, y):
+    def _fit_kernel_bandwidth_squared(self, X, y):
         """
         X np.array of measurements, rows are sources/repetitions, columns are features
         y np 1d-array of labels. For each source a unique identifier (label). Repetitions get the same label.
@@ -138,38 +138,42 @@ class TwoLevelModel:
         kernel_bandwidth_sq = kernel_bandwidth ** 2
         return kernel_bandwidth_sq
 
-    def fit_between_covariance(self, X, y):
+    def _fit_between_covariance(self, X, y):
+
         """
         X np.array of measurements, rows are objects, columns are variables
         y np 1d-array of labels. labels from {1, ..., n} with n the number of objects. Repetitions get the same label.
         returns: estimated covariance of true mean of the features between sources in the population in a np.array
             square matrix with number of features^2 as dimension
         """
+        # this function should not be called on its own, but only within 'fit'
+        if self.model_fitted == False:
+            raise ValueError("This function should only be used within 'fit'")
+        else:
+            # use pandas functionality to allow easy calculation
+            df = pd.DataFrame(X, index=pd.Index(y, name="label"))
+            # group per source
+            grouped = df.groupby(by='label')
 
-        # use pandas functionality to allow easy calculation
-        df = pd.DataFrame(X, index=pd.Index(y, name="label"))
-        # group per source
-        grouped = df.groupby(axis='index', by='label')
+            # calculate kappa; kappa represents the "average" number of repetitions per source
+            # get the repetitions per source
+            reps = np.array(grouped.size()).reshape((-1, 1))
+            # calculate the sum of the repetitions squared and kappa
+            sum_reps_sq = sum(reps ** 2)
+            n_sources = len(reps)
+            kappa = float((reps.sum() - sum_reps_sq / reps.sum()) / (n_sources - 1))
 
-        # calculate kappa; kappa represents the "average" number of repetitions per source
-        # get the repetitions per source
-        reps = np.array(grouped.size()).reshape((-1, 1))
-        # calculate the sum of the repetitions squared and kappa
-        sum_reps_sq = sum(reps ** 2)
-        n_sources = len(reps)
-        kappa = float((reps.sum() - sum_reps_sq / reps.sum()) / (n_sources - 1))
+            # calculate sum_of_squares between
+            # substitute rows with their corresponding group means
+            group_means = grouped.transform('mean')
+            # calculate covariance of measurements
+            cov_between_measurement = group_means.cov(ddof=0)
+            # get Sum of Squares Between
+            SSQ_between = cov_between_measurement * len(group_means)
 
-        # calculate sum_of_squares between
-        # substitute rows with their corresponding group means
-        group_means = grouped.transform('mean')
-        # calculate covariance of measurements
-        cov_between_measurement = group_means.cov(ddof=0)
-        # get Sum of Squares Between
-        SSQ_between = cov_between_measurement * len(group_means)
-
-        # calculate between covariance matrix
-        # Kappa converts within variance at measurement level to within variance at mean of source level and
-        #   scales the SSQ_between to a mean between variance
-        between_covars = (SSQ_between / (n_sources - 1) - self.mean_covars) / kappa
-        between_covars = between_covars.to_numpy()
-        return between_covars
+            # calculate between covariance matrix
+            # Kappa converts within variance at measurement level to within variance at mean of source level and
+            #   scales the SSQ_between to a mean between variance
+            between_covars = (SSQ_between / (n_sources - 1) - self.mean_covars) / kappa
+            between_covars = between_covars.to_numpy()
+            return between_covars
