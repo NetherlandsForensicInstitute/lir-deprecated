@@ -45,6 +45,7 @@ class TwoLevelModel:
         self.y = None
         self.mean_covars = None
         self.means_per_source = None
+        self.kernel_bandwidth_sq = None
 
     def fit(self, X, y):
         """
@@ -59,6 +60,7 @@ class TwoLevelModel:
         self.y = y
         self.mean_covars = self.fit_mean_covariance_within(self.X, self.y)
         self.means_per_source = self.fit_means_per_source(self.X, self.y)
+        self.kernel_bandwidth_sq = self.fit_kernel_bandwidth_squared(self.X, self.y)
 
 
     def transform(self, X):
@@ -115,3 +117,21 @@ class TwoLevelModel:
         # Calculate mean per source and convert to numpy array
         means = np.array(grouped.mean())
         return means
+
+    def fit_kernel_bandwidth_squared(self, X, y):
+        """
+        X np.array of measurements, rows are sources/repetitions, columns are features
+        y np 1d-array of labels. For each source a unique identifier (label). Repetitions get the same label.
+        returns: squared kernel bandwidth for the kernel density estimator with a normal kernel
+        (using Silverman's rule for multivariate data)
+
+        Reference: 'Density estimation for statistics and data analysis', B.W. Silverman,
+        page 86 formula 4.14 with A(K) the second row in the table on page 87
+        """
+        # get number of sources and number of features
+        n_sources = len(np.unique(y))
+        n_features = X.shape[1]
+        # calculate kernel bandwidth and square it, using Silverman's rule for multivariate data
+        kernel_bandwidth = (4 / ((n_features + 2) * n_sources)) ** (1 / (n_features + 4))
+        kernel_bandwidth_sq = kernel_bandwidth ** 2
+        return kernel_bandwidth_sq

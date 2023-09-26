@@ -26,5 +26,11 @@ class TestTwoLevelModel(unittest.TestCase):
         means_train_P = self.two_level_model.fit_means_per_source(self.data_train[:, 1:], self.data_train[:, 0])
         np.testing.assert_almost_equal(means_train_P, means_train_R, decimal=14)
 
+    def test_kernel_bandwidth_sq(self):
+        kernel_bandwidth_sq_R = np.loadtxt(os.path.join(self.dirname, 'data/TLM/R_output/h2.csv'), delimiter=","
+                               , dtype="float", skiprows=1)
+        kernel_bandwidth_sq_P = self.two_level_model.fit_kernel_bandwidth_squared(self.data_train[:, 1:], self.data_train[:, 0])
+        np.testing.assert_almost_equal(kernel_bandwidth_sq_P, kernel_bandwidth_sq_R, decimal=16)
+
 if __name__ == '__main__':
     unittest.main()
