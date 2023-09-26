@@ -2,7 +2,7 @@ import csv
 import os
 import unittest
 import numpy as np
-from lir.classifiers import TLM_calc_MSwithin
+from lir.classifiers import TLM_calc_mean_covariance_within
 
 class TestTLM(unittest.TestCase):
     dirname = os.path.dirname(__file__)
@@ -12,7 +12,7 @@ class TestTLM(unittest.TestCase):
     def test_MSwithin(self):
         MSwithin_R = np.loadtxt(os.path.join(self.dirname, 'data/TLM/R_output/MSwithin.csv'), delimiter=","
                                 , dtype="float", skiprows=1)
-        MSwithin_P = TLM_calc_MSwithin(self.dataZ[:,1:], self.dataZ[:,0])
+        MSwithin_P = TLM_calc_mean_covariance_within(self.dataZ[:,1:], self.dataZ[:,0])
         np.testing.assert_almost_equal(MSwithin_P, MSwithin_R, decimal=17)
 
 
