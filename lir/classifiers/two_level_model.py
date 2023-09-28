@@ -47,6 +47,13 @@ class TwoLevelModel:
         self.means_per_source = None
         self.kernel_bandwidth_sq = None
         self.between_covars = None
+        self.covars_trace = None
+        self.covars_ref = None
+        self.covars_trace_update = None
+        self.covars_trace_inv = None
+        self.covars_ref_inv = None
+        self.covars_trace_update_inv = None
+        self.updated_ref_mean = None
 
     def fit(self, X, y):
         """
@@ -79,9 +86,18 @@ class TwoLevelModel:
         Predict probability scores, making use of the parameters constructed during `self.fit()` (which should
         now be stored in `self`).
         """
+
+
+    def _predict_ln_LR_scores(self, X_trace, X_ref):
+        """
+        Predict ln_LR scores, making use of the parameters constructed during `self.fit()` (which should
+                now be stored in `self`).
+        """
         if self.model_fitted == False:
             raise ValueError("The model is not fitted; fit it before you use it for predicting")
-        return self.model_fitted
+        else:
+            covars_trace, covars_trace_update, covars_ref, covars_trace_inv, covars_trace_update_inv, covars_ref_inv = self._predict_covariances_trace_ref(self, X_trace, X_ref)
+            updated_ref_mean = self._predict_updated_ref_mean(self, X_ref, covars_ref_inv)
 
     def _fit_mean_covariance_within(self, X, y):
         """
@@ -180,18 +196,19 @@ class TwoLevelModel:
 
     def _predict_covariances_trace_ref(self, X_trace, X_ref):
         """
-        X_tr np.array of measurements of trace object, rows are repetitions, columns are variables
-        X_ref no.array of measurments of reference object, rows are repetitions, columns are variables
+        X_tr np.array of measurements of trace object, rows are repetitions, columns are features
+        X_ref np.array of measurements of reference object, rows are repetitions, columns features
         returns: covariance matrices of the trace and reference data and their respective inverses needed for
-        LR calculation; covars_trace is the covariance matrix for the trace data (U_h0),
-            covars_trace_update is the covariance matrix for the trace data with a bayesian update of reference means
-            given KDE background means (U_hn),
-            covars_ref is the covariance matrix for the reference data (U_hx),
+        LR calculation;
+            covars_trace is the covariance matrix for the trace data given a KDE background mean (U_h0),
+            covars_trace_update is the covariance matrix for the trace mean with a bayesian update of reference mean
+            given a KDE background mean (U_hn),
+            covars_ref is the covariance matrix for the reference data given a KDE background mean (U_hx),
             covars_trace_inv is the inverse of covars_trace,
             covars_trace_update_inv is the inverse of covars_trace_update,
             covars_ref_inv is the inverse of covars_ref
         """
-        # this function should not be called on its own,'
+        # this function should not be called on its own,
         if self.model_fitted == False:
             raise ValueError("This function should only be used within 'fit'")
 
@@ -214,4 +231,20 @@ class TwoLevelModel:
         covars_trace_update = T_hn + self.mean_within_covars / n_trace
         # take the inverse
         covars_trace_update_inv = np.linalg.inv(covars_trace_update)
+        # question: covars_trace redundant to return?
         return covars_trace, covars_trace_update, covars_ref, covars_trace_inv, covars_trace_update_inv, covars_ref_inv
+
+    def _predict_updated_ref_mean(self, X_ref, covars_ref_inv):
+        """
+        X_ref np.array of measurements of reference object, rows are repetitions, columns features
+        returns: mu_h, bayesian update of reference mean given KDE background means
+        """
+        # calculate number of reference measurements
+        n_reference = len(X_ref)
+        # calculate mean of reference measurements
+        mean_X_reference = np.mean(X_ref, axis=0)
+        # calculate the two terms for mu_h and add, , see Bolck et al
+        mu_h_1 = np.matmul(np.matmul(self.kernel_bandwidth_sq * self.between_covars, covars_ref_inv), mean_X_reference).reshape(-1, 1)
+        mu_h_2 = np.matmul(np.matmul(self.mean_within_covars / n_reference, covars_ref_inv), self.means_per_source.transpose())
+        updated_ref_mean_T = mu_h_1 + mu_h_2
+        return updated_ref_mean_T.transpose()
