@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from scipy.special import logsumexp
 
 
 class TwoLevelModel:
@@ -237,14 +238,42 @@ class TwoLevelModel:
     def _predict_updated_ref_mean(self, X_ref, covars_ref_inv):
         """
         X_ref np.array of measurements of reference object, rows are repetitions, columns features
-        returns: mu_h, bayesian update of reference mean given KDE background means
+        returns: updated_ref_mean, bayesian update of reference mean given KDE background means
         """
         # calculate number of reference measurements
         n_reference = len(X_ref)
         # calculate mean of reference measurements
         mean_X_reference = np.mean(X_ref, axis=0)
-        # calculate the two terms for mu_h and add, , see Bolck et al
+        # calculate the two terms for mu_h and add, see Bolck et al
         mu_h_1 = np.matmul(np.matmul(self.kernel_bandwidth_sq * self.between_covars, covars_ref_inv), mean_X_reference).reshape(-1, 1)
         mu_h_2 = np.matmul(np.matmul(self.mean_within_covars / n_reference, covars_ref_inv), self.means_per_source.transpose())
         updated_ref_mean_T = mu_h_1 + mu_h_2
-        return updated_ref_mean_T.transpose()
+        updated_ref_mean = updated_ref_mean_T.transpose()
+        return updated_ref_mean
+
+    def _predict_ln_num(self, X_trace, X_ref, covars_ref_inv, covars_trace_update_inv, updated_ref_mean):
+        """
+        See Bolck et al formulain appendix. The formula consists of three sum_terms (and some other terms). The numerator sum term is calculated here.
+        The numerator is based on the product of two Gaussion PDFs.
+        The first PDF: ref_mean ~ N(background_mean, U_hx).
+        The second PDF: trace_mean ~ N(updated_ref_mean, U_hn).
+        In this function log of the PDF is taken (so the exponentiation is left out and the product becomes a sum).
+
+        X_trace np.array of measurements of trace object, rows are repetitions, columns are variables
+        X_ref np.array of measurements of reference object, rows are repetitions, columns are variables
+        covars_ref_inv, covars_trace_update_inv, np.arrays as calculated by _predict_covariances_trace_ref
+        updated_ref_mean np.array with same dimensions as X, calculated by _predict_updated_ref_mean
+        returns: ln_num1, natural log of numerator of the LR-formula in Bolck et al.
+        """
+        # calculate mean of reference and trace measurements
+        mean_X_trace = np.mean(X_trace, axis=0).reshape(1, -1)
+        mean_X_reference = np.mean(X_ref, axis=0).reshape(1, -1)
+        # calculate difference matrices
+        dif_trace = mean_X_trace - updated_ref_mean
+        dif_ref = mean_X_reference - self.means_per_source
+        # calculate matrix products and sums
+        ln_num_terms = -0.5 * np.sum(np.matmul(dif_trace, covars_trace_update_inv) * dif_trace, axis=1) + \
+                       -0.5 * np.sum(np.matmul(dif_ref, covars_ref_inv) * dif_ref, axis=1)
+        # exponentiate, sum and take log again
+        ln_num = logsumexp(ln_num_terms)
+        return ln_num

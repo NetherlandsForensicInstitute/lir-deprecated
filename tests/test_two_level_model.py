@@ -123,6 +123,23 @@ class Test_TwoLevelModel_predict_functions(unittest.TestCase):
         # test
         np.testing.assert_almost_equal(updated_ref_mean_P.transpose(), updated_ref_mean_R, decimal=13)
 
+    def test_ln_num(self):
+        ln_num1_R = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/ln_num1.csv'), delimiter=","
+                            , dtype="float", skiprows=1)
+
+        # load precalculated parameters that have already been predicted and are necessarry input for current test
+        covars_ref = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/U_hx.csv'), delimiter=","
+                            , dtype="float", skiprows=1)
+        covars_ref_inv = np.linalg.inv(covars_ref)
+        covars_trace_update = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/U_hn.csv'), delimiter=","
+                            , dtype="float", skiprows=1)
+        covars_trace_update_inv = np.linalg.inv(covars_trace_update)
+        updated_ref_mean_T = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/mu_h.csv'), delimiter=","
+                            , dtype="float", skiprows=1)
+        updated_ref_mean = updated_ref_mean_T.transpose()
+
+        ln_num_P = self.two_level_model._predict_ln_num(self.data_tr[[0, 1, 2], 1:], self.data_ref, covars_ref_inv, covars_trace_update_inv, updated_ref_mean)
+        np.testing.assert_almost_equal(ln_num1_R, ln_num_P, decimal=14)
 
 if __name__ == '__main__':
     unittest.main()
