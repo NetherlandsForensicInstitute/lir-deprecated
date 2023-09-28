@@ -64,10 +64,10 @@ class Test_TwoLevelModel_predict_functions(unittest.TestCase):
     two_level_model.model_fitted = True
 
     def test_U_h0(self):
-        U_h0_R = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/U_h0.csv'), delimiter=","
+        covars_ref_R = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/U_h0.csv'), delimiter=","
                                , dtype="float", skiprows=1)
-        U_h0_inv_P = self.two_level_model._predict_U(self.data_train[[0, 1, 2], 1:], self.data_ref)[0]
-        np.testing.assert_almost_equal(U_h0_inv_P, np.linalg.inv(U_h0_R), decimal=10)
+        covars_ref_P = self.two_level_model._predict_covariances_trace_ref(self.data_train[[0, 1, 2], 1:], self.data_ref)[0]
+        np.testing.assert_almost_equal(covars_ref_P, covars_ref_R, decimal=15)
 
 
 if __name__ == '__main__':

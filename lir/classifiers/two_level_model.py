@@ -59,10 +59,10 @@ class TwoLevelModel:
         self.model_fitted = True
         self.X = X
         self.y = y
-        self.mean_within_covars = self.fit_mean_covariance_within(self.X, self.y)
-        self.means_per_source = self.fit_means_per_source(self.X, self.y)
-        self.kernel_bandwidth_sq = self.fit_kernel_bandwidth_squared(self.X, self.y)
-        self.between_covars = self.fit_between_covariance(self.X, self.y)
+        self.mean_within_covars = self._fit_mean_covariance_within(self.X, self.y)
+        self.means_per_source = self._fit_means_per_source(self.X, self.y)
+        self.kernel_bandwidth_sq = self._fit_kernel_bandwidth_squared(self.X, self.y)
+        self.between_covars = self._fit_between_covariance(self.X, self.y)
 
 
     def transform(self, X):
@@ -161,7 +161,7 @@ class TwoLevelModel:
             # calculate the sum of the repetitions squared and kappa
             sum_reps_sq = sum(reps ** 2)
             n_sources = len(reps)
-            kappa = float((reps.sum() - sum_reps_sq / reps.sum()) / (n_sources - 1))
+            kappa = ((reps.sum() - sum_reps_sq / reps.sum()) / (n_sources - 1)).item()
 
             # calculate sum_of_squares between
             # substitute rows with their corresponding group means
@@ -178,35 +178,40 @@ class TwoLevelModel:
             between_covars = between_covars.to_numpy()
             return between_covars
 
-    def _predict_U(self, X_tr, X_ref):
+    def _predict_covariances_trace_ref(self, X_trace, X_ref):
         """
         X_tr np.array of measurements of trace object, rows are repetitions, columns are variables
         X_ref no.array of measurments of reference object, rows are repetitions, columns are variables
-        MSwithin np.array: mean within covariance matrix, as calculated by TLM_clc_MSwithin
-        h_sq float: square of kernel bandwith
-        T0 np.array: between covariance matrix as calculated by TLM_calc_t0
-        returns: U_h0_inv, U_hx_inv, U_hn_inv, U_h0, U_hn, covariance matrices needed for LR calculation,
-            one for trace (U_h0), one for ref (U_hx) and one for bayesian update of reference means given
-            KDE background means (U_hn)
+        returns: covariance matrices of the trace and reference data and their respective inverses needed for
+        LR calculation; covars_trace is the covariance matrix for the trace data (U_h0),
+            covars_trace_update is the covariance matrix for the trace data with a bayesian update of reference means
+            given KDE background means (U_hn),
+            covars_ref is the covariance matrix for the reference data (U_hx),
+            covars_trace_inv is the inverse of covars_trace,
+            covars_trace_update_inv is the inverse of covars_trace_update,
+            covars_ref_inv is the inverse of covars_ref
         """
         # this function should not be called on its own,'
         if self.model_fitted == False:
             raise ValueError("This function should only be used within 'fit'")
 
-        # calculate number of trace and reference measurements
-        n_trace = len(X_tr)
+        # Number of trace and reference measurements
+        n_trace = len(X_trace)
         n_reference = len(X_ref)
-        # Calculate covariance matrices U_h0 and U_hx
-        U_h0 = self.kernel_bandwidth_sq * self.between_covars + self.mean_within_covars / n_trace
-        # take the inverse
-        U_h0_inv = np.linalg.inv(U_h0)
-        U_hx = self.kernel_bandwidth_sq * self.between_covars + self.mean_within_covars / n_reference
-        # Take the inverse
-        U_hx_inv = np.linalg.inv(U_hx)
+        # Calculate covariance matrix for the trace data, given the training data (U_h0)
+        covars_trace = self.kernel_bandwidth_sq * self.between_covars + self.mean_within_covars / n_trace
+        # Calculate covariance matrix for the reference data, given the training data (U_hx)
+        covars_ref = self.kernel_bandwidth_sq * self.between_covars + self.mean_within_covars / n_reference
+        # take the inverses
+        covars_trace_inv = np.linalg.inv(covars_trace)
+        covars_ref_inv = np.linalg.inv(covars_ref)
         # Calculate T_hn
-        T_hn = self.kernel_bandwidth_sq * self.between_covars - np.matmul(np.matmul((self.kernel_bandwidth_sq * self.between_covars), U_hx_inv), (self.kernel_bandwidth_sq * self.between_covars))
-        # Calculate U_hn
-        U_hn = T_hn + self.mean_within_covars / n_trace
+        T_hn = self.kernel_bandwidth_sq * self.between_covars - \
+               np.matmul(np.matmul((self.kernel_bandwidth_sq * self.between_covars), covars_ref_inv),
+                         (self.kernel_bandwidth_sq * self.between_covars))
+        # Calculate covariance matrix for the trace data, given the training data and with a Bayesian update with
+        #   the reference data under Hp (U_hn)
+        covars_trace_update = T_hn + self.mean_within_covars / n_trace
         # take the inverse
-        U_hn_inv = np.linalg.inv(U_hn)
-        return U_h0_inv, U_hx_inv, U_hn_inv, U_h0, U_hn
+        covars_trace_update_inv = np.linalg.inv(covars_trace_update)
+        return covars_trace, covars_trace_update, covars_ref, covars_trace_inv, covars_trace_update_inv, covars_ref_inv
