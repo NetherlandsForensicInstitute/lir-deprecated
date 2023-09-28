@@ -632,21 +632,39 @@ class FourParameterLogisticCalibrator:
         return p
 
 
-class DummyCalibrator(BaseEstimator, TransformerMixin):
+class DummyProbabilityCalibrator(BaseEstimator, TransformerMixin):
     """
-    Calculates a likelihood ratio of a score value, provided it is from one of
-    two distributions. No calibration is applied. Instead, the score value is
-    interpreted as a posterior probability of the value being sampled from
-    class 1.
+    Dummy calibrator class which can be used to skip calibration. No
+    calibration is applied. Instead, a prior probability of 0.5 is assumed, and
+    the input values are interpreted as posterior probabilities. Under these
+    circumstances this class returns a likelihood ratio for each input value.
     """
 
     def fit(self, X, y=None, **fit_params):
         return self
 
-    def transform(self, X):
-        self.p0 = (1 - X)
-        self.p1 =  X
-        return to_odds(self.p1)
+    def transform(self, probabilities: np.ndarray):
+        self.p0 = (1 - probabilities)
+        self.p1 = probabilities
+        return to_odds(probabilities)
+
+
+class DummyLogOddsCalibrator(BaseEstimator, TransformerMixin):
+    """
+    Dummy calibrator class which can be used to skip calibration. No
+    calibration is applied. Instead, prior odds of 1 are assumed, and the input
+    values are interpreted as posterior odds. Under these circumstances this
+    class returns a likelihood ratio for each input value.
+    """
+
+    def fit(self, X, y=None, **fit_params):
+        return self
+
+    def transform(self, log_odds: np.ndarray):
+        odds = 10 ** log_odds
+        self.p1 = to_probability(odds)
+        self.p0 = 1 - self.p1
+        return odds
 
 
 class ELUBbounder(BaseEstimator, TransformerMixin):
