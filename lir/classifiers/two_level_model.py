@@ -44,7 +44,8 @@ class TwoLevelModel:
         self.model_fitted = False
         self.X = None
         self.y = None
-        n_sources = None
+        self.n_features_train = None
+        self.n_sources = None
         self.mean_within_covars = None
         self.means_per_source = None
         self.kernel_bandwidth_sq = None
@@ -73,6 +74,7 @@ class TwoLevelModel:
         self.kernel_bandwidth_sq = self._fit_kernel_bandwidth_squared(self.X, self.y)
         self.between_covars = self._fit_between_covariance(self.X, self.y)
         self.n_sources = self._fit_n_sources(self.y)
+        self.n_features_train = self._get_n_features(self.X)
 
 
     def transform(self, X_trace, X_ref):
@@ -105,6 +107,10 @@ class TwoLevelModel:
         """
         if self.model_fitted == False:
             raise ValueError("The model is not fitted; fit it before you use it for predicting")
+        elif self._get_n_features(X_trace) != self.n_features_train:
+            raise ValueError("The numberof features in the training data is different from the number of features in the trace")
+        elif self._get_n_features(X_ref) != self.n_features_train:
+            raise ValueError("The number of features in the training data is different from the number of features in the reference")
         else:
             covars_trace, covars_trace_update, covars_ref, covars_trace_inv, covars_trace_update_inv, covars_ref_inv = self._predict_covariances_trace_ref(X_trace, X_ref)
             updated_ref_mean = self._predict_updated_ref_mean(X_ref, covars_ref_inv)
@@ -115,6 +121,9 @@ class TwoLevelModel:
             log10_LR_score = self._predict_log10_LR_from_formula_Bolck(covars_trace, covars_trace_update, ln_num, ln_den_left, ln_den_right)
             return log10_LR_score
 
+    def _get_n_features(self, X):
+        n_features = X.shape[1]
+        return n_features
 
     def _fit_n_sources(self, y):
         """
@@ -172,10 +181,8 @@ class TwoLevelModel:
         Reference: 'Density estimation for statistics and data analysis', B.W. Silverman,
             page 86 formula 4.14 with A(K) the second row in the table on page 87
         """
-        # get number of sources and number of features
-        n_features = X.shape[1]
         # calculate kernel bandwidth and square it, using Silverman's rule for multivariate data
-        kernel_bandwidth = (4 / ((n_features + 2) * self.n_sources)) ** (1 / (n_features + 4))
+        kernel_bandwidth = (4 / ((self.n_features_train + 2) * self.n_sources)) ** (1 / (self.n_features_train + 4))
         kernel_bandwidth_sq = kernel_bandwidth ** 2
         return kernel_bandwidth_sq
 

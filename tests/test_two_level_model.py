@@ -17,6 +17,11 @@ class TestTwoLevelModel_fit_functions(unittest.TestCase):
         n_sources = self.two_level_model._fit_n_sources(self.data_train[:, 0])
         np.testing.assert_equal(n_sources, 659)
 
+
+    def test_n_features(self):
+        n_features = self.two_level_model._get_n_features(self.data_train[:, 1:])
+        np.testing.assert_equal(n_features, 10)
+
     def test_mean_covariance_within(self):
         mean_cov_within_R = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/MSwithin.csv'), delimiter=","
                                 , dtype="float", skiprows=1)
@@ -34,6 +39,7 @@ class TestTwoLevelModel_fit_functions(unittest.TestCase):
         kernel_bandwidth_sq_R = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/h2.csv'), delimiter=","
                                , dtype="float", skiprows=1)
         self.two_level_model.n_sources = 659
+        self.two_level_model.n_features_train = 10
         kernel_bandwidth_sq_P = self.two_level_model._fit_kernel_bandwidth_squared(self.data_train[:, 1:], self.data_train[:, 0])
         np.testing.assert_almost_equal(kernel_bandwidth_sq_P, kernel_bandwidth_sq_R, decimal=16)
 
@@ -62,6 +68,7 @@ class Test_TwoLevelModel_predict_functions(unittest.TestCase):
                        usecols=range(1, 12))
     # set or load output from fit function
     two_level_model.n_sources = 659
+    two_level_model.n_features_train = 10
     two_level_model.mean_within_covars = np.loadtxt(os.path.join(dirname, 'resources/two_level_model/R_output/MSwithin.csv'),
                                    delimiter=","
                                    , dtype="float", skiprows=1)
