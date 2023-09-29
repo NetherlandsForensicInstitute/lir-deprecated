@@ -2,12 +2,12 @@ import unittest
 import os
 import numpy as np
 
-from lir.classifiers.two_level_model import TwoLevelModel
+from lir.classifiers.two_level_model import TwoLevelModelNormalKDE
 
 
-class TestTwoLevelModel_fit_functions(unittest.TestCase):
+class TestTwoLevelModelNormalKDE_fit_functions(unittest.TestCase):
 
-    two_level_model = TwoLevelModel()
+    two_level_model = TwoLevelModelNormalKDE()
 
     dirname = os.path.dirname(__file__)
     data_train = np.loadtxt(os.path.join(dirname, 'resources/two_level_model/input/train_data.csv'), delimiter=",", dtype="float", skiprows=1,
@@ -53,8 +53,8 @@ class TestTwoLevelModel_fit_functions(unittest.TestCase):
         between_covars_P = self.two_level_model._fit_between_covariance(self.data_train[:, 1:], self.data_train[:, 0])
         np.testing.assert_almost_equal(between_covars_P, between_covars_R, decimal=15)
 
-class Test_TwoLevelModel_predict_functions(unittest.TestCase):
-    two_level_model = TwoLevelModel()
+class Test_TwoLevelModelNormalKDE_predict_functions(unittest.TestCase):
+    two_level_model = TwoLevelModelNormalKDE()
 
     dirname = os.path.dirname(__file__)
     # load datasets
@@ -217,21 +217,21 @@ class Test_TwoLevelModel_predict_functions(unittest.TestCase):
         log10_LR_P[log10_LR_P < -300] = np.NINF
         np.testing.assert_almost_equal(log10_LR_R, log10_LR_P, decimal=10)
 
-    class Test_TwoLevelModel_fit_and_predict_functions(unittest.TestCase):
-        two_level_model = TwoLevelModel()
+class Test_TwoLevelModelNormalKDE_fit_and_predict_functions(unittest.TestCase):
+    two_level_model = TwoLevelModelNormalKDE()
 
-        dirname = os.path.dirname(__file__)
-        # load datasets
-        data_train = np.loadtxt(os.path.join(dirname, 'resources/two_level_model/input/train_data.csv'), delimiter=",",
-                                dtype="float", skiprows=1,
-                                usecols=range(1, 12))
-        y = data_train[:, 0]
-        data_ref = np.loadtxt(os.path.join(dirname, 'resources/two_level_model/input/reference_data.csv'),
-                              delimiter=",", dtype="float", skiprows=1,
-                              usecols=range(1, 11))
-        data_tr = np.loadtxt(os.path.join(dirname, 'resources/two_level_model/input/trace_data.csv'), delimiter=",",
-                             dtype="float", skiprows=1,
-                             usecols=range(1, 12))
+    dirname = os.path.dirname(__file__)
+    # load datasets
+    data_train = np.loadtxt(os.path.join(dirname, 'resources/two_level_model/input/train_data.csv'), delimiter=",",
+                            dtype="float", skiprows=1,
+                            usecols=range(1, 12))
+    y = data_train[:, 0]
+    data_ref = np.loadtxt(os.path.join(dirname, 'resources/two_level_model/input/reference_data.csv'),
+                          delimiter=",", dtype="float", skiprows=1,
+                          usecols=range(1, 11))
+    data_tr = np.loadtxt(os.path.join(dirname, 'resources/two_level_model/input/trace_data.csv'), delimiter=",",
+                         dtype="float", skiprows=1,
+                         usecols=range(1, 12))
     def test_fit_and_predict_log10_LR_score(self):
         # load in ground truth LLRs and instantiate calculated LLRs list
         log10_LR_R = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/log10_MLRs.csv'),
@@ -240,7 +240,7 @@ class Test_TwoLevelModel_predict_functions(unittest.TestCase):
         log10_LR_R = np.array(log10_LR_R)
         log10_LR_P = []
         # fit model
-        self.two_level_model.fit(self.data_train[:,1:], self.y)
+        self.two_level_model.fit(self.data_train[:, 1:], self.y)
         # loop over all traces and predict LLRs
         for label in np.unique(self.data_tr[:, 0]):
             data_tr_selected = self.data_tr[self.data_tr[:, 0] == label, 1:]

@@ -3,7 +3,7 @@ import numpy as np
 from scipy.special import logsumexp
 
 
-class TwoLevelModel:
+class TwoLevelModelNormalKDE:
     def __init__(self):
         """
         An implementation of the two-level model as outlined in FSI191(2009)42 by Bolck et al. "Different likelihood ratio approaches to evaluate the strength of evidence of
@@ -69,12 +69,13 @@ class TwoLevelModel:
         self.model_fitted = True
         self.X = X
         self.y = y
+        self.n_sources = self._fit_n_sources(self.y)
+        self.n_features_train = self._get_n_features(self.X)
         self.mean_within_covars = self._fit_mean_covariance_within(self.X, self.y)
         self.means_per_source = self._fit_means_per_source(self.X, self.y)
         self.kernel_bandwidth_sq = self._fit_kernel_bandwidth_squared(self.X, self.y)
         self.between_covars = self._fit_between_covariance(self.X, self.y)
-        self.n_sources = self._fit_n_sources(self.y)
-        self.n_features_train = self._get_n_features(self.X)
+
 
 
     def transform(self, X_trace, X_ref):
