@@ -75,25 +75,33 @@ class TwoLevelModel:
         self.n_sources = self._fit_n_sources(self.y)
 
 
-    def transform(self, X):
+    def transform(self, X_trace, X_ref):
         """
         Predict odds scores, making use of the parameters constructed during `self.fit()` (which should
         now be stored in `self`).
         """
-        if self.model_fitted == False:
-            raise ValueError("The model is not fitted; fit it before you use it for predicting")
-        return self.model_fitted
+        log10_LR_score = self._predict_log10_LR_score(X_trace, X_ref)
+        odds_score = 10**log10_LR_score
+        return odds_score
 
-    def predict_proba(self, X):
+    def predict_proba(self, X_trace, X_ref):
         """
         Predict probability scores, making use of the parameters constructed during `self.fit()` (which should
         now be stored in `self`).
         """
+        odds_score = self.transform(X_trace, X_ref)
+        p0  = odds_score/(1-odds_score)
+        p1 = 1 - p0
+        return np.array([p0, p1])
 
-    def _predict_ln_LR_scores(self, X_trace, X_ref):
+    def _predict_log10_LR_score(self, X_trace, X_ref):
         """
         Predict ln_LR scores, making use of the parameters constructed during `self.fit()` (which should
                 now be stored in `self`).
+
+        X_trace np.array of measurements of trace object, rows are repetitions, columns are variables
+        X_ref np.array of measurements of reference object, rows are repetitions, columns are variables
+        returns: log10_LR_score, log10 LR according to the two_level_model in Bolck et al.
         """
         if self.model_fitted == False:
             raise ValueError("The model is not fitted; fit it before you use it for predicting")
@@ -101,6 +109,12 @@ class TwoLevelModel:
             covars_trace, covars_trace_update, covars_ref, covars_trace_inv, covars_trace_update_inv, covars_ref_inv = self._predict_covariances_trace_ref(X_trace, X_ref)
             updated_ref_mean = self._predict_updated_ref_mean(X_ref, covars_ref_inv)
             ln_num = self._predict_ln_num(X_trace, X_ref, covars_ref_inv, covars_trace_update_inv, updated_ref_mean)
+            ln_den_left = self._predict_ln_den_term(X_ref, covars_ref_inv)
+            ln_den_right = self._predict_ln_den_term(X_trace, covars_trace_inv)
+            # calculate log10_LR
+            log10_LR_score = self._predict_log10_LR_from_formula_Bolck(covars_trace, covars_trace_update, ln_num, ln_den_left, ln_den_right)
+            return log10_LR_score
+
 
     def _fit_n_sources(self, y):
         """

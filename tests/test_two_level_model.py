@@ -81,26 +81,26 @@ class Test_TwoLevelModel_predict_functions(unittest.TestCase):
     def test_U_h0(self):
         covars_trace_R = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/U_h0.csv'), delimiter=","
                                , dtype="float", skiprows=1)
-        covars_trace_P = self.two_level_model._predict_covariances_trace_ref(self.data_train[[0, 1, 2], 1:], self.data_ref)[0]
+        covars_trace_P = self.two_level_model._predict_covariances_trace_ref(self.data_train[[0, 1], 1:], self.data_ref)[0]
         np.testing.assert_almost_equal(covars_trace_P, covars_trace_R, decimal=15)
 
     def test_U_hn(self):
         covars_trace_update_R  = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/U_hn.csv'), delimiter=","
                                , dtype="float", skiprows=1)
-        covars_trace_update_P = self.two_level_model._predict_covariances_trace_ref(self.data_train[[0, 1, 2], 1:], self.data_ref)[1]
+        covars_trace_update_P = self.two_level_model._predict_covariances_trace_ref(self.data_train[[0, 1], 1:], self.data_ref)[1]
         np.testing.assert_almost_equal(covars_trace_update_P, covars_trace_update_R, decimal=15)
 
     def test_U_hx(self):
         covars_ref_R  = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/U_hx.csv'), delimiter=","
                                , dtype="float", skiprows=1)
-        covars_ref_P = self.two_level_model._predict_covariances_trace_ref(self.data_train[[0, 1, 2], 1:], self.data_ref)[2]
+        covars_ref_P = self.two_level_model._predict_covariances_trace_ref(self.data_train[[0, 1], 1:], self.data_ref)[2]
         np.testing.assert_almost_equal(covars_ref_P, covars_ref_R, decimal=15)
 
     def test_U_h0_inv(self):
         covars_trace_R = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/U_h0.csv'), delimiter=","
                                , dtype="float", skiprows=1)
         covars_trace_inv_P = \
-        self.two_level_model._predict_covariances_trace_ref(self.data_train[[0, 1, 2], 1:], self.data_ref)[3]
+        self.two_level_model._predict_covariances_trace_ref(self.data_train[[0, 1], 1:], self.data_ref)[3]
         np.testing.assert_almost_equal(np.linalg.inv(covars_trace_inv_P), covars_trace_R, decimal=15)
 
     def test_U_hn_inv(self):
@@ -108,13 +108,13 @@ class Test_TwoLevelModel_predict_functions(unittest.TestCase):
                                            delimiter=","
                                            , dtype="float", skiprows=1)
         covars_trace_update_inv_P = \
-        self.two_level_model._predict_covariances_trace_ref(self.data_train[[0, 1, 2], 1:], self.data_ref)[4]
+        self.two_level_model._predict_covariances_trace_ref(self.data_train[[0, 1], 1:], self.data_ref)[4]
         np.testing.assert_almost_equal(np.linalg.inv(covars_trace_update_inv_P), covars_trace_update_R, decimal=15)
 
     def test_U_hx_inv(self):
         covars_ref_R  = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/U_hx.csv'), delimiter=","
                                , dtype="float", skiprows=1)
-        covars_ref_inv_P = self.two_level_model._predict_covariances_trace_ref(self.data_train[[0, 1, 2], 1:], self.data_ref)[5]
+        covars_ref_inv_P = self.two_level_model._predict_covariances_trace_ref(self.data_train[[0, 1], 1:], self.data_ref)[5]
         np.testing.assert_almost_equal(np.linalg.inv(covars_ref_inv_P), covars_ref_R, decimal=15)
 
     def test_mu_h(self):
@@ -145,7 +145,7 @@ class Test_TwoLevelModel_predict_functions(unittest.TestCase):
                             , dtype="float", skiprows=1)
         updated_ref_mean = updated_ref_mean_T.transpose()
         # calculate test object and compare
-        ln_num_P = self.two_level_model._predict_ln_num(self.data_tr[[0, 1, 2], 1:], self.data_ref, covars_ref_inv, covars_trace_update_inv, updated_ref_mean)
+        ln_num_P = self.two_level_model._predict_ln_num(self.data_tr[[0, 1], 1:], self.data_ref, covars_ref_inv, covars_trace_update_inv, updated_ref_mean)
         np.testing.assert_almost_equal(ln_num_P, ln_num1_R, decimal=14)
 
     def test_ln_den_left(self):
@@ -167,7 +167,7 @@ class Test_TwoLevelModel_predict_functions(unittest.TestCase):
                                 , dtype="float", skiprows=1)
         covars_trace_inv = np.linalg.inv(covars_trace)
         # calculate test object and compare
-        ln_den_right_P = self.two_level_model._predict_ln_den_term(self.data_tr[[0, 1, 2], 1:], covars_trace_inv)
+        ln_den_right_P = self.two_level_model._predict_ln_den_term(self.data_tr[[0, 1], 1:], covars_trace_inv)
         np.testing.assert_almost_equal(ln_den_right_P, ln_den_right_R, decimal=14)
 
     def test_log10_LR_from_formula_Bolck(self):
@@ -192,6 +192,114 @@ class Test_TwoLevelModel_predict_functions(unittest.TestCase):
         # calculate test object and compare
         log10_LR_P = self.two_level_model._predict_log10_LR_from_formula_Bolck(covars_trace, covars_trace_update, ln_num, ln_den_left, ln_den_right)
         np.testing.assert_almost_equal(log10_LR_P, log10_LR_R, decimal=13)
+
+    def test_predict_log10_LR_score(self):
+        log10_LR_R = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/log10_MLRs.csv'), delimiter=","
+                                , dtype="float", skiprows=1)
+        log10_LR_R = np.array(log10_LR_R)
+        log10_LR_P = []
+        # loop over all traces and calculate LLRs
+        for label in np.unique(self.data_tr[:, 0]):
+            data_tr_selected = self.data_tr[self.data_tr[:, 0] == label, 1:]
+            log10_LR_P_single = [self.two_level_model._predict_log10_LR_score(data_tr_selected, self.data_ref)]
+            # expand list
+            log10_LR_P = log10_LR_P + log10_LR_P_single
+        # convert to np.array and prepare for comparison with R-result
+        log10_LR_P = np.array(log10_LR_P)
+        # replace too negative log10_LR_P since log10_LR_R gives -Inf after -300
+        log10_LR_P[log10_LR_P < -300] = np.NINF
+        np.testing.assert_almost_equal(log10_LR_R, log10_LR_P, decimal=10)
+
+    class Test_TwoLevelModel_fit_and_predict_functions(unittest.TestCase):
+        two_level_model = TwoLevelModel()
+
+        dirname = os.path.dirname(__file__)
+        # load datasets
+        data_train = np.loadtxt(os.path.join(dirname, 'resources/two_level_model/input/train_data.csv'), delimiter=",",
+                                dtype="float", skiprows=1,
+                                usecols=range(1, 12))
+        y = data_train[:, 0]
+        data_ref = np.loadtxt(os.path.join(dirname, 'resources/two_level_model/input/reference_data.csv'),
+                              delimiter=",", dtype="float", skiprows=1,
+                              usecols=range(1, 11))
+        data_tr = np.loadtxt(os.path.join(dirname, 'resources/two_level_model/input/trace_data.csv'), delimiter=",",
+                             dtype="float", skiprows=1,
+                             usecols=range(1, 12))
+    def test_fit_and_predict_log10_LR_score(self):
+        # load in ground truth LLRs and instantiate calculated LLRs list
+        log10_LR_R = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/log10_MLRs.csv'),
+                                delimiter=","
+                                , dtype="float", skiprows=1)
+        log10_LR_R = np.array(log10_LR_R)
+        log10_LR_P = []
+        # fit model
+        self.two_level_model.fit(self.data_train[:,1:], self.y)
+        # loop over all traces and predict LLRs
+        for label in np.unique(self.data_tr[:, 0]):
+            data_tr_selected = self.data_tr[self.data_tr[:, 0] == label, 1:]
+            log10_LR_P_single = [self.two_level_model._predict_log10_LR_score(data_tr_selected, self.data_ref)]
+            # expand list
+            log10_LR_P = log10_LR_P + log10_LR_P_single
+        # convert to np.array and prepare for comparison with R-result
+        log10_LR_P = np.array(log10_LR_P)
+        # replace too negative log10_LR_P since log10_LR_R gives -Inf after -300
+        log10_LR_P[log10_LR_P < -300] = np.NINF
+        # compare
+        np.testing.assert_almost_equal(log10_LR_R, log10_LR_P, decimal=10)
+
+    def test_fit_and_transform(self):
+        # load in ground truth LLRs and instantiate calculated LLRs list
+        log10_LR_R = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/log10_MLRs.csv'),
+                                delimiter=","
+                                , dtype="float", skiprows=1)
+        odds_R = 10**log10_LR_R
+        odds_R = np.array(odds_R)
+        LRs_P = []
+        # fit model
+        self.two_level_model.fit(self.data_train[:, 1:], self.y)
+        # loop over all traces and predict LLRs
+        for label in np.unique(self.data_tr[:, 0]):
+            data_tr_selected = self.data_tr[self.data_tr[:, 0] == label, 1:]
+            LR_P_single = [self.two_level_model.transform(data_tr_selected, self.data_ref)]
+            # expand list
+            LRs_P = LRs_P + LR_P_single
+        # convert to np.array and prepare for comparison with R-result
+        LRs_P = np.array(LRs_P)
+        # create ground truth
+        Ground_truth = np.repeat(1.0, len(LRs_P))
+        Ground_truth[odds_R == 0] = float('nan')
+        # replace 0's by float('nan')
+        odds_R[odds_R == 0 ] = float('nan')
+        # compare
+        np.testing.assert_almost_equal(LRs_P/odds_R, Ground_truth, decimal=10)
+
+    def test_fit_and_predict_proba(self):
+        # load in ground truth LLRs and instantiate calculated LLRs list
+        log10_LR_R = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/log10_MLRs.csv'),
+                                delimiter=","
+                                , dtype="float", skiprows=1)
+        odds_R = 10**log10_LR_R
+        odds_R = np.array(odds_R)
+        p1_R = odds_R/(1+odds_R)
+        p0_R = 1 - p1_R
+        probs_R = np.array((p0_R, p1_R))
+        LRs_P = []
+        # fit model
+        self.two_level_model.fit(self.data_train[:, 1:], self.y)
+        # loop over all traces and predict LLRs
+        for label in np.unique(self.data_tr[:, 0]):
+            data_tr_selected = self.data_tr[self.data_tr[:, 0] == label, 1:]
+            LR_P_single = [self.two_level_model.transform(data_tr_selected, self.data_ref)]
+            # expand list
+            LRs_P = LRs_P + LR_P_single
+        # convert to np.array and prepare for comparison with R-result
+        LRs_P = np.array(LRs_P)
+        p1_P = LRs_P / (1 + LRs_P)
+        p0_P = 1 - p1_P
+        probs_P = np.array((p0_P, p1_P))
+        # compare
+        np.testing.assert_almost_equal(probs_P, probs_R, decimal=19)
+
 
 if __name__ == '__main__':
     unittest.main()
