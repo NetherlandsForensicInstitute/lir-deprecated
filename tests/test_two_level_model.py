@@ -13,6 +13,10 @@ class TestTwoLevelModel_fit_functions(unittest.TestCase):
     data_train = np.loadtxt(os.path.join(dirname, 'resources/two_level_model/input/train_data.csv'), delimiter=",", dtype="float", skiprows=1,
                        usecols=range(1, 12))
 
+    def test_n_sources(self):
+        n_sources = self.two_level_model._fit_n_sources(self.data_train[:, 0])
+        np.testing.assert_equal(n_sources, 659)
+
     def test_mean_covariance_within(self):
         mean_cov_within_R = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/MSwithin.csv'), delimiter=","
                                 , dtype="float", skiprows=1)
@@ -29,6 +33,7 @@ class TestTwoLevelModel_fit_functions(unittest.TestCase):
     def test_kernel_bandwidth_sq(self):
         kernel_bandwidth_sq_R = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/h2.csv'), delimiter=","
                                , dtype="float", skiprows=1)
+        self.two_level_model.n_sources = 659
         kernel_bandwidth_sq_P = self.two_level_model._fit_kernel_bandwidth_squared(self.data_train[:, 1:], self.data_train[:, 0])
         np.testing.assert_almost_equal(kernel_bandwidth_sq_P, kernel_bandwidth_sq_R, decimal=16)
 
@@ -50,11 +55,13 @@ class Test_TwoLevelModel_predict_functions(unittest.TestCase):
     data_train = np.loadtxt(os.path.join(dirname, 'resources/two_level_model/input/train_data.csv'), delimiter=",",
                             dtype="float", skiprows=1,
                             usecols=range(1, 12))
+    y = data_train[:,0]
     data_ref = np.loadtxt(os.path.join(dirname, 'resources/two_level_model/input/reference_data.csv'), delimiter=",", dtype="float", skiprows=1,
                        usecols=range(1, 11))
     data_tr = np.loadtxt(os.path.join(dirname, 'resources/two_level_model/input/trace_data.csv'), delimiter=",", dtype="float", skiprows=1,
                        usecols=range(1, 12))
-    # load output from fit function
+    # set or load output from fit function
+    two_level_model.n_sources = 659
     two_level_model.mean_within_covars = np.loadtxt(os.path.join(dirname, 'resources/two_level_model/R_output/MSwithin.csv'),
                                    delimiter=","
                                    , dtype="float", skiprows=1)
@@ -137,9 +144,54 @@ class Test_TwoLevelModel_predict_functions(unittest.TestCase):
         updated_ref_mean_T = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/mu_h.csv'), delimiter=","
                             , dtype="float", skiprows=1)
         updated_ref_mean = updated_ref_mean_T.transpose()
-
+        # calculate test object and compare
         ln_num_P = self.two_level_model._predict_ln_num(self.data_tr[[0, 1, 2], 1:], self.data_ref, covars_ref_inv, covars_trace_update_inv, updated_ref_mean)
-        np.testing.assert_almost_equal(ln_num1_R, ln_num_P, decimal=14)
+        np.testing.assert_almost_equal(ln_num_P, ln_num1_R, decimal=14)
+
+    def test_ln_den_left(self):
+        ln_den_left_R = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/ln_num2.csv'), delimiter=","
+                               , dtype="float", skiprows=1)
+        # load precalculated parameters that have already been predicted and are necessarry input for current test
+        covars_ref = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/U_hx.csv'), delimiter=","
+                                , dtype="float", skiprows=1)
+        covars_ref_inv = np.linalg.inv(covars_ref)
+        # calculate test object and compare
+        ln_den_left_P = self.two_level_model._predict_ln_den_term(self.data_ref, covars_ref_inv)
+        np.testing.assert_almost_equal(ln_den_left_P, ln_den_left_R, decimal=14)
+
+    def test_ln_den_right(self):
+        ln_den_right_R = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/ln_den.csv'), delimiter=","
+                               , dtype="float", skiprows=1)
+        # load precalculated parameters that have already been predicted and are necessarry input for current test
+        covars_trace = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/U_h0.csv'), delimiter=","
+                                , dtype="float", skiprows=1)
+        covars_trace_inv = np.linalg.inv(covars_trace)
+        # calculate test object and compare
+        ln_den_right_P = self.two_level_model._predict_ln_den_term(self.data_tr[[0, 1, 2], 1:], covars_trace_inv)
+        np.testing.assert_almost_equal(ln_den_right_P, ln_den_right_R, decimal=14)
+
+    def test_log10_LR_from_formula_Bolck(self):
+        log10_LR_R = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/log10_MLRs.csv'), delimiter=","
+                                , dtype="float", skiprows=1)[0]
+        # load precalculated parameters that have already been predicted and are necessarry input for current test
+        covars_trace = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/U_h0.csv'),
+                                  delimiter=","
+                                  , dtype="float", skiprows=1)
+        covars_trace_update = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/U_hn.csv'),
+                                  delimiter=","
+                                  , dtype="float", skiprows=1)
+        ln_num = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/ln_num1.csv'),
+                                  delimiter=","
+                                  , dtype="float", skiprows=1)
+        ln_den_left = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/ln_num2.csv'),
+                            delimiter=","
+                            , dtype="float", skiprows=1)
+        ln_den_right = np.loadtxt(os.path.join(self.dirname, 'resources/two_level_model/R_output/ln_den.csv'),
+                            delimiter=","
+                            , dtype="float", skiprows=1)
+        # calculate test object and compare
+        log10_LR_P = self.two_level_model._predict_log10_LR_from_formula_Bolck(covars_trace, covars_trace_update, ln_num, ln_den_left, ln_den_right)
+        np.testing.assert_almost_equal(log10_LR_P, log10_LR_R, decimal=13)
 
 if __name__ == '__main__':
     unittest.main()

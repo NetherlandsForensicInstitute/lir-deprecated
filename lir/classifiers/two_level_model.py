@@ -44,6 +44,7 @@ class TwoLevelModel:
         self.model_fitted = False
         self.X = None
         self.y = None
+        n_sources = None
         self.mean_within_covars = None
         self.means_per_source = None
         self.kernel_bandwidth_sq = None
@@ -71,6 +72,7 @@ class TwoLevelModel:
         self.means_per_source = self._fit_means_per_source(self.X, self.y)
         self.kernel_bandwidth_sq = self._fit_kernel_bandwidth_squared(self.X, self.y)
         self.between_covars = self._fit_between_covariance(self.X, self.y)
+        self.n_sources = self._fit_n_sources(self.y)
 
 
     def transform(self, X):
@@ -88,7 +90,6 @@ class TwoLevelModel:
         now be stored in `self`).
         """
 
-
     def _predict_ln_LR_scores(self, X_trace, X_ref):
         """
         Predict ln_LR scores, making use of the parameters constructed during `self.fit()` (which should
@@ -97,8 +98,18 @@ class TwoLevelModel:
         if self.model_fitted == False:
             raise ValueError("The model is not fitted; fit it before you use it for predicting")
         else:
-            covars_trace, covars_trace_update, covars_ref, covars_trace_inv, covars_trace_update_inv, covars_ref_inv = self._predict_covariances_trace_ref(self, X_trace, X_ref)
-            updated_ref_mean = self._predict_updated_ref_mean(self, X_ref, covars_ref_inv)
+            covars_trace, covars_trace_update, covars_ref, covars_trace_inv, covars_trace_update_inv, covars_ref_inv = self._predict_covariances_trace_ref(X_trace, X_ref)
+            updated_ref_mean = self._predict_updated_ref_mean(X_ref, covars_ref_inv)
+            ln_num = self._predict_ln_num(X_trace, X_ref, covars_ref_inv, covars_trace_update_inv, updated_ref_mean)
+
+    def _fit_n_sources(self, y):
+        """
+        y np 1d-array of labels. labels from {1, ..., n} with n the number of sources. Repetitions get the same label.
+        returns: number of sources in y (int)
+        """
+        # get number of sources in y
+        n_sources = len(np.unique(y))
+        return n_sources
 
     def _fit_mean_covariance_within(self, X, y):
         """
@@ -148,10 +159,9 @@ class TwoLevelModel:
             page 86 formula 4.14 with A(K) the second row in the table on page 87
         """
         # get number of sources and number of features
-        n_sources = len(np.unique(y))
         n_features = X.shape[1]
         # calculate kernel bandwidth and square it, using Silverman's rule for multivariate data
-        kernel_bandwidth = (4 / ((n_features + 2) * n_sources)) ** (1 / (n_features + 4))
+        kernel_bandwidth = (4 / ((n_features + 2) * self.n_sources)) ** (1 / (n_features + 4))
         kernel_bandwidth_sq = kernel_bandwidth ** 2
         return kernel_bandwidth_sq
 
@@ -253,7 +263,7 @@ class TwoLevelModel:
 
     def _predict_ln_num(self, X_trace, X_ref, covars_ref_inv, covars_trace_update_inv, updated_ref_mean):
         """
-        See Bolck et al formulain appendix. The formula consists of three sum_terms (and some other terms). The numerator sum term is calculated here.
+        See Bolck et al formula in appendix. The formula consists of three sum_terms (and some other terms). The numerator sum term is calculated here.
         The numerator is based on the product of two Gaussion PDFs.
         The first PDF: ref_mean ~ N(background_mean, U_hx).
         The second PDF: trace_mean ~ N(updated_ref_mean, U_hn).
@@ -268,7 +278,7 @@ class TwoLevelModel:
         # calculate mean of reference and trace measurements
         mean_X_trace = np.mean(X_trace, axis=0).reshape(1, -1)
         mean_X_reference = np.mean(X_ref, axis=0).reshape(1, -1)
-        # calculate difference matrices
+        # calculate difference vectors (in matrix form)
         dif_trace = mean_X_trace - updated_ref_mean
         dif_ref = mean_X_reference - self.means_per_source
         # calculate matrix products and sums
@@ -277,3 +287,37 @@ class TwoLevelModel:
         # exponentiate, sum and take log again
         ln_num = logsumexp(ln_num_terms)
         return ln_num
+
+    def _predict_ln_den_term(self, X_ref_or_trace, covars_inv):
+        """
+        See Bolck et al formula in appendix. The formula consists of three sum_terms (and some other terms). A denominator sum term is calculated here.
+
+        X_ref_or_trace np.array of measurements of reference or trace object, rows are repetitions, columns are features
+        U_inv, np.array with respective covariance matrix as calculated by _predict_covariances_trace_ref
+        returns: ln_den, natural log of a denominator term of the LR-formula in Bolck et al.
+        """
+        # calculate mean of reference or trace measurements
+        mean_X_ref_or_trace = np.mean(X_ref_or_trace, axis=0).reshape(1, -1)
+        # calculate difference vectors (in matrix form)
+        dif_ref = mean_X_ref_or_trace - self.means_per_source
+        # calculate matrix products and sums
+        ln_den_terms = -0.5 * np.sum(np.matmul(dif_ref, covars_inv) * dif_ref, axis=1)
+        # exponentiate, sum and take log again
+        ln_den_term = logsumexp(ln_den_terms)
+        return ln_den_term
+
+    def _predict_log10_LR_from_formula_Bolck(self, covars_trace, covars_trace_update, ln_num, ln_den_left, ln_den_right):
+        """
+            X_trace np.array of measurements of trace object, rows are repetitions, columns are variables
+            covars_trace, covars_trace_update, np.arrays as calculated by _predict_covariances_trace_ref
+            ln_num, ln_den_left, ln_den_right: terms in big fraction in Bolck et al, as calculated by _predict_ln_num
+                and _predict_ln_den_term
+            returns: log10_LR_score, 10log of LR according to the LR-formula in Bolck et al.
+        """
+        # calculate ln LR_score and change base to 10log
+        ln_LR_score = np.log(self.n_sources) - 0.5 * np.log(np.linalg.det(covars_trace_update)) + \
+                      0.5 * np.log(np.linalg.det(covars_trace)) + ln_num - ln_den_left - ln_den_right
+        log10_LR_score = ln_LR_score / np.log(10)
+        return log10_LR_score
+
+
