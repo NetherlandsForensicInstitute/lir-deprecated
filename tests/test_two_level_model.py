@@ -3,14 +3,13 @@ from pathlib import Path
 
 import numpy as np
 
-from lir.classifiers.two_level_model import TwoLevelModelNormalKDE
-
+from lir.classifiers.two_level_model import TwoLevelModelNormalKDE, construct_3d_input
 
 input_path = Path('resources') / 'two_level_model' / 'input'
 output_path = Path('resources') / 'two_level_model' / 'R_output'
 
 data_train = np.loadtxt(input_path / 'train_data.csv', delimiter=",", dtype="float", skiprows=1, usecols=range(1, 12))
-data_ref = np.loadtxt(input_path / 'reference_data.csv', delimiter=",", dtype="float", skiprows=1, usecols=range(1, 11))
+data_ref = np.loadtxt(input_path / 'reference_data.csv', delimiter=",", dtype="float", skiprows=1, usecols=range(11))
 data_tr = np.loadtxt(input_path / 'trace_data.csv', delimiter=",", dtype="float", skiprows=1, usecols=range(1, 12))
 
 mean_cov_within_R = np.loadtxt(output_path / 'MSwithin.csv', delimiter=",", dtype="float", skiprows=1)
@@ -35,7 +34,7 @@ class TestTwoLevelModelNormalKDEFit(unittest.TestCase):
         np.testing.assert_equal(n_sources, 659)
 
     def test_n_features(self):
-        n_features = self.two_level_model._get_n_features(data_train[:, 1:])
+        n_features = self.two_level_model._get_n_features(data_train[:, 1:], feature_ix=1)
         np.testing.assert_equal(n_features, 10)
 
     def test_mean_covariance_within(self):
@@ -51,8 +50,7 @@ class TestTwoLevelModelNormalKDEFit(unittest.TestCase):
     def test_kernel_bandwidth_sq(self):
         self.two_level_model.n_sources = 659
         self.two_level_model.n_features_train = 10
-        kernel_bandwidth_sq_P = self.two_level_model._fit_kernel_bandwidth_squared(data_train[:, 1:],
-                                                                                   data_train[:, 0])
+        kernel_bandwidth_sq_P = self.two_level_model._fit_kernel_bandwidth_squared()
         np.testing.assert_almost_equal(kernel_bandwidth_sq_P, kernel_bandwidth_sq_R, decimal=16)
 
     def test_between_covars(self):
@@ -107,7 +105,7 @@ class TestTwoLevelModelNormalKDEPredict(unittest.TestCase):
     def test_mu_h(self):
         covars_ref_inv = np.linalg.inv(covars_ref_R)
 
-        updated_ref_mean_P = self.two_level_model._predict_updated_ref_mean(data_ref, covars_ref_inv)
+        updated_ref_mean_P = self.two_level_model._predict_updated_ref_mean(data_ref[:, 1:], covars_ref_inv)
         np.testing.assert_almost_equal(updated_ref_mean_P.transpose(), updated_ref_mean_R, decimal=13)
 
     def test_ln_num(self):
@@ -117,7 +115,7 @@ class TestTwoLevelModelNormalKDEPredict(unittest.TestCase):
         updated_ref_mean_T = updated_ref_mean_R.transpose()
 
         # calculate test object and compare
-        ln_num_P = self.two_level_model._predict_ln_num(data_tr[[0, 1], 1:], data_ref, covars_ref_inv,
+        ln_num_P = self.two_level_model._predict_ln_num(data_tr[[0, 1], 1:], data_ref[:, 1:], covars_ref_inv,
                                                         covars_trace_update_inv, updated_ref_mean_T)
         np.testing.assert_almost_equal(ln_num_P, ln_num1_R, decimal=14)
 
@@ -125,7 +123,7 @@ class TestTwoLevelModelNormalKDEPredict(unittest.TestCase):
         # load precalculated parameters that have already been predicted and are necessary input for current test
         covars_ref_inv = np.linalg.inv(covars_ref_R)
         # calculate test object and compare
-        ln_den_left_P = self.two_level_model._predict_ln_den_term(data_ref, covars_ref_inv)
+        ln_den_left_P = self.two_level_model._predict_ln_den_term(data_ref[:, 1:], covars_ref_inv)
         np.testing.assert_almost_equal(ln_den_left_P, ln_den_left_R, decimal=14)
 
     def test_ln_den_right(self):
@@ -142,20 +140,19 @@ class TestTwoLevelModelNormalKDEPredict(unittest.TestCase):
         np.testing.assert_almost_equal(log10_LR_P, log10_LR, decimal=13)
 
     def test_predict_log10_LR_score(self):
-        log10_LR = np.array(log10_LR_R)
-        log10_LR_P = []
 
-        for label in np.unique(data_tr[:, 0]):
-            data_tr_selected = data_tr[data_tr[:, 0] == label, 1:]
-            log10_LR_P_single = [self.two_level_model._predict_log10_LR_score(data_tr_selected, data_ref)]
-            log10_LR_P = log10_LR_P + log10_LR_P_single
+        data_tr_samples = [data_tr[data_tr[:, 0] == label, 1:] for label in np.unique(data_tr[:, 0])]
+        data_tr_reshaped = construct_3d_input(data_tr_samples)
 
-        log10_LR_P = np.array(log10_LR_P)
+        data_ref_samples = [data_ref[:, 1:] for i in data_tr_samples]
+        data_ref_reshaped = construct_3d_input(data_ref_samples)
+
+        log10_LR_P = self.two_level_model._predict_log10_LR_score(data_tr_reshaped, data_ref_reshaped)
 
         # replace too negative log10_LR_P since log10_LR_R gives -Inf after -300
         log10_LR_P[log10_LR_P < -300] = np.NINF
 
-        np.testing.assert_almost_equal(log10_LR, log10_LR_P, decimal=10)
+        np.testing.assert_almost_equal(np.array(log10_LR_R), log10_LR_P, decimal=10)
 
 
 class TestTwoLevelModelNormalKDEFitPredict(unittest.TestCase):
@@ -166,16 +163,17 @@ class TestTwoLevelModelNormalKDEFitPredict(unittest.TestCase):
     def test_fit_and_predict_log10_LR_score(self):
         # load in ground truth LLRs and instantiate calculated LLRs list
         log10_LR = np.array(log10_LR_R)
-        log10_LR_P = []
 
         self.two_level_model.fit(data_train[:, 1:], self.y)
 
-        for label in np.unique(data_tr[:, 0]):
-            data_tr_selected = data_tr[data_tr[:, 0] == label, 1:]
-            log10_LR_P_single = [self.two_level_model._predict_log10_LR_score(data_tr_selected, data_ref)]
-            log10_LR_P = log10_LR_P + log10_LR_P_single
+        data_tr_samples = [data_tr[data_tr[:, 0] == label, 1:] for label in np.unique(data_tr[:, 0])]
+        data_tr_reshaped = construct_3d_input(data_tr_samples)
 
-        log10_LR_P = np.array(log10_LR_P)
+        data_ref_samples = [data_ref[:,1:] for i in data_tr_samples]
+        data_ref_reshaped = construct_3d_input(data_ref_samples)
+
+        log10_LR_P = self.two_level_model._predict_log10_LR_score(data_tr_reshaped, data_ref_reshaped)
+
         # replace too negative log10_LR_P since log10_LR_R gives -Inf after -300
         log10_LR_P[log10_LR_P < -300] = np.NINF
 
@@ -183,18 +181,17 @@ class TestTwoLevelModelNormalKDEFitPredict(unittest.TestCase):
 
     def test_fit_and_transform(self):
         # load in ground truth LLRs and instantiate calculated LLRs list
-        odds_R = 10 ** log10_LR_R
-        odds_R = np.array(odds_R)
-        LRs_P = []
+        odds_R = np.array(10 ** log10_LR_R)
 
         self.two_level_model.fit(data_train[:, 1:], self.y)
 
-        for label in np.unique(data_tr[:, 0]):
-            data_tr_selected = data_tr[data_tr[:, 0] == label, 1:]
-            LR_P_single = [self.two_level_model.transform(data_tr_selected, data_ref)]
-            LRs_P = LRs_P + LR_P_single
+        data_tr_samples = [data_tr[data_tr[:, 0] == label, 1:] for label in np.unique(data_tr[:, 0])]
+        data_tr_reshaped = construct_3d_input(data_tr_samples)
 
-        LRs_P = np.array(LRs_P)
+        data_ref_samples = [data_ref[:, 1:] for i in data_tr_samples]
+        data_ref_reshaped = construct_3d_input(data_ref_samples)
+
+        LRs_P = self.two_level_model.transform(data_tr_reshaped, data_ref_reshaped)
 
         # create ground truth
         ground_truth = np.repeat(1.0, len(LRs_P))
@@ -204,21 +201,21 @@ class TestTwoLevelModelNormalKDEFitPredict(unittest.TestCase):
         np.testing.assert_almost_equal(LRs_P / odds_R, ground_truth, decimal=10)
 
     def test_fit_and_predict_proba(self):
-        # load in ground truth LLRs and instantiate calculated LLRs list
-        odds_R = 10 ** log10_LR_R
-        odds_R = np.array(odds_R)
+        # instantiate calculated LLRs list
+        odds_R = np.array(10 ** log10_LR_R)
         p1_R = odds_R / (1 + odds_R)
         p0_R = 1 - p1_R
         probs_R = np.array((p0_R, p1_R))
-        LRs_P = []
 
         self.two_level_model.fit(data_train[:, 1:], self.y)
 
-        for label in np.unique(data_tr[:, 0]):
-            data_tr_selected = data_tr[data_tr[:, 0] == label, 1:]
-            LR_P_single = [self.two_level_model.transform(data_tr_selected, data_ref)]
-            # expand list
-            LRs_P = LRs_P + LR_P_single
+        data_tr_samples = [data_tr[data_tr[:, 0] == label, 1:] for label in np.unique(data_tr[:, 0])]
+        data_tr_reshaped = construct_3d_input(data_tr_samples)
+
+        data_ref_samples = [data_ref[:, 1:] for i in data_tr_samples]
+        data_ref_reshaped = construct_3d_input(data_ref_samples)
+
+        LRs_P = self.two_level_model.transform(data_tr_reshaped, data_ref_reshaped)
 
         # prepare for comparison with R-result
         LRs_P = np.array(LRs_P)
