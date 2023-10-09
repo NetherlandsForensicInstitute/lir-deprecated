@@ -104,8 +104,6 @@ class TwoLevelModelNormalKDE:
         elif self._get_n_features(X_ref) != self.n_features_train:
             raise ValueError(
                 "The number of features in the training data is different from the number of features in the reference")
-        elif X_ref.shape != X_trace.shape:
-            raise ValueError("Shapes of traces and references do not match")
 
         log10lr = []
 
