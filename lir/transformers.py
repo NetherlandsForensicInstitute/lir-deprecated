@@ -89,15 +89,13 @@ class PercentileRankTransformer(sklearn.base.TransformerMixin):
 
     Fit:
     Expects:
-        - X is of shape (n, f) with n = number of measurements,
-        f = number of features
+        - `X` is a numpy array with one row per measurement
 
     Transform:
     Expects:
-        - X is of shape (m, f) with m = number of measurements,
-        f = number of features
+        - `X` is a numpy array with one row per measurement, same shape as in `fit()`
     Returns:
-        - rankings with shape (m, f)
+        - a numpy array with the same shape as `X`
     """
     def __init__(self):
         self.rank_functions = None
