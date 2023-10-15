@@ -175,39 +175,29 @@ def _devpavcalculator(lrs, pav_lrs, y):
 
     # order coordinates based on x's then y's and filtering out identical datapoints
     data = np.unique(np.array([Xen, PAVresult]), axis=1)
-    Xen = data[0,:]
-    Yen = data[1,:]
+    Xen = data[0, :]
+    Yen = data[1, :]
+
     # pathological cases
-    # check if min(Xen) = 0 or max(Xen) = Inf. First min(Xen)
-    # eerst van drie: als Xen[0] == 0 en Xen[len(Xen)-1] != Inf
-    if Xen[0] == 0 and Xen[-1] != np.inf:
-        if Yen[0] == 0 and Yen[1] != 0:
-            # dan loopt er een lijn in de PAV transform tot {inf, -Inf} evenwijdig aan de lijn y=x
-            return (np.absolute(np.log10(Xen[1]) - np.log10(Yen[1])))
-        else:
-            # dan is Yen[0] finite of Yen[1] gelijk 0 en loopt er ergens een horizontale lijn tot Log(Xen[0]) = -Inf. devPAV wordt oneindig
-            return np.inf
-        # tweede van drie: als Xen[len(Xen)-1] == Inf en Xen[0] != 0
-    elif Xen[0] != 0 and Xen[-1] == np.inf:
-        if Yen[len(Yen) - 1] == np.inf and Yen[len(Yen) - 2] != np.inf:
-            # dan loopt er een lijn in de PAV transform tot {inf, -Inf} evenwijdig aan de lijn y=x
-            return (np.absolute(np.log10(Xen[len(Xen) - 2]) - np.log10(Yen[len(Yen) - 2])))
-        else:
-            # dan is Yen[len(Yen] finite of Yen[len(Yen-2] gelijk inf en loopt er ergens een horizontale lijn tot Log(Xen[len(Xen)]) = Inf. devPAV wordt oneindig
-            return np.inf
-        # derde van drie: als Xen[0] = 0 en Xen[len(Xen)-1] == Inf
-    elif Xen[0] == 0 and Xen[-1] == np.inf:
-        if Yen[len(Yen) - 1] == np.inf and Yen[len(Yen) - 2] != np.inf and Yen[0] == 0 and Yen[1] != 0:
-            # dan zijn de lijnen aan beide uiteinden evenwijdig met de lijn Y=X. Het berekenen van devPAV is het gemiddelde van twee coordinaten
-            devPAV = ((np.absolute(np.log10(Xen[len(Xen) - 2]) - np.log10(Yen[len(Yen) - 2]))) + np.absolute(
-                np.log10(Xen[1]) - np.log10(Yen[1]))) / 2
-            return (devPAV)
-        else:
-            # dan loopt er ergens een horizontale lijn met oneindig bereik is is devPAV Inf
-            return np.inf
+    # first one of four: PAV-transform has a horizonal line to log(X) = -Inf as to log(X) = Inf
+    if Yen[0] != 0 and Yen[-1] != np.inf and Xen[-1] == np.inf and Xen[-1] == np.inf:
+        return np.nan
+
+    # second of four: PAV-transform has a horizontal line to log(X) = -Inf
+    if Yen[0] != 0 and Xen[0] == 0 and Yen[-1] == np.inf:
+        return np.Inf
+
+    # third of four: PAV-transform has a horizontal line to log(X) = Inf
+    if Yen[0] == 0 and Yen[-1] != np.inf and Xen[-1] == np.inf:
+        return np.NINF
+
+    # forth of four: PAV-transform has one vertical line from log(Y) = -Inf to log(Y) = Inn
+    wh = (Yen == 0) | (Yen == np.inf)
+    if np.sum(wh) == len(Yen):
+        return np.nan
 
     else:
-        # dan is het geen pathological case met rare X-waarden en kan devPAV berekend worden
+        # than it is not a  pathological case with weird X-values and devPAV can be calculated
 
         # filtering out -Inf or 0 Y's
         wh = (Yen > 0) & (Yen < np.inf)
