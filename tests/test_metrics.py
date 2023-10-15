@@ -42,97 +42,46 @@ class TestDevPAV_estimated(unittest.TestCase):
 
 class TestDevpavcalculator(unittest.TestCase):
     def test_devpavcalculator(self):
-        # #test on dummy data: only one finite PAV coordinate
-        LRssame = [0.01, 1, 10**3]
-        LRsdif = [0.001, 1, 10**2]
-        PAVresult = np.array([0, 10, float('inf'), 0, 10, float('inf')])
-        y = np.concatenate([np.ones(len(LRssame)), np.zeros(len(LRsdif))])
-        LRs = np.concatenate((LRssame, LRsdif))
-        self.assertAlmostEqual(_devpavcalculator(LRs, PAVresult, y), 1)
-
-        ### tests on data with LLRs -Inf or Inf
-        #test on dummy data: de PAV transform loopt tot {-inf, -inf}, evenwijdig aan lijn Y=X
+        ## four tests on pathological PAV-transforms
+        # 1 of 4: test on data where PAV-tranform has a horizontal line starting at log(X) = -Inf
         LRssame = (0, 1, 10**3)
         LRsdif = (0.001, 2, 10**2)
-        PAVresult = np.array([0, 10, float('inf'), 0.1, 20, float('inf')])
+        PAVresult = np.array([0.66666667, 0.66666667, np.inf, 0.66666667, 0.66666667, 0.66666667])
         y = np.concatenate([np.ones(len(LRssame)), np.zeros(len(LRsdif))])
         LRs = np.concatenate([LRssame, LRsdif])
-        self.assertAlmostEqual(_devpavcalculator(LRs, PAVresult, y), 2)
+        self.assertAlmostEqual(_devpavcalculator(LRs, PAVresult, y), np.inf)
 
 
-        #test on dummy data: de PAV transform loopt tot {-inf, -inf}, maar is daarvoor al -inf
-        LRssame = (0, 1, 10**3)
-        LRsdif = (0.001, 2, 10**2)
-        PAVresult = np.array([0, 10, float('inf'), 0, 20, float('inf')])
+        # 2 of 4: test on data where PAV-tranform has a horizontal line ending at log(X) = Inf
+        LRssame = (0.01, 1, 10**2)
+        LRsdif = (0.001, 2, float('inf'))
+        PAVresult = np.array([1.5, 1.5, 1.5, 0.,  1.5, 1.5])
         y = np.concatenate([np.ones(len(LRssame)), np.zeros(len(LRsdif))])
         LRs = np.concatenate([LRssame, LRsdif])
-        self.assertAlmostEqual(_devpavcalculator(LRs, PAVresult, y), float('inf'))
+        cal = lir.IsotonicCalibrator()
+        pavlrs = cal.fit_transform(LRs, y)
+        self.assertAlmostEqual(_devpavcalculator(LRs, PAVresult, y), np.NINF)
 
 
-        # #test on dummy data: de PAV transform loopt tot {-inf, finite}
-        LRssame = (0, 1, 10**3)
-        LRsdif = (0.001, 2, 10**2)
-        PAVresult = np.array([0.0001, 10, float('inf'), 0.001, 20, float('inf')])
+        # 3 of 4: test on data where PAV-tranform has a horizontal line starting at log(X) = -Inf, and another one ending at log(X) = Inf
+        LRssame = (0, 1, 10**3, 10**3, 10**3, 10**3)
+        LRsdif = (0.001, 2, float('inf'))
+        PAVresult = np.array([0.5, 0.5, 2.,  2.,  2.,  2.,  0.5, 0.5, 2.])
         y = np.concatenate([np.ones(len(LRssame)), np.zeros(len(LRsdif))])
         LRs = np.concatenate([LRssame, LRsdif])
-        self.assertAlmostEqual(_devpavcalculator(LRs, PAVresult, y), float('inf'))
+        pavlrs = cal.fit_transform(LRs, y)
+        self.assertEqual(np.isnan(_devpavcalculator(LRs, PAVresult, y)), True)
 
 
-        #test on dummy data: de PAV transform loopt tot {inf, inf}, evenwijdig aan lijn Y=X
-        LRssame = (0.01, 1, float('inf'))
-        LRsdif = (0.001, 2, 10**2)
-        PAVresult = np.array([0, 10, float('inf'), 0.1, 20, 100])
+        # 4 of 4: test on data where LRssame and LRsdif are completely seperated (and PAV result is a vertical line)
+        LRssame = (10**4, 10**5, float('inf'))
+        LRsdif = (0, 1, 10**3)
+        PAVresult = np.array([float('inf'), float('inf'),float('inf'), 0, 0, 0])
         y = np.concatenate([np.ones(len(LRssame)), np.zeros(len(LRsdif))])
         LRs = np.concatenate([LRssame, LRsdif])
-        self.assertAlmostEqual(_devpavcalculator(LRs, PAVresult, y), 0)
-
-
-        # #test on dummy data: de PAV transform loopt tot {inf, inf}, maar is daarvoor ook al inf
-        LRssame = (0.01, 1, float('inf'))
-        LRsdif = (0.001, 2, 10**2)
-        PAVresult = np.array([0, 10, float('inf'), 0, 20, float('inf')])
-        y = np.concatenate([np.ones(len(LRssame)), np.zeros(len(LRsdif))])
-        LRs = np.concatenate([LRssame, LRsdif])
-        self.assertAlmostEqual(_devpavcalculator(LRs, PAVresult, y), float('inf'))
-
-
-
-        # #test on dummy data: de PAV transform loopt tot {inf, finite}
-        LRssame = (0.01, 1, float('inf'))
-        LRsdif = (0.001, 2, 10**2)
-        PAVresult = np.array([0.0001, 10, 10**4, 0.001, 20, 10**3])
-        y = np.concatenate([np.ones(len(LRssame)), np.zeros(len(LRsdif))])
-        LRs = np.concatenate([LRssame, LRsdif])
-        self.assertAlmostEqual(_devpavcalculator(LRs, PAVresult, y), float('inf'))
-
-
-
-        # #test on dummy data: de PAV transform loopt tot {-inf, -inf} en tot {inf , inf} en is daartussen finite
-        LRssame = (0, 1, float('inf'))
-        LRsdif = (0.001, 2, 10**2)
-        PAVresult = np.array([0, 10, float('inf'), .1, 20, 1000])
-        y = np.concatenate([np.ones(len(LRssame)), np.zeros(len(LRsdif))])
-        LRs = np.concatenate([LRssame, LRsdif])
-        self.assertAlmostEqual(_devpavcalculator(LRs, PAVresult, y), 1.5)
-
-
-
-        # #test on dummy data: de PAV transform loopt tot {-inf, -inf} en tot {inf , inf} en is daarvoor al -Inf
-        LRssame = (0, 1, float('inf'))
-        LRsdif = (0.001, 2, 10**2)
-        PAVresult = np.array([0, 10, float('inf'), 0, 20, 1000])
-        y = np.concatenate([np.ones(len(LRssame)), np.zeros(len(LRsdif))])
-        LRs = np.concatenate([LRssame, LRsdif])
-        self.assertAlmostEqual(_devpavcalculator(LRs, PAVresult, y), float('inf'))
-
-
-        # #test on dummy data: de PAV transform loopt tot {-inf, -inf} en tot {inf , inf} en is daarvoor al Inf
-        LRssame = (0, 1, float('inf'))
-        LRsdif = (0.001, 2, 10**2)
-        PAVresult = np.array([0, 10, float('inf'), .1, 20, float('inf')])
-        y = np.concatenate([np.ones(len(LRssame)), np.zeros(len(LRsdif))])
-        LRs = np.concatenate([LRssame, LRsdif])
-        self.assertAlmostEqual(_devpavcalculator(LRs, PAVresult, y), float('inf'))
+        pavlrs = cal.fit_transform(LRs, y)
+        print(pavlrs)
+        self.assertEqual(np.isnan(_devpavcalculator(LRs, PAVresult, y)), True)
 
         ### tests on ordinary data
 
@@ -143,7 +92,6 @@ class TestDevpavcalculator(unittest.TestCase):
         y = np.concatenate([np.ones(len(LRssame)), np.zeros(len(LRsdif))])
         LRs = np.concatenate([LRssame, LRsdif])
         self.assertAlmostEqual(_devpavcalculator(LRs, PAVresult, y), 0.5)
-
 
 
         #test on dummy data 2, this PAV-transform crosses the identity line
