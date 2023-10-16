@@ -72,6 +72,9 @@ class TwoLevelModelNormalKDE:
         """
         Predict odds scores, making use of the parameters constructed during `self.fit()` (which should
         now be stored in `self`).
+
+        X_trace measurements of trace object. np.ndarray of shape (instances, repetitions_trace, features)
+        X_ref measurements of reference object. np.ndarray of shape (instances, repetitions_ref, features)
         """
         log10_LR_score = self._predict_log10_LR_score(X_trace, X_ref)
         odds_score = 10 ** log10_LR_score
@@ -81,6 +84,11 @@ class TwoLevelModelNormalKDE:
         """
         Predict probability scores, making use of the parameters constructed during `self.fit()` (which should
         now be stored in `self`).
+
+        X_trace measurements of trace object. np.ndarray of shape (instances, repetitions_trace, features)
+        X_ref measurements of reference object. np.ndarray of shape (instances, repetitions_ref, features)
+
+        return: np.array with dimensions shape (instances, 2)
         """
         odds_score = self.transform(X_trace, X_ref)
         p0 = odds_score / (1 - odds_score)
@@ -92,8 +100,8 @@ class TwoLevelModelNormalKDE:
         Predict ln_LR scores, making use of the parameters constructed during `self.fit()` (which should
                 now be stored in `self`).
 
-        X_trace measurements of trace object. np.ndarray of shape (instances, repetitions, features)
-        X_ref measurements of reference object. np.ndarray of shape (instances, repetitions, features)
+        X_trace measurements of trace object. np.ndarray of shape (instances, repetitions_trace, features)
+        X_ref measurements of reference object. np.ndarray of shape (instances, repetitions_ref, features)
         returns: log10_LR_scores according to the two_level_model in Bolck et al. np.ndarray of shape (instances,)
         """
         if not self.model_fitted:
