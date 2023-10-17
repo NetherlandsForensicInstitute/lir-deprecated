@@ -205,7 +205,7 @@ class TestTwoLevelModelNormalKDEFitPredict(unittest.TestCase):
         odds_R = np.array(10 ** log10_LR_R)
         p1_R = odds_R / (1 + odds_R)
         p0_R = 1 - p1_R
-        probs_R = np.array((p0_R, p1_R))
+        probs_R = np.array((p0_R, p1_R)).reshape(-1,2)
 
         self.two_level_model.fit(data_train[:, 1:], self.y)
 
@@ -215,15 +215,9 @@ class TestTwoLevelModelNormalKDEFitPredict(unittest.TestCase):
         data_ref_samples = [data_ref[:, 1:] for i in data_tr_samples]
         data_ref_reshaped = construct_3d_input(data_ref_samples)
 
-        LRs_P = self.two_level_model.transform(data_tr_reshaped, data_ref_reshaped)
+        probs_P = self.two_level_model.predict_proba(data_tr_reshaped, data_ref_reshaped)
 
-        # prepare for comparison with R-result
-        LRs_P = np.array(LRs_P)
-        p1_P = LRs_P / (1 + LRs_P)
-        p0_P = 1 - p1_P
-        probs_P = np.array((p0_P, p1_P))
-
-        np.testing.assert_almost_equal(probs_P, probs_R, decimal=19)
+        np.testing.assert_almost_equal(probs_P, probs_R, decimal=16)
 
 
 if __name__ == '__main__':

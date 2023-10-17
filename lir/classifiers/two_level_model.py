@@ -91,9 +91,9 @@ class TwoLevelModelNormalKDE:
         return: np.array with dimensions shape (instances, 2)
         """
         odds_score = self.transform(X_trace, X_ref)
-        p0 = odds_score / (1 - odds_score)
+        p0 = 1 / (1 + odds_score)
         p1 = 1 - p0
-        return np.array([p0, p1])
+        return np.array([p0, p1]).reshape(-1,2)
 
     def _predict_log10_LR_score(self, X_trace, X_ref):
         """
