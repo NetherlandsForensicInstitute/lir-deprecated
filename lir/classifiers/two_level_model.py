@@ -93,7 +93,7 @@ class TwoLevelModelNormalKDE:
         odds_score = self.transform(X_trace, X_ref)
         p0 = 1 / (1 + odds_score)
         p1 = 1 - p0
-        return np.array([p0, p1]).reshape(-1,2)
+        return np.array([p0, p1]).reshape(-1, 2)
 
     def _predict_log10_LR_score(self, X_trace, X_ref):
         """
