@@ -205,7 +205,7 @@ class TestTwoLevelModelNormalKDEFitPredict(unittest.TestCase):
         odds_R = np.array(10 ** log10_LR_R)
         p1_R = odds_R / (1 + odds_R)
         p0_R = 1 - p1_R
-        probs_R = np.array((p0_R, p1_R)).reshape(-1,2)
+        probs_R = np.transpose(np.array((p0_R, p1_R)))
 
         self.two_level_model.fit(data_train[:, 1:], self.y)
 
