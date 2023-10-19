@@ -1,29 +1,30 @@
 import unittest
-from pathlib import Path
+import os
 
 import numpy as np
 
 from lir.classifiers.two_level_model import TwoLevelModelNormalKDE, construct_3d_input
 
-input_path = Path('resources') / 'two_level_model' / 'input'
-output_path = Path('resources') / 'two_level_model' / 'R_output'
+dirname = os.path.dirname(__file__)
+input_path = os.path.join(dirname, 'resources/two_level_model/input')
+output_path = os.path.join(dirname, 'resources/two_level_model/R_output')
 
-data_train = np.loadtxt(input_path / 'train_data.csv', delimiter=",", dtype="float", skiprows=1, usecols=range(1, 12))
-data_ref = np.loadtxt(input_path / 'reference_data.csv', delimiter=",", dtype="float", skiprows=1, usecols=range(11))
-data_tr = np.loadtxt(input_path / 'trace_data.csv', delimiter=",", dtype="float", skiprows=1, usecols=range(1, 12))
+data_train = np.loadtxt(os.path.join(input_path, 'train_data.csv'), delimiter=",", dtype="float", skiprows=1, usecols=range(1, 12))
+data_ref = np.loadtxt(os.path.join(input_path, 'reference_data.csv'), delimiter=",", dtype="float", skiprows=1, usecols=range(11))
+data_tr = np.loadtxt(os.path.join(input_path, 'trace_data.csv'), delimiter=",", dtype="float", skiprows=1, usecols=range(1, 12))
 
-mean_cov_within_R = np.loadtxt(output_path / 'MSwithin.csv', delimiter=",", dtype="float", skiprows=1)
-means_train_R = np.loadtxt(output_path / 'means_z.csv', delimiter=",", dtype="float", skiprows=1)
-kernel_bandwidth_sq_R = np.loadtxt(output_path / 'h2.csv', delimiter=",", dtype="float", skiprows=1)
-between_covars_R = np.loadtxt(output_path / 'T0.csv', delimiter=",", dtype="float", skiprows=1)
-covars_trace_R = np.loadtxt(output_path / 'U_h0.csv', delimiter=",", dtype="float", skiprows=1)
-covars_trace_update_R = np.loadtxt(output_path / 'U_hn.csv', delimiter=",", dtype="float", skiprows=1)
-covars_ref_R = np.loadtxt(output_path / 'U_hx.csv', delimiter=",", dtype="float", skiprows=1)
-updated_ref_mean_R = np.loadtxt(output_path / 'mu_h.csv', delimiter=",", dtype="float", skiprows=1)
-ln_num1_R = np.loadtxt(output_path / 'ln_num1.csv', delimiter=",", dtype="float", skiprows=1)
-ln_den_left_R = np.loadtxt(output_path / 'ln_num2.csv', delimiter=",", dtype="float", skiprows=1)
-ln_den_right_R = np.loadtxt(output_path / 'ln_den.csv', delimiter=",", dtype="float", skiprows=1)
-log10_LR_R = np.loadtxt(output_path / 'log10_MLRs.csv', delimiter=",", dtype="float", skiprows=1)
+mean_cov_within_R = np.loadtxt(os.path.join(output_path, 'MSwithin.csv'), delimiter=",", dtype="float", skiprows=1)
+means_train_R = np.loadtxt(os.path.join(output_path, 'means_z.csv'), delimiter=",", dtype="float", skiprows=1)
+kernel_bandwidth_sq_R = np.loadtxt(os.path.join(output_path, 'h2.csv'), delimiter=",", dtype="float", skiprows=1)
+between_covars_R = np.loadtxt(os.path.join(output_path, 'T0.csv'), delimiter=",", dtype="float", skiprows=1)
+covars_trace_R = np.loadtxt(os.path.join(output_path, 'U_h0.csv'), delimiter=",", dtype="float", skiprows=1)
+covars_trace_update_R = np.loadtxt(os.path.join(output_path, 'U_hn.csv'), delimiter=",", dtype="float", skiprows=1)
+covars_ref_R = np.loadtxt(os.path.join(output_path, 'U_hx.csv'), delimiter=",", dtype="float", skiprows=1)
+updated_ref_mean_R = np.loadtxt(os.path.join(output_path, 'mu_h.csv'), delimiter=",", dtype="float", skiprows=1)
+ln_num1_R = np.loadtxt(os.path.join(output_path, 'ln_num1.csv'), delimiter=",", dtype="float", skiprows=1)
+ln_den_left_R = np.loadtxt(os.path.join(output_path, 'ln_num2.csv'), delimiter=",", dtype="float", skiprows=1)
+ln_den_right_R = np.loadtxt(os.path.join(output_path, 'ln_den.csv'), delimiter=",", dtype="float", skiprows=1)
+log10_LR_R = np.loadtxt(os.path.join(output_path, 'log10_MLRs.csv'), delimiter=",", dtype="float", skiprows=1)
 
 
 class TestTwoLevelModelNormalKDEFit(unittest.TestCase):
