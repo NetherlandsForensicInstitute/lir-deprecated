@@ -43,7 +43,7 @@ with lir.plotting.show() as ax:
     ax.pav(lrs_test, y_test)
 ```
 
-The log likelihood ratio cost (CLLR) may be used as a metric of performance.
+The log likelihood ratio cost (Cllr) may be used as a metric of performance.
 In this case it should yield a value of around .8, but highly variable due to
 the small number of samples. Increase the sample size to get more stable
 results.
