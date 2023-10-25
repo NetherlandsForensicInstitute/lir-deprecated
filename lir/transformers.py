@@ -83,19 +83,26 @@ class PercentileRankTransformer(sklearn.base.TransformerMixin):
     Rankings are in range [0, 1]. Handling ties: the maximum of the ranks that
     would have been assigned to all the tied values is assigned to each value.
 
-    To be able to compute the rankings of dataset Z relative to dataset X,
-    'fit' will create a ranking function for each feature, based on X.
-    'transform' will apply ranking of Z based on dataset X.
+    To be able to compute the rankings of dataset *Z* relative to dataset *X*,
+    `fit` will create a ranking function for each feature separately, based on
+    *X*. The method `transform` will apply ranking of *Z* based on dataset *X*.
+
+    This class has the methods `fit()` and `transform()`, both take a parameter
+    `X` with one row per instance, e.g. dimensions (n, f) with n = number of
+    measurements, f = number of features. The number of features should be the
+    same in `fit()` and `transform()`.
+
+    If the parameter `X` has a *pair* of measurements per row, i.e. has
+    dimensions (n, f, 2), the percentile rank is fitted and applied
+    independently for the first and second measurement of the pair.
 
     Fit:
     Expects:
-        - `X` is a numpy array with one row per measurement, eg dimension (n, f) or (n, f, 2) 
-        with n = number of measurements, f = number of features. 
-        
+        - `X` is a numpy array with one row per instance
 
     Transform:
     Expects:
-        - `X` is a numpy array with one row per measurement, same shape as in `fit()`
+        - `X` is a numpy array with one row per instance
     Returns:
         - a numpy array with the same shape as `X`
     """
