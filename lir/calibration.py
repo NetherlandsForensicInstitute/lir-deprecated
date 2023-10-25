@@ -15,7 +15,7 @@ from typing import Optional, Tuple, Union, Iterable, Callable, Sized
 from .bayeserror import elub
 from .loss_functions import negative_log_likelihood_balanced
 from .regression import IsotonicRegressionInf
-from .util import Xy_to_Xn, to_odds, ln_to_log10, Bind
+from .util import Xy_to_Xn, to_odds, ln_to_log10, Bind, to_probability
 
 LOG = logging.getLogger(__name__)
 
