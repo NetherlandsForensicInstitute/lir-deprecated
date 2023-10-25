@@ -89,7 +89,9 @@ class PercentileRankTransformer(sklearn.base.TransformerMixin):
 
     Fit:
     Expects:
-        - `X` is a numpy array with one row per measurement
+        - `X` is a numpy array with one row per measurement, eg dimension (n, f) or (n, f, 2) 
+        with n = number of measurements, f = number of features. 
+        
 
     Transform:
     Expects:
