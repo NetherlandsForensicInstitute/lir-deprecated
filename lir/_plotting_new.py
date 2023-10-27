@@ -263,13 +263,9 @@ def score_distribution(scores, y, bins=20, weighted=True, ax=plt):
     bins = np.histogram_bin_edges(scores[np.isfinite(scores)], bins=bins)
 
     # create weights vector so y-axis is between 0-1
-    scores_by_class = [scores[y == cls] for cls in np.unique(y)]
+    y_classes = np.flip(np.unique(y))
+    scores_by_class = [scores[y == cls] for cls in y_classes]
     weights = [np.ones_like(data) / len(data) for data in scores_by_class]
-
-    # adjust weights so largest value is 1
-    for i, s in enumerate(scores_by_class):
-        hist, _ = np.histogram(s, bins=np.r_[-np.inf, bins, np.inf], weights=weights[i])
-        weights[i] = weights[i] * (1 / hist.max())
 
     # handle inf values
     if np.isinf(scores).any():
@@ -300,11 +296,17 @@ def score_distribution(scores, y, bins=20, weighted=True, ax=plt):
         ax.xticks(x_range, labels)
 
         for color, x_coord, y_coord in plot_args_inf:
-            ax.bar(x_coord, y_coord, width=bar_width, color=color, alpha=0.25, hatch='/')
+            ax.bar(x_coord, y_coord, width=bar_width, color=color, alpha=0.3, hatch='/')
 
-    for cls, weight in zip(np.unique(y), weights):
-        ax.hist(scores[y == cls], bins=bins, alpha=.25,
-                label=f'class {cls}', weights=weight if weighted else None)
+    for cls, weight in zip(y_classes, weights):
+        ax.hist(scores[y == cls], bins=bins, alpha=.3,
+                label=f'class {cls}', density=True if weighted else None)
+
+    ax.xlabel('score')
+    if weighted:
+        ax.ylabel('probability density')
+    else:
+        ax.ylabel('count')
 
 
 def calibrator_fit(calibrator, score_range=(0, 1), resolution=100, ax=plt):
@@ -319,5 +321,5 @@ def calibrator_fit(calibrator, score_range=(0, 1), resolution=100, ax=plt):
     x = np.linspace(score_range[0], score_range[1], resolution)
     calibrator.transform(x)
 
-    ax.plot(x, calibrator.p1, label='fit class 1')
-    ax.plot(x, calibrator.p0, label='fit class 0')
+    ax.plot(x, calibrator.p1, color='tab:blue', label='fit class 1')
+    ax.plot(x, calibrator.p0, color='tab:orange', label='fit class 0')
