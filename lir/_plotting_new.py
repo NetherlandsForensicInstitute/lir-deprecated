@@ -181,8 +181,8 @@ def pav(lrs, y, add_misleading=0, show_scatter=True, ax=plt):
     if show_scatter:
         ax.scatter(llrs, pav_llrs)  # scatter plot of measured lrs
 
-    ax.set_xlabel("pre-calibrated 10log LR")
-    ax.set_ylabel("post-calibrated 10log LR")
+    ax.set_xlabel("pre-calibrated log$_{10}$(LR)")
+    ax.set_ylabel("post-calibrated log$_{10}$(LR)")
 
 
 def lr_histogram(lrs, y, bins=20, weighted=True, ax=plt):
@@ -206,7 +206,7 @@ def lr_histogram(lrs, y, bins=20, weighted=True, ax=plt):
                           for points in (points0, points1))
     ax.hist(points0, bins=bins, alpha=.25, weights=weights0)
     ax.hist(points1, bins=bins, alpha=.25, weights=weights1)
-    ax.set_xlabel('10log likelihood ratio')
+    ax.set_xlabel('log$_{10}$(LR)')
     ax.set_ylabel('count' if not weighted else 'relative frequency')
 
 
@@ -241,7 +241,7 @@ def tippett(lrs, y, plot_type=1, ax=plt):
     ax.plot(xplot1, perc1, color='b', label='LRs given $\mathregular{H_1}$')
     ax.plot(xplot0, perc0, color='r', label='LRs given $\mathregular{H_2}$')
     ax.axvline(x=0, color='k', linestyle='--')
-    ax.set_xlabel('10log likelihood ratio')
+    ax.set_xlabel('log$_{10}$(LR)')
     ax.set_ylabel('Cumulative proportion')
     ax.legend()
 

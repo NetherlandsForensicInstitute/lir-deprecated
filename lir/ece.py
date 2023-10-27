@@ -67,7 +67,7 @@ def plot_ece(lrs, y, log_prior_odds_range=None, ax=plt):
     pav_lrs = calibration.IsotonicCalibrator().fit_transform(util.to_probability(lrs), y)
     ax.plot(log_prior_odds, calculate_ece(pav_lrs, y, util.to_probability(prior_odds)), linestyle='--', label='PAV LRs')
 
-    ax.set_xlabel("prior 10log odds")
+    ax.set_xlabel("prior log$_{10}$(odds)")
     ax.set_ylabel("empirical cross-entropy")
     ax.set_ylim((0,None))
     ax.set_xlim(log_prior_odds_range)
