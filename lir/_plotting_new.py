@@ -261,9 +261,11 @@ def score_distribution(scores, y, bins=20, weighted=True, ax=plt):
     """
     ax.rcParams.update({'font.size': 15})
     bins = np.histogram_bin_edges(scores[np.isfinite(scores)], bins=bins)
+    bin_width = bins[1] - bins[0]
 
-    # create weights vector so y-axis is between 0-1
+    # flip Y-classes to achieve blue bars for H1-true and orange for H2-true
     y_classes = np.flip(np.unique(y))
+    # create weights vector so y-axis is between 0-1
     scores_by_class = [scores[y == cls] for cls in y_classes]
     weights = [np.ones_like(data) / len(data) for data in scores_by_class]
 
@@ -300,9 +302,9 @@ def score_distribution(scores, y, bins=20, weighted=True, ax=plt):
 
     for cls, weight in zip(y_classes, weights):
         ax.hist(scores[y == cls], bins=bins, alpha=.3,
-                label=f'class {cls}', density=True if weighted else None)
+                label = f'class {cls}', weights = weight/bin_width if weighted else None)
 
-    ax.xlabel('score')
+        ax.xlabel('score')
     if weighted:
         ax.ylabel('probability density')
     else:
