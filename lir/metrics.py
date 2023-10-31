@@ -127,7 +127,6 @@ def calcsurface_f(c1, c2):
         # dan xs equals +/- Infinite en is er there is no intersection with the identity line
         # the surface of the parrallolgram is:
         surface = (y2 - y1) * np.abs(y1 - x1)
-
     elif (a < 0):
         raise ValueError(f"slope is negative; impossible for PAV-transform. Coordinates are {c1} and {c2}. Calculated slope is {a}")
     else:
