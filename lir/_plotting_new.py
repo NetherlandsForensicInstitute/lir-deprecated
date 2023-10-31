@@ -272,7 +272,10 @@ def score_distribution(scores, y, bins: int = 20, weighted: bool = True, ax=plt)
     y_classes = np.flip(np.unique(y))
     # create weights vector so y-axis is between 0-1
     scores_by_class = [scores[y == cls] for cls in y_classes]
-    weights = [np.ones_like(data) / len(data) for data in scores_by_class]
+    if weighted:
+        weights = [np.ones_like(data) / len(data) for data in scores_by_class]
+    else:
+        weights = [np.ones_like(data) for data in scores_by_class]
 
     # handle inf values
     if np.isinf(scores).any():
