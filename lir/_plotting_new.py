@@ -5,6 +5,8 @@ from functools import partial
 import matplotlib.pyplot as plt
 import numpy as np
 
+from zoom_plots import plot_ece_zoom as ece_zoom
+from zoom_plots import pav_zoom
 from . import util
 from .bayeserror import plot_nbe as nbe
 from .calibration import IsotonicCalibrator
@@ -25,9 +27,11 @@ class Canvas:
 
         self.calibrator_fit = partial(calibrator_fit, ax=ax)
         self.ece = partial(ece, ax=ax)
+        self.ece_zoom = partial(ece_zoom, ax=ax)
         self.lr_histogram = partial(lr_histogram, ax=ax)
         self.nbe = partial(nbe, ax=ax)
         self.pav = partial(pav, ax=ax)
+        self.pav_zoom = partial(pav_zoom, ax=ax)
         self.score_distribution = partial(score_distribution, ax=ax)
         self.tippett = partial(tippett, ax=ax)
 
