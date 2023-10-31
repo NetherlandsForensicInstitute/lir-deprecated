@@ -253,3 +253,42 @@ observation_2 = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 manual_entered_data = np.moveaxis(np.array([z_score_transformer.transform([observation_1, observation_2])]), 1, -1)
 
 print(f'The LR obtained is {selected_lr_system.predict_lr(manual_entered_data)[0]}')
+
+
+
+# Plaatje overfitting
+
+from scipy.interpolate import UnivariateSpline
+
+np.random.seed(1)
+
+#x and y array definition (initial set of data points)
+x = np.linspace(0, 10, 30)
+# y = np.sin(0.5*x)*np.sin(x*np.random.randn(30))
+y = 1/2*x +  np.random.normal(0, 1, size=len(x))
+
+
+def func(x):
+    return 1/2*x
+
+
+#spline definition
+spline = UnivariateSpline(x, y, s=5)
+
+x_spline = np.linspace(0, 10, 1000)
+y_spline = spline(x_spline)
+
+y_line = func(x_spline)
+
+# Changing the smoothing factor for a better fit
+spline.set_smoothing_factor(0.05)
+y_spline2 = spline(x_spline)
+
+# Plotting
+fig = plt.figure()
+ax = fig.subplots()
+ax.scatter(x, y, label='observations')
+ax.plot(x_spline, y_line, linestyle='dashed', label='true model')
+ax.plot(x_spline, y_spline2, color='tab:orange', label='overfitted model')
+plt.legend()
+plt.savefig('fig2_overfitting.jpeg', edgecolor='white', dpi=600, facecolor='white', transparent=False)
