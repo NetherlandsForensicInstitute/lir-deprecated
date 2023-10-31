@@ -31,33 +31,29 @@ class TestTwoLevelModelNormalKDEFit(unittest.TestCase):
     two_level_model = TwoLevelModelNormalKDE()
 
     def test_n_sources(self):
-        n_sources = self.two_level_model._fit_n_sources(data_train[:, 0])
+        n_sources = TwoLevelModelNormalKDE._get_n_sources(data_train[:, 0])
         np.testing.assert_equal(n_sources, 659)
 
     def test_n_features(self):
-        n_features = self.two_level_model._get_n_features(data_train[:, 1:], feature_ix=1)
+        n_features = TwoLevelModelNormalKDE._get_n_features(data_train[:, 1:], feature_ix=1)
         np.testing.assert_equal(n_features, 10)
 
     def test_mean_covariance_within(self):
-        mean_cov_within_P = self.two_level_model._fit_mean_covariance_within(data_train[:, 1:],
+        mean_cov_within_P = TwoLevelModelNormalKDE._get_mean_covariance_within(data_train[:, 1:],
                                                                              data_train[:, 0])
         np.testing.assert_almost_equal(mean_cov_within_P, mean_cov_within_R, decimal=17)
 
     def test_means_train(self):
         means_train_R_T = means_train_R.transpose()
-        means_train_P = self.two_level_model._fit_means_per_source(data_train[:, 1:], data_train[:, 0])
+        means_train_P = self.two_level_model._get_means_per_source(data_train[:, 1:], data_train[:, 0])
         np.testing.assert_almost_equal(means_train_P, means_train_R_T, decimal=14)
 
     def test_kernel_bandwidth_sq(self):
-        self.two_level_model.n_sources = 659
-        self.two_level_model.n_features_train = 10
-        kernel_bandwidth_sq_P = self.two_level_model._fit_kernel_bandwidth_squared()
+        kernel_bandwidth_sq_P = TwoLevelModelNormalKDE._get_kernel_bandwidth_squared(659, 10)
         np.testing.assert_almost_equal(kernel_bandwidth_sq_P, kernel_bandwidth_sq_R, decimal=16)
 
     def test_between_covars(self):
-        self.two_level_model.mean_within_covars = mean_cov_within_R
-        self.two_level_model.model_fitted = True
-        between_covars_P = self.two_level_model._fit_between_covariance(data_train[:, 1:], data_train[:, 0])
+        between_covars_P = TwoLevelModelNormalKDE._get_between_covariance(data_train[:, 1:], data_train[:, 0], mean_cov_within_R)
         np.testing.assert_almost_equal(between_covars_P, between_covars_R, decimal=15)
 
 
@@ -148,7 +144,7 @@ class TestTwoLevelModelNormalKDEPredict(unittest.TestCase):
         data_ref_samples = [data_ref[:, 1:] for i in data_tr_samples]
         data_ref_reshaped = construct_3d_input(data_ref_samples)
 
-        log10_LR_P = self.two_level_model._predict_log10_LR_score(data_tr_reshaped, data_ref_reshaped)
+        log10_LR_P = self.two_level_model._predict_log10_lr_score(data_tr_reshaped, data_ref_reshaped)
 
         # replace too negative log10_LR_P since log10_LR_R gives -Inf after -300
         log10_LR_P[log10_LR_P < -300] = np.NINF
@@ -173,7 +169,7 @@ class TestTwoLevelModelNormalKDEFitPredict(unittest.TestCase):
         data_ref_samples = [data_ref[:,1:] for i in data_tr_samples]
         data_ref_reshaped = construct_3d_input(data_ref_samples)
 
-        log10_LR_P = self.two_level_model._predict_log10_LR_score(data_tr_reshaped, data_ref_reshaped)
+        log10_LR_P = self.two_level_model._predict_log10_lr_score(data_tr_reshaped, data_ref_reshaped)
 
         # replace too negative log10_LR_P since log10_LR_R gives -Inf after -300
         log10_LR_P[log10_LR_P < -300] = np.NINF

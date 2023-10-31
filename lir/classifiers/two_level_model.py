@@ -16,9 +16,8 @@ class TwoLevelModelNormalKDE:
         Model description:
 
         Definitions
-        X_ij = vector, measurement of reference j, ith repetition
-        Y_kl = vector, measurement of trace l, kth repetition
-        The number of repetitions for X = n and for Y = m
+        X_ij = vector, measurement of reference j, ith repetition, with i=1..n
+        Y_kl = vector, measurement of trace l, kth repetition, with k=1..m
 
         Model:
 
@@ -52,7 +51,7 @@ class TwoLevelModelNormalKDE:
         self.kernel_bandwidth_sq = None
         self.between_covars = None
 
-    def fit(self, X, y):
+    def fit(self, X: np.ndarray, y: np.ndarray) -> "TwoLevelModelNormalKDE":
         """
         X np.ndarray of measurements, rows are sources/repetitions, columns are features
         y np 1d-array of labels. For each source a unique identifier (label). Repetitions get the same label.
@@ -60,27 +59,33 @@ class TwoLevelModelNormalKDE:
         Construct the necessary matrices/scores/etc based on test data (X) so that we can predict a score later on.
         Store any calculated parameters in `self`.
         """
-        self.n_sources = self._fit_n_sources(y)
-        self.n_features_train = self._get_n_features(X, feature_ix=1)
-        self.mean_within_covars = self._fit_mean_covariance_within(X, y)
-        self.means_per_source = self._fit_means_per_source(X, y)
-        self.kernel_bandwidth_sq = self._fit_kernel_bandwidth_squared()
-        self.between_covars = self._fit_between_covariance(X, y)
+        assert len(X.shape) == 2, f"fit(X, y) requires X to be 2-dimensional; found dimensions {X.shape}"
+        self.n_sources = self._get_n_sources(y)
+        self.n_features_train = X.shape[1]
+        self.mean_within_covars = self._get_mean_covariance_within(X, y)
+        self.means_per_source = self._get_means_per_source(X, y)
+        self.kernel_bandwidth_sq = self._get_kernel_bandwidth_squared(self.n_sources, self.n_features_train)
+        self.between_covars = self._get_between_covariance(X, y, self.mean_within_covars)
         self.model_fitted = True
 
-    def transform(self, X_trace, X_ref):
+        return self
+
+    def transform(self, X_trace: np.ndarray, X_ref: np.ndarray) -> np.ndarray:
         """
         Predict odds scores, making use of the parameters constructed during `self.fit()` (which should
         now be stored in `self`).
 
         X_trace measurements of trace object. np.ndarray of shape (instances, repetitions_trace, features)
         X_ref measurements of reference object. np.ndarray of shape (instances, repetitions_ref, features)
+
+        returns: odds of same source / different source: one-dimensional np.ndarray with one element per instance
         """
-        log10_LR_score = self._predict_log10_LR_score(X_trace, X_ref)
-        odds_score = 10 ** log10_LR_score
+        assert self.model_fitted, "fit() must be called before transform()"
+        log10_lr_score = self._predict_log10_lr_score(X_trace, X_ref)
+        odds_score = 10 ** log10_lr_score
         return odds_score
 
-    def predict_proba(self, X_trace, X_ref):
+    def predict_proba(self, X_trace: np.ndarray, X_ref: np.ndarray) -> np.ndarray:
         """
         Predict probability scores, making use of the parameters constructed during `self.fit()` (which should
         now be stored in `self`).
@@ -88,14 +93,14 @@ class TwoLevelModelNormalKDE:
         X_trace measurements of trace object. np.ndarray of shape (instances, repetitions_trace, features)
         X_ref measurements of reference object. np.ndarray of shape (instances, repetitions_ref, features)
 
-        return: np.array with dimensions shape (instances, 2)
+        returns: probabilities for same source and different source: np.ndarray with shape (instances, 2)
         """
         odds_score = self.transform(X_trace, X_ref)
         p0 = 1 / (1 + odds_score)
         p1 = 1 - p0
-        return np.transpose(np.array([p0, p1]))
+        return np.stack([p0, p1], axis=1)
 
-    def _predict_log10_LR_score(self, X_trace, X_ref):
+    def _predict_log10_lr_score(self, X_trace: np.ndarray, X_ref: np.ndarray) -> np.ndarray:
         """
         Predict ln_LR scores, making use of the parameters constructed during `self.fit()` (which should
                 now be stored in `self`).
@@ -132,17 +137,20 @@ class TwoLevelModelNormalKDE:
 
         return np.array(log10lr)
 
-    def _get_n_features(self, X, feature_ix=2):
+    @staticmethod
+    def _get_n_features(X: np.ndarray, feature_ix: int = 2) -> int:
         return X.shape[feature_ix]
 
-    def _fit_n_sources(self, y):
+    @staticmethod
+    def _get_n_sources(y) -> int:
         """
         y np 1d-array of labels. labels from {1, ..., n} with n the number of sources. Repetitions get the same label.
         returns: number of sources in y (int)
         """
         return len(np.unique(y))
 
-    def _fit_mean_covariance_within(self, X, y):
+    @staticmethod
+    def _get_mean_covariance_within(X, y) -> np.ndarray:
         """
         X np.array of measurements, rows are sources/repetitions, columns are features
         y np 1d-array of labels. labels from {1, ..., n} with n the number of sources. Repetitions get the same label.
@@ -168,7 +176,8 @@ class TwoLevelModelNormalKDE:
 
         return np.array(grouped_by_feature.mean())
 
-    def _fit_means_per_source(self, X, y):
+    @staticmethod
+    def _get_means_per_source(X, y) -> np.ndarray:
         """
         X np.array of measurements, rows are sources/repetitions, columns are features
         y np 1d-array of labels. For each source a unique identifier (label). Repetitions get the same label.
@@ -180,22 +189,18 @@ class TwoLevelModelNormalKDE:
 
         return np.array(grouped.mean())
 
-    def _fit_kernel_bandwidth_squared(self):
+    @staticmethod
+    def _get_kernel_bandwidth_squared(n_sources: int, n_features_train: int) -> int:
         """
-        X np.array of measurements, rows are sources/repetitions, columns are features
-        y np 1d-array of labels. For each source a unique identifier (label). Repetitions get the same label.
-        returns: squared kernel bandwidth for the kernel density estimator with a normal kernel
-            (using Silverman's rule for multivariate data)
-
         Reference: 'Density estimation for statistics and data analysis', B.W. Silverman,
             page 86 formula 4.14 with A(K) the second row in the table on page 87
         """
         # calculate kernel bandwidth and square it, using Silverman's rule for multivariate data
-        kernel_bandwidth = (4 / ((self.n_features_train + 2) * self.n_sources)) ** (1 / (self.n_features_train + 4))
+        kernel_bandwidth = (4 / ((n_features_train + 2) * n_sources)) ** (1 / (n_features_train + 4))
         return kernel_bandwidth ** 2
 
-    def _fit_between_covariance(self, X, y):
-
+    @staticmethod
+    def _get_between_covariance(X, y, mean_within_covars):
         """
         X np.array of measurements, rows are objects, columns are variables
         y np 1d-array of labels. labels from {1, ..., n} with n the number of objects. Repetitions get the same label.
@@ -225,9 +230,9 @@ class TwoLevelModelNormalKDE:
         # Kappa converts within variance at measurement level to within variance at mean of source level and
         #   scales the SSQ_between to a mean between variance
 
-        return ((sum_squares_between / (len(reps) - 1) - self.mean_within_covars) / kappa).to_numpy()
+        return ((sum_squares_between / (len(reps) - 1) - mean_within_covars) / kappa).to_numpy()
 
-    def _predict_covariances_trace_ref(self, X_trace, X_ref):
+    def _predict_covariances_trace_ref(self, X_trace: np.ndarray, X_ref: np.ndarray):
         """
         X_tr np.array of measurements of trace object, rows are repetitions, columns are features
         X_ref np.array of measurements of reference object, rows are repetitions, columns features
