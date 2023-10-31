@@ -1,7 +1,4 @@
 from itertools import combinations
-from random import choices
-from random import seed
-from random import randint
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -15,6 +12,13 @@ from sklearn.svm import SVC
 
 from lir import KDECalibrator, ELUBbounder, CalibratedScorer, metrics, plotting, LogitCalibrator
 from lir.transformers import AbsDiffTransformer
+
+plot_arguments = {
+    'edgecolor': 'white',
+    'dpi': 600,
+    'facecolor': 'white',
+    'transparent': False
+}
 
 csv_url = 'https://raw.githubusercontent.com/NetherlandsForensicInstitute/elemental_composition_glass/main/duplo.csv'
 data_set = pd.read_csv(csv_url, delimiter=',').rename(columns={'Item': 'Subject', 'Piece': 'Repeat', 'id': 'Id'})
@@ -31,6 +35,14 @@ labels = ["Subject"]
 
 obs = data_set[variables].to_numpy()
 ids = data_set[labels].to_numpy()
+
+# pip install pandas seaborn
+import seaborn as sns
+sns.set_theme(style='ticks')
+sns.pairplot(data_set.reset_index()[["K39", "Ti49", "Mn55", "Rb85"]])
+plt.savefig('fig1_correlation_plot.jpeg', **plot_arguments)
+plt.close()
+
 
 # First we split off 20% from the data for a hold-out validation set (grouped per glass particle)
 splitter = GroupShuffleSplit(test_size=.20, n_splits=2, random_state=1)
@@ -65,7 +77,8 @@ plt.hist(obs_zscore[:,0], bins=20, color='tab:cyan', alpha=0.5, label='after pre
 plt.xlabel('K39 value')
 plt.ylabel('count')
 plt.legend()
-plt.savefig('fig4_step3preprocess_both.jpeg', edgecolor='white', dpi=600, facecolor='white', transparent=False)
+plt.savefig('fig4_step3preprocess_both.jpeg', **plot_arguments)
+
 
 
 def create_pairs(obs, ids):
@@ -110,7 +123,7 @@ with plotting.show() as ax:
     H1_legend = mpatches.Patch(color='tab:blue', alpha=.5, label='$H_1$-true')
     H2_legend = mpatches.Patch(color='tab:orange', alpha=.5, label='$H_2$-true')
     ax.legend(handles=[H1_legend, H2_legend])
-    ax.savefig('fig5A_step4dissimilarity_scores.jpeg', edgecolor='white', dpi=600, facecolor='white', transparent=False)
+    ax.savefig('fig5A_step4dissimilarity_scores.jpeg', **plot_arguments)
 
 
 # machine learning models need a single vector as input. The AbsDiffTransformer takes two feature vectors,
@@ -130,7 +143,7 @@ with plotting.show() as ax:
     H1_legend = mpatches.Patch(color='tab:blue', alpha=.5, label='$H_1$-true')
     H2_legend = mpatches.Patch(color='tab:orange', alpha=.5, label='$H_2$-true')
     ax.legend(handles=[H1_legend, H2_legend])
-    ax.savefig('fig5B_step4ML_scores.jpeg', edgecolor='white', dpi=600, facecolor='white', transparent=False)
+    ax.savefig('fig5B_step4ML_scores.jpeg', **plot_arguments)
 
 kde_calibrator = KDECalibrator(bandwidth='silverman')
 
@@ -142,7 +155,7 @@ with plotting.show() as ax:
     H1_legend = mpatches.Patch(color='tab:blue', alpha=.5, label='$H_1$-true')
     H2_legend = mpatches.Patch(color='tab:orange', alpha=.5, label='$H_2$-true')
     ax.legend(handles=[H1_legend, H2_legend])
-    ax.savefig('fig6_step5kde.jpeg', edgecolor='white', dpi=600, facecolor='white', transparent=False)
+    ax.savefig('fig6_step5kde.jpeg', **plot_arguments)
 
 logreg_calibrator = LogitCalibrator()
 
@@ -158,7 +171,7 @@ plt.xlim([0, 5])
 plt.legend()
 plt.xlabel('dissimilarity score')
 plt.ylabel('log$_{10}$(LR)')
-plt.savefig('fig7_step5kde_logreg.jpeg', edgecolor='white', dpi=600, facecolor='white', transparent=False)
+plt.savefig('fig7_step5kde_logreg.jpeg', **plot_arguments)
 
 print(f'ELUB log(LR) bounds for logreg are {np.log10(bounded_logreg_calibrator._lower_lr_bound):.2f} and {np.log10(bounded_logreg_calibrator._upper_lr_bound):.2f}')
 print(f'ELUB log(LR) bounds for kde are {np.log10(bounded_kde_calibrator._lower_lr_bound):.2f} and {np.log10(bounded_kde_calibrator._upper_lr_bound):.2f}')
@@ -174,7 +187,7 @@ def show_performance(lrs, hypothesis, calibrator, fileprefix):
           H1_legend = mpatches.Patch(color='tab:blue', alpha=.5, label='$H_1$-true')
           H2_legend = mpatches.Patch(color='tab:orange', alpha=.5, label='$H_2$-true')
           ax.legend(handles=[H1_legend, H2_legend])
-          plt.savefig(f'{fileprefix}_hist.jpeg', edgecolor='white', dpi=600, facecolor='white', transparent=False);
+          plt.savefig(f'{fileprefix}_hist.jpeg', **plot_arguments)
 
 
       print(f'\n ELUB log LR bounds are {np.log10(calibrator._lower_lr_bound):.2f} and {np.log10(calibrator._upper_lr_bound):.2f} \n')
@@ -183,11 +196,11 @@ def show_performance(lrs, hypothesis, calibrator, fileprefix):
       # show the PAV plot (closer to the line y=x is better)
       with plotting.show() as ax:
           ax.pav(lrs, hypothesis)
-          plt.savefig(f'{fileprefix}_pav.jpeg', edgecolor='white', dpi=600, facecolor='white', transparent=False)
+          plt.savefig(f'{fileprefix}_pav.jpeg', **plot_arguments)
 
       with plotting.show() as ax:
           ax.pav_zoom(lrs, hypothesis)
-          plt.savefig(f'{fileprefix}_pav_zoom.jpeg', edgecolor='white', dpi=600, facecolor='white', transparent=False)
+          plt.savefig(f'{fileprefix}_pav_zoom.jpeg', **plot_arguments)
 
       # print the quality of the system as log likelihood ratio cost (lower is better)
       print(f'\n The log likelihood ratio cost is {metrics.cllr(lrs, hypothesis):.3f} (lower is better)\n')
@@ -232,11 +245,11 @@ show_performance(lrs_val, hypothesis_val, selected_lr_system.calibrator, 'fig9_s
 # There are many other characteristics that we may want to inspect, such as the empirical cross entropy (ECE) plot.
 with plotting.show() as ax:
       ax.ece(lrs_val, hypothesis_val == 'H1')
-      plt.savefig(f'fig9_step7_ece.jpeg', edgecolor='white', dpi=600, facecolor='white', transparent=False)
+      plt.savefig(f'fig9_step7_ece.jpeg', **plot_arguments)
 
 with plotting.show() as ax:
     ax.ece_zoom(lrs_val, hypothesis_val == 'H1')
-    plt.savefig(f'fig9_step7_ece_zoom.jpeg', edgecolor='white', dpi=600, facecolor='white', transparent=False)
+    plt.savefig(f'fig9_step7_ece_zoom.jpeg', **plot_arguments)
 
 
 # create casework LR system
@@ -291,4 +304,4 @@ ax.scatter(x, y, label='observations')
 ax.plot(x_spline, y_line, linestyle='dashed', label='true model')
 ax.plot(x_spline, y_spline2, color='tab:orange', label='overfitted model')
 plt.legend()
-plt.savefig('fig2_overfitting.jpeg', edgecolor='white', dpi=600, facecolor='white', transparent=False)
+plt.savefig('fig2_overfitting.jpeg', **plot_arguments)
