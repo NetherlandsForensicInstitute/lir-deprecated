@@ -14,8 +14,9 @@ from lir import KDECalibrator, ELUBbounder, CalibratedScorer, metrics, plotting,
 from lir.transformers import AbsDiffTransformer
 
 plot_arguments = {
+    'format': 'jpeg',
     'edgecolor': 'white',
-    'dpi': 600,
+    'dpi': 1000,
     'facecolor': 'white',
     'transparent': False
 }
@@ -72,13 +73,12 @@ z_score_transformer = StandardScaler()
 z_score_transformer.fit(obs_train)
 obs_zscore = z_score_transformer.transform(obs)
 
-plt.hist(obs[:,0], bins=20, histtype='step', color='tab:purple', alpha=1, label='before pre-processing')
-plt.hist(obs_zscore[:,0], bins=20, color='tab:cyan', alpha=0.5, label='after pre-processing')
+plt.hist(obs[:, 0], bins=20, histtype='step', color='tab:purple', alpha=1, label='before pre-processing')
+plt.hist(obs_zscore[:, 0], bins=20, color='tab:cyan', alpha=0.5, label='after pre-processing')
 plt.xlabel('K39 value')
 plt.ylabel('count')
 plt.legend()
 plt.savefig('fig4_step3preprocess_both.jpeg', **plot_arguments)
-
 
 
 def create_pairs(obs, ids):
@@ -120,8 +120,8 @@ dissimilarity_scores_select = paired_manhattan_distances(obs_pairs_select[:,:,0]
 with plotting.show() as ax:
     ax.score_distribution(scores=dissimilarity_scores_train, y=(hypothesis_train=='H1')*1, bins=np.linspace(0, 30, 60), weighted=True)
     plt.xlabel('dissimilarity score')
-    H1_legend = mpatches.Patch(color='tab:blue', alpha=.5, label='$H_1$-true')
-    H2_legend = mpatches.Patch(color='tab:orange', alpha=.5, label='$H_2$-true')
+    H1_legend = mpatches.Patch(color='tab:blue', alpha=.3, label='$H_1$-true')
+    H2_legend = mpatches.Patch(color='tab:orange', alpha=.3, label='$H_2$-true')
     ax.legend(handles=[H1_legend, H2_legend])
     ax.savefig('fig5A_step4dissimilarity_scores.jpeg', **plot_arguments)
 
@@ -140,8 +140,8 @@ machine_learning_scores_train = machine_learning_scorer.predict_proba(obs_pairs_
 with plotting.show() as ax:
     ax.score_distribution(scores=machine_learning_scores_train, y=(hypothesis_train=='H1')*1, bins=np.linspace(0, 1, 10), weighted=True)
     plt.xlabel('machine learning score')
-    H1_legend = mpatches.Patch(color='tab:blue', alpha=.5, label='$H_1$-true')
-    H2_legend = mpatches.Patch(color='tab:orange', alpha=.5, label='$H_2$-true')
+    H1_legend = mpatches.Patch(color='tab:blue', alpha=.3, label='$H_1$-true')
+    H2_legend = mpatches.Patch(color='tab:orange', alpha=.3, label='$H_2$-true')
     ax.legend(handles=[H1_legend, H2_legend])
     ax.savefig('fig5B_step4ML_scores.jpeg', **plot_arguments)
 
@@ -152,8 +152,8 @@ with plotting.show() as ax:
     ax.calibrator_fit(kde_calibrator, score_range=[0, 30])
     ax.score_distribution(scores=dissimilarity_scores_train, y=(hypothesis_train=='H1')*1, bins=np.linspace(0, 30, 60), weighted=True)
     ax.xlabel('dissimilarity score')
-    H1_legend = mpatches.Patch(color='tab:blue', alpha=.5, label='$H_1$-true')
-    H2_legend = mpatches.Patch(color='tab:orange', alpha=.5, label='$H_2$-true')
+    H1_legend = mpatches.Patch(color='tab:blue', alpha=.3, label='$H_1$-true')
+    H2_legend = mpatches.Patch(color='tab:orange', alpha=.3, label='$H_2$-true')
     ax.legend(handles=[H1_legend, H2_legend])
     ax.savefig('fig6_step5kde.jpeg', **plot_arguments)
 
