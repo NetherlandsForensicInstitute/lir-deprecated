@@ -246,16 +246,21 @@ def tippett(lrs, y, plot_type=1, ax=plt):
     ax.legend()
 
 
-def score_distribution(scores, y, bins=20, weighted=True, ax=plt):
+def score_distribution(scores, y, bins: int = 20, weighted: bool = True, ax=plt):
     """
-    plots the distributions of scores calculated by the (fitted) lr_system
+    Plots the distributions of scores calculated by the (fitted) lr_system.
+
+    If `weighted` is `True`, the y-axis represents the probability density
+    within the class, and `inf` is the fraction of instances. Otherwise, the
+    y-axis shows the number of instances.
 
     Parameters
     ----------
-    scores : scores of (fitted) lr_system
-    y : a numpy array of labels (0 or 1)
+    scores : scores of (fitted) lr_system (1d-array)
+    y : a numpy array of labels (0 or 1, 1d-array of same length as `scores`)
     bins: number of bins to divide scores into
-    weighted: if y-axis should be weighted for frequency within each class
+    weighted: if y-axis should be the probability density within each class,
+        instead of counts
     ax: axes to plot figure to
 
     """
