@@ -4,7 +4,7 @@ import unittest
 from context import lir
 assert lir  # so import optimizer doesn't remove the line above
 
-from lir.metrics import devpav, _devpavcalculator, calcsurface_f
+from lir.metrics import devpav, _devpavcalculator, _calcsurface
 from lir.util import Xn_to_Xy, to_probability
 from lir.calibration import IsotonicCalibrator as Cal
 

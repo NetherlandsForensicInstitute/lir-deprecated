@@ -224,7 +224,7 @@ def _devpavcalculator(lrs, pav_lrs, y):
 
 def devpav(lrs, y):
     """
-    calculates PAV transform of LR data under H1 and H2.
+    calculates devPAV for LR data under H1 and H2.
     """
     if sum(y) == len(y) or sum(y) == 0:
         raise ValueError('devpav: illegal input: at least one value is required for each class')
