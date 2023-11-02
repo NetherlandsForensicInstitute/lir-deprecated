@@ -109,47 +109,47 @@ class TestDevpavcalculator(unittest.TestCase):
 
 
     def test_calcsurface(self):
-        # tests for the calcsurface_f function
+        # tests for the _calcsurface function
 
         # the line segment is parallel to the identity line
         c1 = (4, 1)
         c2 = (10, 7)
-        self.assertAlmostEqual(calcsurface_f(c1, c2), 18)
+        self.assertAlmostEqual(_calcsurface(c1, c2), 18)
 
         # 2nd possibility (situation 1 of 2 in code below, the intersection with the identity line is within the line segment, y1 < x1)
         c1 = (-1, -2)
         c2 = (0, 3)
-        self.assertAlmostEqual(calcsurface_f(c1, c2), 1.25)
+        self.assertAlmostEqual(_calcsurface(c1, c2), 1.25)
 
         # 3rd possibility (situation 2 of 2 in code below, the intersection with the identity line is within the line segment, y1 >= x1)
         c1 = (0, 3)
         c2 = (10, 4)
-        self.assertAlmostEqual(calcsurface_f(c1, c2), 25)
+        self.assertAlmostEqual(_calcsurface(c1, c2), 25)
 
         # 5th possibility (situation 1 of 4 in code below, both coordinates are below the identity line, intersection with identity line on left hand side)
         c1 = (-1, -2)
         c2 = (0, -1.5)
-        self.assertAlmostEqual(calcsurface_f(c1, c2), 1.25)
+        self.assertAlmostEqual(_calcsurface(c1, c2), 1.25)
 
         # 6th possibility (situation 2 van 4 in code below, both coordinates are above the identity line, intersection with identity line on right hand side)
         c1 = (1, 2)
         c2 = (1.5, 2)
-        self.assertAlmostEqual(calcsurface_f(c1, c2), 0.375)
+        self.assertAlmostEqual(_calcsurface(c1, c2), 0.375)
 
         # 7th possibility (situation 2 of 4 in code below, both coordinates are above the identity line, intersection with identity line on left hand side)
         c1 = (1, 2)
         c2 = (2, 4)
-        self.assertAlmostEqual(calcsurface_f(c1, c2), 1.5)
+        self.assertAlmostEqual(_calcsurface(c1, c2), 1.5)
 
         # 8th possibility (situation 3 of 4 in code below, both coordinates are below the identity line, intersection with identity line on right hand side)
         c1 = (-1, -2)
         c2 = (0, -0.5)
-        self.assertAlmostEqual(calcsurface_f(c1, c2), 0.75)
+        self.assertAlmostEqual(_calcsurface(c1, c2), 0.75)
 
 
         #test with negative slope
         c1 = (1, 4)
         c2 = (2, 2)
-        #self.assertEqual(calcsurface_f(c1, c2), None)
+        #self.assertEqual(_calcsurface(c1, c2), None)
         with self.assertRaises(Exception) as context:
-            calcsurface_f(c1, c2)
+            _calcsurface(c1, c2)
