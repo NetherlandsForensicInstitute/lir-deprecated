@@ -126,7 +126,7 @@ def calcsurface_f(c1, c2):
     if a == 1:
         # dan xs equals +/- Infinite en is er there is no intersection with the identity line
         # the surface of the parrallolgram is:
-        surface = (y2 - y1) * np.abs(y1 - x1)
+        surface = (x2 - x1) * np.abs(y1 - x1)
 
     elif (a < 0):
         raise ValueError(f"slope is negative; impossible for PAV-transform. Coordinates are {c1} and {c2}. Calculated slope is {a}")
@@ -182,7 +182,7 @@ def _devpavcalculator(lrs, pav_lrs, y):
     # pathological cases
     # first one of four: PAV-transform has a horizonal line to log(X) = -Inf as to log(X) = Inf
     if Yen[0] != 0 and Yen[-1] != np.inf and Xen[-1] == np.inf and Xen[-1] == np.inf:
-        return np.nan
+        return np.Inf
 
     # second of four: PAV-transform has a horizontal line to log(X) = -Inf
     if Yen[0] != 0 and Xen[0] == 0 and Yen[-1] == np.inf:
@@ -190,9 +190,9 @@ def _devpavcalculator(lrs, pav_lrs, y):
 
     # third of four: PAV-transform has a horizontal line to log(X) = Inf
     if Yen[0] == 0 and Yen[-1] != np.inf and Xen[-1] == np.inf:
-        return np.NINF
+        return np.Inf
 
-    # forth of four: PAV-transform has one vertical line from log(Y) = -Inf to log(Y) = Inn
+    # forth of four: PAV-transform has one vertical line from log(Y) = -Inf to log(Y) = Inf
     wh = (Yen == 0) | (Yen == np.inf)
     if np.sum(wh) == len(Yen):
         return np.nan
@@ -219,7 +219,7 @@ def _devpavcalculator(lrs, pav_lrs, y):
                 surface = surface + calcsurface_f((Xen[i - 1], Yen[i - 1]), (Xen[i], Yen[i]))
                 devPAVs[i - 1] = calcsurface_f((Xen[i - 1], Yen[i - 1]), (Xen[i], Yen[i]))
             # return(list(surface/a, PAVresult, Xen, Yen, devPAVs))
-            return (surface / deltaX)
+            return surface / deltaX
 
 
 def devpav(lrs, y):
@@ -227,7 +227,7 @@ def devpav(lrs, y):
     calculates PAV transform of LR data under H1 and H2.
     """
     cal = IsotonicCalibrator()
-    pavlrs = cal.fit_transform(to_probability(lrs), y)
+    pavlrs = cal.fit_transform(lrs, y)
     return _devpavcalculator(lrs, pavlrs, y)
 
 
