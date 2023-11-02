@@ -214,7 +214,7 @@ def _devpavcalculator(lrs, pav_lrs, y):
         # than calculate devPAV
         else:
             deltaX = Xen[-1] - Xen[0]
-            surface = (0)
+            surface = 0
             for i in range(1, (len(Xen))):
                 surface = surface + _calcsurface((Xen[i - 1], Yen[i - 1]), (Xen[i], Yen[i]))
                 devPAVs[i - 1] = _calcsurface((Xen[i - 1], Yen[i - 1]), (Xen[i], Yen[i]))
