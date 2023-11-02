@@ -210,7 +210,7 @@ def _devpavcalculator(lrs, pav_lrs, y):
         if len(Xen) == 0:
             return np.nan
         elif len(Xen) == 1:
-            return (abs(Xen - Yen))
+            return abs(Xen - Yen)
         # than calculate devPAV
         else:
             deltaX = Xen[-1] - Xen[0]
