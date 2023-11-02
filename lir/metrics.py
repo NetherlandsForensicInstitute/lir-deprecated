@@ -112,7 +112,7 @@ def devpav_estimated(lrs, y, resolution=1000):
     return (np.sum(devlr) / resolution) * (np.log10(last_misleading) - np.log10(first_misleading))
 
 
-def calcsurface_f(c1, c2):
+def _calcsurface(c1, c2):
     """
     Helperfunction that calculates the desired surface for two xy-coordinates
     """
@@ -169,7 +169,7 @@ def _devpavcalculator(lrs, pav_lrs, y):
     Output: devPAV value
 
     """
-    DSLRs, SSLRs = Xy_to_Xn(lrs,y)
+    DSLRs, SSLRs = Xy_to_Xn(lrs, y)
     DSPAVLRs, SSPAVLRs = Xy_to_Xn(pav_lrs, y)
     PAVresult = np.concatenate([SSPAVLRs, DSPAVLRs])
     Xen = np.concatenate([SSLRs, DSLRs])
@@ -216,8 +216,8 @@ def _devpavcalculator(lrs, pav_lrs, y):
             deltaX = Xen[-1] - Xen[0]
             surface = (0)
             for i in range(1, (len(Xen))):
-                surface = surface + calcsurface_f((Xen[i - 1], Yen[i - 1]), (Xen[i], Yen[i]))
-                devPAVs[i - 1] = calcsurface_f((Xen[i - 1], Yen[i - 1]), (Xen[i], Yen[i]))
+                surface = surface + _calcsurface((Xen[i - 1], Yen[i - 1]), (Xen[i], Yen[i]))
+                devPAVs[i - 1] = _calcsurface((Xen[i - 1], Yen[i - 1]), (Xen[i], Yen[i]))
             # return(list(surface/a, PAVresult, Xen, Yen, devPAVs))
             return surface / deltaX
 
@@ -226,6 +226,8 @@ def devpav(lrs, y):
     """
     calculates PAV transform of LR data under H1 and H2.
     """
+    if sum(y) == len(y) or sum(y) == 0:
+        raise ValueError('devpav: illegal input: at least one value is required for each class')
     cal = IsotonicCalibrator()
     pavlrs = cal.fit_transform(lrs, y)
     return _devpavcalculator(lrs, pavlrs, y)
