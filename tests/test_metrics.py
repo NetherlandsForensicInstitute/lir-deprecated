@@ -33,10 +33,6 @@ class TestDevPAV(unittest.TestCase):
         # binary system
         lrs = np.array([5, 5, 5, .2, 5, .2, .2, .2])
         y = np.concatenate([np.ones(4), np.zeros(4)])
-        print("devpav_estimated / basis")
-        print(devpav_estimated(lrs, y, resolution=100000)/(2 * np.log10(5)))
-        print ("devpav")
-        print(devpav(lrs, y))
         self.assertAlmostEqual(devpav(lrs, y), (np.log10(5)-np.log10(3))/2)
 
         # somewhat normal

@@ -6,7 +6,6 @@ import numpy as np
 
 from .calibration import IsotonicCalibrator
 from .util import Xn_to_Xy, Xy_to_Xn, to_probability, LR
-import matplotlib.pyplot as plt
 
 
 LrStats = collections.namedtuple('LrStats',
@@ -61,61 +60,6 @@ def cllr_min(lrs, y, weights=(1, 1)):
     cal = IsotonicCalibrator()
     lrmin = cal.fit_transform(to_probability(lrs), y)
     return cllr(lrmin, y, weights)
-
-
-def devpav_estimated(lrs, y, resolution=1000):
-    """
-    Estimate devPAV, a metric for calibration.
-
-    devPAV is the cumulative deviation of the PAV transformation from
-    the identity line. It is calculated in the LR range where misleading LRs
-    occur.
-
-    See also: P. Vergeer, Measuring calibration of likelihood ratio systems: a
-    comparison of four systems, including a new metric devPAV, to appear
-
-    This implementation estimates devPAV by calculating the average deviation
-    for a large number of LRs.
-
-    Parameters
-    ----------
-    lrs : a numpy array of LRs
-    y : a numpy array of labels (0 or 1)
-    resolution : the number of measurements in the range of misleading evidence; a higher value yields a more accurate estimation
-
-    Returns
-    -------
-    devPAV
-        an estimation of devPAV
-    """
-    lrs0, lrs1 = Xy_to_Xn(lrs, y)
-    if len(lrs0) == 0 or len(lrs1) == 0:
-        raise ValueError('devpav: illegal input: at least one value is required for each class')
-
-    # find misleading LR extremes
-    first_misleading = np.min(lrs1)
-    last_misleading = np.max(lrs0)
-    if first_misleading > last_misleading:  # test for perfect discrimination
-        return 0
-
-    if np.isinf(first_misleading) or np.isinf(last_misleading):  # test for infinitely misleading LRs
-        return np.inf
-
-    # calibrate on the input LRs
-    cal = IsotonicCalibrator()
-    pavlrs_ori = cal.fit_transform(to_probability(lrs), y)
-    plt.plot(np.log10(lrs), np.log10(pavlrs_ori))
-    # take `resolution` points evenly divided along the range of misleading LRs
-    xlr = np.exp(np.linspace(np.log(first_misleading), np.log(last_misleading), resolution))
-    pavlr = cal.transform(to_probability(xlr))
-    plt.plot(np.log10(xlr), np.log10(pavlr))
-    plt.axline((-6, -6), (6, 6))
-    plt.xlim(-0.8, 0.8)
-    plt.ylim(-0.8, 0.8)
-    plt.grid()
-    plt.show()
-    devlr = np.absolute(np.log10(xlr) - np.log10(pavlr))
-    return (np.sum(devlr) / resolution) * (np.log10(last_misleading) - np.log10(first_misleading))
 
 
 def _calcsurface(c1, c2):
