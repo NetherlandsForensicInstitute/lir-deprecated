@@ -75,7 +75,8 @@ def _calcsurface(c1, c2):
 
     if a == 1:
         # dan xs equals +/- Infinite en is er there is no intersection with the identity line
-        # the surface of the parrallolgram is:
+
+        # the surface of the parallellogram is:
         surface = (x2 - x1) * np.abs(y1 - x1)
 
     elif (a < 0):

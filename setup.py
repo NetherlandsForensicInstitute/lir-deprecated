@@ -14,7 +14,7 @@ setup(
     packages=find_packages(),
     setup_requires=["nose"],
     test_suite="nose.collector",
-    install_requires=["matplotlib", "numpy", "scipy", "scikit-learn", "tqdm"],
+    install_requires=["matplotlib", "numpy", "scipy", "scikit-learn", "tqdm", "pandas"],
     classifiers=[
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3 :: Only",
