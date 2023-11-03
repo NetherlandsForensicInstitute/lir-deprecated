@@ -4,7 +4,7 @@ import unittest
 from context import lir
 assert lir  # so import optimizer doesn't remove the line above
 
-from lir.metrics import devpav, _devpavcalculator, _calcsurface, devpav_estimated
+from lir.metrics import devpav, _devpavcalculator, _calcsurface
 from lir.util import Xn_to_Xy
 
 class TestDevPAV(unittest.TestCase):
@@ -79,7 +79,7 @@ class TestDevpavcalculator(unittest.TestCase):
         lrs_dif = (0, 1, 10**3)
         PAVresult = np.array([0, 0, 0, float('inf'), float('inf'), float('inf')])
         lrs, y = Xn_to_Xy(lrs_dif, lrs_same)
-        self.assertEqual(np.isnan(_devpavcalculator(lrs, PAVresult, y)), True)
+        self.assertTrue(np.isnan(_devpavcalculator(lrs, PAVresult, y)))
 
         ### tests on ordinary data
 

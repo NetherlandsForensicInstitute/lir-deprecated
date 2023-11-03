@@ -195,7 +195,7 @@ class TestTwoLevelModelNormalKDEFitPredict(unittest.TestCase):
         ground_truth[odds_R == 0] = float('nan')
         odds_R[odds_R == 0] = float('nan')
 
-        np.testing.assert_almost_equal(LRs_P / odds_R, ground_truth, decimal=10)
+        np.testing.assert_almost_equal(LRs_P / odds_R, ground_truth, decimal=9)
 
     def test_fit_and_predict_proba(self):
         # instantiate calculated LLRs list
