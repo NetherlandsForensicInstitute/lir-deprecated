@@ -62,57 +62,7 @@ def cllr_min(lrs, y, weights=(1, 1)):
     return cllr(lrmin, y, weights)
 
 
-def devpav_estimated(lrs, y, resolution=1000):
-    """
-    Estimate devPAV, a metric for calibration.
-
-    devPAV is the cumulative deviation of the PAV transformation from
-    the identity line. It is calculated in the LR range where misleading LRs
-    occur.
-
-    See also: P. Vergeer, Measuring calibration of likelihood ratio systems: a
-    comparison of four systems, including a new metric devPAV, to appear
-
-    This implementation estimates devPAV by calculating the average deviation
-    for a large number of LRs.
-
-    Parameters
-    ----------
-    lrs : a numpy array of LRs
-    y : a numpy array of labels (0 or 1)
-    resolution : the number of measurements in the range of misleading evidence; a higher value yields a more accurate estimation
-
-    Returns
-    -------
-    devPAV
-        an estimation of devPAV
-    """
-    lrs0, lrs1 = Xy_to_Xn(lrs, y)
-    if len(lrs0) == 0 or len(lrs1) == 0:
-        raise ValueError('devpav: illegal input: at least one value is required for each class')
-
-    # find misleading LR extremes
-    first_misleading = np.min(lrs1)
-    last_misleading = np.max(lrs0)
-    if first_misleading > last_misleading:  # test for perfect discrimination
-        return 0
-
-    if np.isinf(first_misleading) or np.isinf(last_misleading):  # test for infinitely misleading LRs
-        return np.inf
-
-    # calibrate on the input LRs
-    cal = IsotonicCalibrator()
-    cal.fit_transform(to_probability(lrs), y)
-
-    # take `resolution` points evenly divided along the range of misleading LRs
-    xlr = np.exp(np.linspace(np.log(first_misleading), np.log(last_misleading), resolution))
-    pavlr = cal.transform(to_probability(xlr))
-
-    devlr = np.absolute(np.log10(xlr) - np.log10(pavlr))
-    return (np.sum(devlr) / resolution) * (np.log10(last_misleading) - np.log10(first_misleading))
-
-
-def calcsurface_f(c1, c2):
+def _calcsurface(c1, c2):
     """
     Helperfunction that calculates the desired surface for two xy-coordinates
     """
@@ -125,8 +75,10 @@ def calcsurface_f(c1, c2):
 
     if a == 1:
         # dan xs equals +/- Infinite en is er there is no intersection with the identity line
-        # the surface of the parallelogram is:
-        surface = (y2 - y1) * np.abs(y1 - x1)
+
+        # the surface of the parallellogram is:
+        surface = (x2 - x1) * np.abs(y1 - x1)
+
     elif (a < 0):
         raise ValueError(f"slope is negative; impossible for PAV-transform. Coordinates are {c1} and {c2}. Calculated slope is {a}")
     else:
@@ -168,7 +120,7 @@ def _devpavcalculator(lrs, pav_lrs, y):
     Output: devPAV value
 
     """
-    DSLRs, SSLRs = Xy_to_Xn(lrs,y)
+    DSLRs, SSLRs = Xy_to_Xn(lrs, y)
     DSPAVLRs, SSPAVLRs = Xy_to_Xn(pav_lrs, y)
     PAVresult = np.concatenate([SSPAVLRs, DSPAVLRs])
     Xen = np.concatenate([SSLRs, DSLRs])
@@ -181,7 +133,7 @@ def _devpavcalculator(lrs, pav_lrs, y):
     # pathological cases
     # first one of four: PAV-transform has a horizonal line to log(X) = -Inf as to log(X) = Inf
     if Yen[0] != 0 and Yen[-1] != np.inf and Xen[-1] == np.inf and Xen[-1] == np.inf:
-        return np.nan
+        return np.Inf
 
     # second of four: PAV-transform has a horizontal line to log(X) = -Inf
     if Yen[0] != 0 and Xen[0] == 0 and Yen[-1] == np.inf:
@@ -189,9 +141,9 @@ def _devpavcalculator(lrs, pav_lrs, y):
 
     # third of four: PAV-transform has a horizontal line to log(X) = Inf
     if Yen[0] == 0 and Yen[-1] != np.inf and Xen[-1] == np.inf:
-        return np.NINF
+        return np.Inf
 
-    # forth of four: PAV-transform has one vertical line from log(Y) = -Inf to log(Y) = Inn
+    # forth of four: PAV-transform has one vertical line from log(Y) = -Inf to log(Y) = Inf
     wh = (Yen == 0) | (Yen == np.inf)
     if np.sum(wh) == len(Yen):
         return np.nan
@@ -209,24 +161,26 @@ def _devpavcalculator(lrs, pav_lrs, y):
         if len(Xen) == 0:
             return np.nan
         elif len(Xen) == 1:
-            return (abs(Xen - Yen))
+            return abs(Xen - Yen)
         # than calculate devPAV
         else:
             deltaX = Xen[-1] - Xen[0]
-            surface = (0)
+            surface = 0
             for i in range(1, (len(Xen))):
-                surface = surface + calcsurface_f((Xen[i - 1], Yen[i - 1]), (Xen[i], Yen[i]))
-                devPAVs[i - 1] = calcsurface_f((Xen[i - 1], Yen[i - 1]), (Xen[i], Yen[i]))
+                surface = surface + _calcsurface((Xen[i - 1], Yen[i - 1]), (Xen[i], Yen[i]))
+                devPAVs[i - 1] = _calcsurface((Xen[i - 1], Yen[i - 1]), (Xen[i], Yen[i]))
             # return(list(surface/a, PAVresult, Xen, Yen, devPAVs))
-            return (surface / deltaX)
+            return surface / deltaX
 
 
 def devpav(lrs, y):
     """
-    calculates PAV transform of LR data under H1 and H2.
+    calculates devPAV for LR data under H1 and H2.
     """
+    if sum(y) == len(y) or sum(y) == 0:
+        raise ValueError('devpav: illegal input: at least one value is required for each class')
     cal = IsotonicCalibrator()
-    pavlrs = cal.fit_transform(to_probability(lrs), y)
+    pavlrs = cal.fit_transform(lrs, y)
     return _devpavcalculator(lrs, pavlrs, y)
 
 
