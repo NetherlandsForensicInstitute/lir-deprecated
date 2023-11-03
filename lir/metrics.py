@@ -6,6 +6,7 @@ import numpy as np
 
 from .calibration import IsotonicCalibrator
 from .util import Xn_to_Xy, Xy_to_Xn, to_probability, LR
+import matplotlib.pyplot as plt
 
 
 LrStats = collections.namedtuple('LrStats',
@@ -102,12 +103,17 @@ def devpav_estimated(lrs, y, resolution=1000):
 
     # calibrate on the input LRs
     cal = IsotonicCalibrator()
-    cal.fit_transform(to_probability(lrs), y)
-
+    pavlrs_ori = cal.fit_transform(to_probability(lrs), y)
+    plt.plot(np.log10(lrs), np.log10(pavlrs_ori))
     # take `resolution` points evenly divided along the range of misleading LRs
     xlr = np.exp(np.linspace(np.log(first_misleading), np.log(last_misleading), resolution))
     pavlr = cal.transform(to_probability(xlr))
-
+    plt.plot(np.log10(xlr), np.log10(pavlr))
+    plt.axline((-6, -6), (6, 6))
+    plt.xlim(-0.8, 0.8)
+    plt.ylim(-0.8, 0.8)
+    plt.grid()
+    plt.show()
     devlr = np.absolute(np.log10(xlr) - np.log10(pavlr))
     return (np.sum(devlr) / resolution) * (np.log10(last_misleading) - np.log10(first_misleading))
 
