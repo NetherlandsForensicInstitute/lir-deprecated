@@ -75,8 +75,8 @@ jobs:
     - name: Publish to PyPI
       if: github.ref == 'refs/heads/master'
       env:
-        TWINE_USERNAME: fbda
-        TWINE_PASSWORD: ${{ secrets.PYPI_FBDA_PASSWORD }}
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
       run: |
         twine upload dist/*
     - uses: actions/upload-artifact@v2
