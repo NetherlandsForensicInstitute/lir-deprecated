@@ -177,7 +177,7 @@ print(f'ELUB log(LR) bounds for logreg are {np.log10(bounded_logreg_calibrator._
 print(f'ELUB log(LR) bounds for kde are {np.log10(bounded_kde_calibrator._lower_lr_bound):.2f} and {np.log10(bounded_kde_calibrator._upper_lr_bound):.2f}')
 
 
-def show_performance(lrs, hypothesis, calibrator, fileprefix):
+def show_performance(lrs, hypothesis, calibrator, fileprefix, pav_zoom=False):
       hypothesis=(hypothesis=='H1')*1 # convert to 0 or 1 for technical reasons
       # show the distribution of LRs together with the ELUB values
       print('Histogram of the LRs:\n')
@@ -198,9 +198,10 @@ def show_performance(lrs, hypothesis, calibrator, fileprefix):
           ax.pav(lrs, hypothesis)
           plt.savefig(f'{fileprefix}_pav.jpeg', **plot_arguments)
 
-      with plotting.show() as ax:
-          ax.pav_zoom(lrs, hypothesis)
-          plt.savefig(f'{fileprefix}_pav_zoom.jpeg', **plot_arguments)
+      if pav_zoom:
+          with plotting.show() as ax:
+              ax.pav_zoom(lrs, hypothesis)
+              plt.savefig(f'{fileprefix}_pav_zoom.jpeg', **plot_arguments)
 
       # print the quality of the system as log likelihood ratio cost (lower is better)
       print(f'\n The log likelihood ratio cost is {metrics.cllr(lrs, hypothesis):.3f} (lower is better)\n')
@@ -218,7 +219,7 @@ lr_system = CalibratedScorer(scorer, bounded_kde_calibrator)
 lr_system.fit(obs_pairs_train, hypothesis_train == "H1")
 lrs_select = lr_system.predict_lr(obs_pairs_select)
 
-show_performance(lrs_select, hypothesis_select, lr_system.calibrator, 'fig8_step6_selection')
+show_performance(lrs_select, hypothesis_select, lr_system.calibrator, 'fig8_step6_selection', pav_zoom=True)
 
 # create the combined data set
 obs_train_select = obs[train_select_indices]
@@ -240,7 +241,7 @@ selected_lr_system.fit(obs_pairs_train_select, hypothesis_train_select == 'H1')
 lrs_val = selected_lr_system.predict_lr(obs_pairs_val)
 
 # we always inspect the characteristics we also look at in selection
-show_performance(lrs_val, hypothesis_val, selected_lr_system.calibrator, 'fig9_step7_validate')
+show_performance(lrs_val, hypothesis_val, selected_lr_system.calibrator, 'fig9_step7_validate', pav_zoom=False)
 
 # There are many other characteristics that we may want to inspect, such as the empirical cross entropy (ECE) plot.
 with plotting.show() as ax:
