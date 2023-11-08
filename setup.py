@@ -4,7 +4,7 @@ with open("README.md") as f:
     long_description = f.read()
 setup(
     name="lir",
-    version="0.1.24",
+    version="0.1.25",
     description="scripts for calculating likelihood ratios",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -12,9 +12,9 @@ setup(
     author="Netherlands Forensic Institute",
     author_email="fbda@nfi.nl",
     packages=find_packages(),
-    setup_requires=["nose"],
-    test_suite="nose.collector",
-    install_requires=["matplotlib", "numpy", "scipy", "scikit-learn", "tqdm", "pandas"],
+    setup_requires=["pytest-runner"],
+    tests_require=['pytest'],
+    install_requires=["matplotlib", "numpy", "scipy", "scikit-learn", "tqdm"],
     classifiers=[
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3 :: Only",

@@ -2,9 +2,6 @@ import numpy as np
 import unittest
 import warnings
 
-from context import lir
-assert lir  # so import optimizer doesn't remove the line above
-
 from lir.calibration import IsotonicCalibrator
 from lir.calibration import KDECalibrator
 from lir.calibration import GaussianCalibrator

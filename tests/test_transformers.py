@@ -6,8 +6,6 @@ import warnings
 
 from scipy.stats import rankdata
 
-from context import lir
-
 from lir.transformers import InstancePairing, PercentileRankTransformer
 
 warnings.simplefilter("error")

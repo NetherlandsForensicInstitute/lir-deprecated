@@ -1,10 +1,7 @@
 import numpy as np
 import unittest
 
-from context import lir
-assert lir  # so import optimizer doesn't remove the line above
-
-from lir.metrics import devpav, _devpavcalculator, _calcsurface
+from lir.metrics import devpav, _calcsurface, _devpavcalculator
 from lir.util import Xn_to_Xy
 
 class TestDevPAV(unittest.TestCase):

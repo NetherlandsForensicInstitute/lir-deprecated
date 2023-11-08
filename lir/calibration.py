@@ -10,12 +10,12 @@ from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.mixture import GaussianMixture
 from sklearn.neighbors import KernelDensity
-from typing import Optional, Tuple, Union, Iterable, Callable, Sized
+from typing import Optional, Tuple, Union, Callable, Sized
 
 from .bayeserror import elub
 from .loss_functions import negative_log_likelihood_balanced
 from .regression import IsotonicRegressionInf
-from .util import Xy_to_Xn, to_odds, ln_to_log10, Bind
+from .util import Xy_to_Xn, to_odds, ln_to_log10, Bind, to_probability
 
 LOG = logging.getLogger(__name__)
 
@@ -500,6 +500,8 @@ class GaussianCalibratorInProbabilityDomain(BaseEstimator, TransformerMixin):
         warnings.warn(f"the class {type(self).__name__} will be removed in the future")
         self.n_components_H1 = n_components_H1
         self.n_components_H0 = n_components_H0
+        self._model0 = None
+        self._model1 = None
 
     def fit(self, X, y):
         X0, X1 = Xy_to_Xn(X, y)
@@ -582,21 +584,21 @@ class FourParameterLogisticCalibrator:
             # then define 4PL-logistic model
             self.model = self._four_pl_model
             bounds.extend([(10**-10, 1-10**-10), (10**-10, np.inf)])
-            LOG.warning("There were -Inf lrs for the same source samples and Inf lrs for the different source samples "
+            LOG.debug("There were -Inf lrs for the same source samples and Inf lrs for the different source samples "
                         ", therefore a 4pl calibrator was fitted.")
         elif estimate_c:
             # then define 3-PL logistic model. Set 'd' to 0
             self.model = partial(self._four_pl_model, d=0)
             # use very small values since limits result in -inf llh
             bounds.append((10**-10, 1-10**-10))
-            LOG.warning("There were -Inf lrs for the same source samples, therefore a 3pl calibrator was fitted.")
+            LOG.debug("There were -Inf lrs for the same source samples, therefore a 3pl calibrator was fitted.")
         elif estimate_d:
             # then define 3-PL logistic model. Set 'c' to 0
             # use bind since 'c' is intermediate variable. In that case partial does not work.
             self.model = Bind(self._four_pl_model, ..., ..., ..., 0, ...)
             # use very small value since limits result in -inf llh
             bounds.append((10**-10, np.inf))
-            LOG.warning("There were Inf lrs for the different source samples, therefore a 3pl calibrator was fitted.")
+            LOG.debug("There were Inf lrs for the different source samples, therefore a 3pl calibrator was fitted.")
         else:
             # define ordinary logistic model (no regularization, so maximum likelihood estimates)
             self.model = partial(self._four_pl_model, c=0, d=0)
@@ -632,21 +634,39 @@ class FourParameterLogisticCalibrator:
         return p
 
 
-class DummyCalibrator(BaseEstimator, TransformerMixin):
+class DummyProbabilityCalibrator(BaseEstimator, TransformerMixin):
     """
-    Calculates a likelihood ratio of a score value, provided it is from one of
-    two distributions. No calibration is applied. Instead, the score value is
-    interpreted as a posterior probability of the value being sampled from
-    class 1.
+    Dummy calibrator class which can be used to skip calibration. No
+    calibration is applied. Instead, a prior probability of 0.5 is assumed, and
+    the input values are interpreted as posterior probabilities. Under these
+    circumstances this class returns a likelihood ratio for each input value.
     """
 
     def fit(self, X, y=None, **fit_params):
         return self
 
-    def transform(self, X):
-        self.p0 = (1 - X)
-        self.p1 =  X
-        return to_odds(self.p1)
+    def transform(self, probabilities: np.ndarray):
+        self.p0 = (1 - probabilities)
+        self.p1 = probabilities
+        return to_odds(probabilities)
+
+
+class DummyLogOddsCalibrator(BaseEstimator, TransformerMixin):
+    """
+    Dummy calibrator class which can be used to skip calibration. No
+    calibration is applied. Instead, prior odds of 1 are assumed, and the input
+    values are interpreted as posterior odds. Under these circumstances this
+    class returns a likelihood ratio for each input value.
+    """
+
+    def fit(self, X, y=None, **fit_params):
+        return self
+
+    def transform(self, log_odds: np.ndarray):
+        odds = 10 ** log_odds
+        self.p1 = to_probability(odds)
+        self.p0 = 1 - self.p1
+        return odds
 
 
 class ELUBbounder(BaseEstimator, TransformerMixin):

@@ -181,8 +181,8 @@ def pav(lrs, y, add_misleading=0, show_scatter=True, ax=plt):
     if show_scatter:
         ax.scatter(llrs, pav_llrs)  # scatter plot of measured lrs
 
-    ax.set_xlabel("pre-calibrated 10log LR")
-    ax.set_ylabel("post-calibrated 10log LR")
+    ax.set_xlabel("pre-calibrated log$_{10}$(LR)")
+    ax.set_ylabel("post-calibrated log$_{10}$(LR)")
 
 
 def lr_histogram(lrs, y, bins=20, weighted=True, ax=plt):
@@ -204,9 +204,9 @@ def lr_histogram(lrs, y, bins=20, weighted=True, ax=plt):
     points0, points1 = util.Xy_to_Xn(log_lrs, y)
     weights0, weights1 = (np.ones_like(points) / len(points) if weighted else None
                           for points in (points0, points1))
-    ax.hist(points0, bins=bins, alpha=.25, weights=weights0)
     ax.hist(points1, bins=bins, alpha=.25, weights=weights1)
-    ax.set_xlabel('10log likelihood ratio')
+    ax.hist(points0, bins=bins, alpha=.25, weights=weights0)
+    ax.set_xlabel('log$_{10}$(LR)')
     ax.set_ylabel('count' if not weighted else 'relative frequency')
 
 
@@ -241,35 +241,41 @@ def tippett(lrs, y, plot_type=1, ax=plt):
     ax.plot(xplot1, perc1, color='b', label='LRs given $\mathregular{H_1}$')
     ax.plot(xplot0, perc0, color='r', label='LRs given $\mathregular{H_2}$')
     ax.axvline(x=0, color='k', linestyle='--')
-    ax.set_xlabel('10log likelihood ratio')
+    ax.set_xlabel('log$_{10}$(LR)')
     ax.set_ylabel('Cumulative proportion')
     ax.legend()
 
 
-def score_distribution(scores, y, bins=20, weighted=True, ax=plt):
+def score_distribution(scores, y, bins: int = 20, weighted: bool = True, ax=plt):
     """
-    plots the distributions of scores calculated by the (fitted) lr_system
+    Plots the distributions of scores calculated by the (fitted) lr_system.
+
+    If `weighted` is `True`, the y-axis represents the probability density
+    within the class, and `inf` is the fraction of instances. Otherwise, the
+    y-axis shows the number of instances.
 
     Parameters
     ----------
-    scores : scores of (fitted) lr_system
-    y : a numpy array of labels (0 or 1)
+    scores : scores of (fitted) lr_system (1d-array)
+    y : a numpy array of labels (0 or 1, 1d-array of same length as `scores`)
     bins: number of bins to divide scores into
-    weighted: if y-axis should be weighted for frequency within each class
+    weighted: if y-axis should be the probability density within each class,
+        instead of counts
     ax: axes to plot figure to
 
     """
     ax.rcParams.update({'font.size': 15})
     bins = np.histogram_bin_edges(scores[np.isfinite(scores)], bins=bins)
+    bin_width = bins[1] - bins[0]
 
+    # flip Y-classes to achieve blue bars for H1-true and orange for H2-true
+    y_classes = np.flip(np.unique(y))
     # create weights vector so y-axis is between 0-1
-    scores_by_class = [scores[y == cls] for cls in np.unique(y)]
-    weights = [np.ones_like(data) / len(data) for data in scores_by_class]
-
-    # adjust weights so largest value is 1
-    for i, s in enumerate(scores_by_class):
-        hist, _ = np.histogram(s, bins=np.r_[-np.inf, bins, np.inf], weights=weights[i])
-        weights[i] = weights[i] * (1 / hist.max())
+    scores_by_class = [scores[y == cls] for cls in y_classes]
+    if weighted:
+        weights = [np.ones_like(data) / len(data) for data in scores_by_class]
+    else:
+        weights = [np.ones_like(data) for data in scores_by_class]
 
     # handle inf values
     if np.isinf(scores).any():
@@ -300,11 +306,17 @@ def score_distribution(scores, y, bins=20, weighted=True, ax=plt):
         ax.xticks(x_range, labels)
 
         for color, x_coord, y_coord in plot_args_inf:
-            ax.bar(x_coord, y_coord, width=bar_width, color=color, alpha=0.25, hatch='/')
+            ax.bar(x_coord, y_coord, width=bar_width, color=color, alpha=0.3, hatch='/')
 
-    for cls, weight in zip(np.unique(y), weights):
-        ax.hist(scores[y == cls], bins=bins, alpha=.25,
-                label=f'class {cls}', weights=weight if weighted else None)
+    for cls, weight in zip(y_classes, weights):
+        ax.hist(scores[y == cls], bins=bins, alpha=.3,
+                label = f'class {cls}', weights = weight/bin_width if weighted else None)
+
+        ax.xlabel('score')
+    if weighted:
+        ax.ylabel('probability density')
+    else:
+        ax.ylabel('count')
 
 
 def calibrator_fit(calibrator, score_range=(0, 1), resolution=100, ax=plt):
@@ -319,5 +331,5 @@ def calibrator_fit(calibrator, score_range=(0, 1), resolution=100, ax=plt):
     x = np.linspace(score_range[0], score_range[1], resolution)
     calibrator.transform(x)
 
-    ax.plot(x, calibrator.p1, label='fit class 1')
-    ax.plot(x, calibrator.p0, label='fit class 0')
+    ax.plot(x, calibrator.p1, color='tab:blue', label='fit class 1')
+    ax.plot(x, calibrator.p0, color='tab:orange', label='fit class 0')
