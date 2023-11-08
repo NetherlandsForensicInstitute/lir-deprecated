@@ -1,6 +1,4 @@
-import numpy as np
-
-from ..util import to_probability, to_odds, get_classes_from_Xy, Xy_to_Xn
+from ..util import get_classes_from_Xy, Xy_to_Xn
 
 
 def get_classes_from_scores_Xy(scores, y, classes=None):

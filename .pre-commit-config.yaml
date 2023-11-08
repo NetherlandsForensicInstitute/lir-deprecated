@@ -16,9 +16,9 @@ repos:
         stages: [commit]
         language: system
         entry: jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace
-      - id: nosetests
-        name: nosetests
-        entry: nosetests
+      - id: pytest-check
+        name: pytest-check
+        entry: bash -c pytest
         language: system
         always_run: true
         pass_filenames: false

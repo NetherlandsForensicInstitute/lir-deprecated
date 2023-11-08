@@ -12,8 +12,7 @@ setup(
     author="Netherlands Forensic Institute",
     author_email="fbda@nfi.nl",
     packages=find_packages(),
-    setup_requires=["nose", "pre-commit", "jupyter"],
-    test_suite="nose.collector",
+    setup_requires=["pre-commit", "jupyter"],
     install_requires=["matplotlib", "numpy", "scipy", "scikit-learn", "tqdm"],
     classifiers=[
         "License :: OSI Approved :: Apache Software License",

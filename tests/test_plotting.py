@@ -5,7 +5,7 @@ import unittest
 
 import matplotlib.pyplot as plt
 
-from context import lir
+import lir
 from lir.util import to_probability
 
 
@@ -24,7 +24,7 @@ class TestPlotting(unittest.TestCase):
         lir.plotting.pav(lrs, y)
         plt.title("simple call with full control")
         plt.close(fig)
-        
+
         # sub plots
         fig, axs = plt.subplots(2)
         lir.plotting.pav(lrs, y, ax=axs[0])
