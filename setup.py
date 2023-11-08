@@ -12,7 +12,7 @@ setup(
     author="Netherlands Forensic Institute",
     author_email="fbda@nfi.nl",
     packages=find_packages(),
-    install_requires=["matplotlib", "numpy", "scipy", "scikit-learn", "tqdm"],
+    install_requires=["matplotlib", "numpy", "scipy", "scikit-learn", "tqdm", "pandas"],
     classifiers=[
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3 :: Only",
