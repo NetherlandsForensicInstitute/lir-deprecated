@@ -10,7 +10,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.mixture import GaussianMixture
 from sklearn.neighbors import KernelDensity
-from typing import Optional, Tuple, Union, Iterable, Callable, Sized
+from typing import Optional, Tuple, Union, Callable, Sized
 
 from .bayeserror import elub
 from .loss_functions import negative_log_likelihood_balanced
@@ -500,6 +500,8 @@ class GaussianCalibratorInProbabilityDomain(BaseEstimator, TransformerMixin):
         warnings.warn(f"the class {type(self).__name__} will be removed in the future")
         self.n_components_H1 = n_components_H1
         self.n_components_H0 = n_components_H0
+        self._model0 = None
+        self._model1 = None
 
     def fit(self, X, y):
         X0, X1 = Xy_to_Xn(X, y)
@@ -582,21 +584,21 @@ class FourParameterLogisticCalibrator:
             # then define 4PL-logistic model
             self.model = self._four_pl_model
             bounds.extend([(10**-10, 1-10**-10), (10**-10, np.inf)])
-            LOG.warning("There were -Inf lrs for the same source samples and Inf lrs for the different source samples "
+            LOG.debug("There were -Inf lrs for the same source samples and Inf lrs for the different source samples "
                         ", therefore a 4pl calibrator was fitted.")
         elif estimate_c:
             # then define 3-PL logistic model. Set 'd' to 0
             self.model = partial(self._four_pl_model, d=0)
             # use very small values since limits result in -inf llh
             bounds.append((10**-10, 1-10**-10))
-            LOG.warning("There were -Inf lrs for the same source samples, therefore a 3pl calibrator was fitted.")
+            LOG.debug("There were -Inf lrs for the same source samples, therefore a 3pl calibrator was fitted.")
         elif estimate_d:
             # then define 3-PL logistic model. Set 'c' to 0
             # use bind since 'c' is intermediate variable. In that case partial does not work.
             self.model = Bind(self._four_pl_model, ..., ..., ..., 0, ...)
             # use very small value since limits result in -inf llh
             bounds.append((10**-10, np.inf))
-            LOG.warning("There were Inf lrs for the different source samples, therefore a 3pl calibrator was fitted.")
+            LOG.debug("There were Inf lrs for the different source samples, therefore a 3pl calibrator was fitted.")
         else:
             # define ordinary logistic model (no regularization, so maximum likelihood estimates)
             self.model = partial(self._four_pl_model, c=0, d=0)
