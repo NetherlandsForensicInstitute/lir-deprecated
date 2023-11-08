@@ -62,7 +62,7 @@ def cllr_min(lrs, y, weights=(1, 1)):
     return cllr(lrmin, y, weights)
 
 
-def _calcsurface(c1, c2):
+def _calcsurface(c1: (float, float), c2: (float, float)) -> float:
     """
     Helperfunction that calculates the desired surface for two xy-coordinates
     """
@@ -149,7 +149,7 @@ def _devpavcalculator(lrs, pav_lrs, y):
         return np.nan
 
     else:
-        # than it is not a  pathological case with weird X-values and devPAV can be calculated
+        # then it is not a  pathological case with weird X-values and devPAV can be calculated
 
         # filtering out -Inf or 0 Y's
         wh = (Yen > 0) & (Yen < np.inf)
@@ -173,7 +173,7 @@ def _devpavcalculator(lrs, pav_lrs, y):
             return surface / deltaX
 
 
-def devpav(lrs, y):
+def devpav(lrs: np.ndarray, y: np.ndarray) -> float:
     """
     calculates devPAV for LR data under H1 and H2.
     """
