@@ -5,7 +5,7 @@ import unittest
 
 import matplotlib.pyplot as plt
 
-from context import lir
+import lir
 from lir.util import to_probability
 
 

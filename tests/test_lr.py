@@ -5,10 +5,7 @@ import warnings
 import sklearn
 from sklearn.metrics.pairwise import paired_manhattan_distances
 
-from context import lir
 from lir.transformers import InstancePairing
-
-assert lir  # so import optimizer doesn't remove the line above
 
 from sklearn.linear_model import LogisticRegression
 
