@@ -13,17 +13,13 @@ transform(self, X)
     returns a two dimensional array of lrs; same dimensions as X
 """
 import logging
-import math
-import warnings
 
 import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.base import TransformerMixin
 from sklearn.linear_model import LogisticRegression
-from sklearn.neighbors import KernelDensity
 
-from ..calibration import DummyCalibrator
-from .util import to_odds, get_classes_from_scores_Xy, to_probability
+from ..util import to_odds, to_probability
 
 LOG = logging.getLogger(__name__)
 
