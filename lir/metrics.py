@@ -180,6 +180,8 @@ def devpav(lrs: np.ndarray, y: np.ndarray) -> float:
     if sum(y) == len(y) or sum(y) == 0:
         raise ValueError('devpav: illegal input: at least one value is required for each class')
     cal = IsotonicCalibrator()
+    # change datatype to float64 to counteract rounding errors resulting in non-monotonicity
+    lrs = lrs.astype(np.float64)
     pavlrs = cal.fit_transform(lrs, y)
     return _devpavcalculator(lrs, pavlrs, y)
 
