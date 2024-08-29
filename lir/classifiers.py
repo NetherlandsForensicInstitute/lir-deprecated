@@ -48,7 +48,6 @@ class TwoLevelModelNormalKDE:
         self.means_per_source = None
         self.kernel_bandwidth_sq = None
         self.between_covars = None
-        print('a')
 
     def fit_on_unpaired_instances(self, X: np.ndarray, y: np.ndarray) -> "TwoLevelModelNormalKDE":
         """
