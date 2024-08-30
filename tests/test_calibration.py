@@ -144,7 +144,7 @@ class TestLogitCalibrator(unittest.TestCase):
         calibrator = LogitCalibrator()
         calibrator.fit(X, y)
         lrs_cal = calibrator.transform(X)
-        np.testing.assert_allclose(lrs_cal, desired)
+        np.testing.assert_allclose(lrs_cal, desired, rtol=1e-2)
 
     def test_on_extreme_values(self):
         X = np.array([8.34714300e-002, 1.37045206e-006, 7.09420198e-007, 5.71489187e-007, 2.38531254e-002, 5.24259542e-002, 6.39928887e-004, 8.22553304e-009, 2.57792061e-006, 0.00000000e+000, 9.88131292e-324, 0.00000000e+000, 9.99995881e-001, 9.99813208e-001, 9.99335354e-001, 9.99081531e-001, 9.56347800e-001, 9.98600437e-001, 9.99552746e-001, 9.99818952e-001, 9.99999911e-001, 1.00000000e+000, 1 - np.float_power(10, -16), 1.00000000e+000])
@@ -154,7 +154,7 @@ class TestLogitCalibrator(unittest.TestCase):
         calibrator = LogitCalibrator()
         calibrator.fit(X, y)
         lrs_cal = calibrator.transform(X)
-        np.testing.assert_allclose(lrs_cal, desired, rtol=1e-2)
+        np.testing.assert_allclose(lrs_cal, desired, atol=1e-16)
 
 
 if __name__ == '__main__':

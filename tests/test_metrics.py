@@ -60,7 +60,7 @@ class TestDevpavcalculator(unittest.TestCase):
         lrs_dif = (0.001, 2, float('inf'))
         PAVresult = np.array([0.,  1.5, 1.5, 1.5, 1.5, 1.5])
         lrs, y = Xn_to_Xy(lrs_dif, lrs_same)
-        self.assertEqual(_devpavcalculator(lrs, PAVresult, y), np.Inf)
+        self.assertEqual(_devpavcalculator(lrs, PAVresult, y), np.inf)
 
 
         # 3 of 4: test on data where PAV-tranform has a horizontal line starting at log(X) = -Inf, and another one ending at log(X) = Inf
