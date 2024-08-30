@@ -121,7 +121,7 @@ def pav(lrs, y, add_misleading=0, show_scatter=True, ax=plt):
         llrs = np.log10(lrs)
         pav_llrs = np.log10(pav_lrs)
 
-    xrange = yrange = [llrs[llrs != -np.Inf].min() - .5, llrs[llrs != np.Inf].max() + .5]
+    xrange = yrange = [llrs[llrs != -np.inf].min() - .5, llrs[llrs != np.inf].max() + .5]
 
     # plot line through origin
     ax.plot(xrange, yrange)

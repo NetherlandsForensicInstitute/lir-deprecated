@@ -162,7 +162,7 @@ class TestTwoLevelModelNormalKDEPredict(unittest.TestCase):
         log10_LR_P = self.two_level_model._predict_log10_lr_score(data_tr_reshaped, data_ref_reshaped)
 
         # replace too negative log10_LR_P since log10_LR_R gives -Inf after -300
-        log10_LR_P[log10_LR_P < -300] = np.NINF
+        log10_LR_P[log10_LR_P < -300] = -np.inf
 
         np.testing.assert_almost_equal(np.array(log10_LR_R), log10_LR_P, decimal=10)
 
@@ -187,7 +187,7 @@ class TestTwoLevelModelNormalKDEFitPredict(unittest.TestCase):
         log10_LR_P = self.two_level_model._predict_log10_lr_score(data_tr_reshaped, data_ref_reshaped)
 
         # replace too negative log10_LR_P since log10_LR_R gives -Inf after -300
-        log10_LR_P[log10_LR_P < -300] = np.NINF
+        log10_LR_P[log10_LR_P < -300] = -np.inf
 
         np.testing.assert_almost_equal(log10_LR, log10_LR_P, decimal=10)
 

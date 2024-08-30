@@ -133,15 +133,15 @@ def _devpavcalculator(lrs, pav_lrs, y):
     # pathological cases
     # first one of four: PAV-transform has a horizonal line to log(X) = -Inf as to log(X) = Inf
     if Yen[0] != 0 and Yen[-1] != np.inf and Xen[-1] == np.inf and Xen[-1] == np.inf:
-        return np.Inf
+        return np.inf
 
     # second of four: PAV-transform has a horizontal line to log(X) = -Inf
     if Yen[0] != 0 and Xen[0] == 0 and Yen[-1] == np.inf:
-        return np.Inf
+        return np.inf
 
     # third of four: PAV-transform has a horizontal line to log(X) = Inf
     if Yen[0] == 0 and Yen[-1] != np.inf and Xen[-1] == np.inf:
-        return np.Inf
+        return np.inf
 
     # forth of four: PAV-transform has one vertical line from log(Y) = -Inf to log(Y) = Inf
     wh = (Yen == 0) | (Yen == np.inf)
