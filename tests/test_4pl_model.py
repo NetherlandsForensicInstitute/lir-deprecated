@@ -30,7 +30,7 @@ class TestFourParameterLogisticCalibrator(unittest.TestCase):
         four_pl_model = FourParameterLogisticCalibrator()
         four_pl_model.fit(X, y)
 
-        logistic = LogisticRegression(penalty='none', class_weight='balanced')
+        logistic = LogisticRegression(penalty=None, class_weight='balanced')
         logistic.fit(X[:, None], y)
         logistic_coef = [logistic.coef_[0][0], logistic.intercept_[0]]
         np.testing.assert_almost_equal(four_pl_model.coef_, logistic_coef, decimal=5)
