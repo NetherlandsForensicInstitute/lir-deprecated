@@ -238,8 +238,8 @@ def tippett(lrs, y, plot_type=1, ax=plt):
     else:
         raise ValueError("plot_type must be either 1 or 2.")
 
-    ax.plot(xplot1, perc1, color='b', label='LRs given $\mathregular{H_1}$')
-    ax.plot(xplot0, perc0, color='r', label='LRs given $\mathregular{H_2}$')
+    ax.plot(xplot1, perc1, color='b', label=r'LRs given $\mathregular{H_1}$')
+    ax.plot(xplot0, perc0, color='r', label=r'LRs given $\mathregular{H_2}$')
     ax.axvline(x=0, color='k', linestyle='--')
     ax.set_xlabel('log$_{10}$(LR)')
     ax.set_ylabel('Cumulative proportion')

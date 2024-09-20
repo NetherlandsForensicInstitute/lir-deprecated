@@ -509,8 +509,8 @@ def plot_tippett(lrs, y, savefig=None, show=None, kw_figure={}):
     perc0 = (sum(i >= xplot for i in lr_0) / len(lr_0)) * 100
     perc1 = (sum(i >= xplot for i in lr_1) / len(lr_1)) * 100
 
-    plt.plot(xplot, perc1, color='b', label='LRs given $\mathregular{H_1}$')
-    plt.plot(xplot, perc0, color='r', label='LRs given $\mathregular{H_2}$')
+    plt.plot(xplot, perc1, color='b', label=r'LRs given $\mathregular{H_1}$')
+    plt.plot(xplot, perc0, color='r', label=r'LRs given $\mathregular{H_2}$')
     plt.axvline(x=0, color='k', linestyle='--')
     plt.xlabel('Log likelihood ratio')
     plt.ylabel('Cumulative proportion')
