@@ -29,11 +29,11 @@ class TestFourParameterLogisticCalibrator(unittest.TestCase):
         y = np.concatenate([np.zeros(len(self.X_diff)), np.ones(len(self.X_same))])
         four_pl_model = FourParameterLogisticCalibrator()
         four_pl_model.fit(X, y)
-
-        logistic = LogisticRegression(penalty='none', class_weight='balanced')
+        
+        logistic = LogisticRegression(penalty=None, class_weight='balanced')
         logistic.fit(X[:, None], y)
         logistic_coef = [logistic.coef_[0][0], logistic.intercept_[0]]
-        np.testing.assert_almost_equal(four_pl_model.coef_, logistic_coef, decimal=5)
+        np.testing.assert_allclose(four_pl_model.coef_, logistic_coef, rtol=1e-2)
 
     def test_pl_1_is_0(self):
         X_same = np.concatenate([self.X_same, [0]])

@@ -13,6 +13,7 @@ setup(
     author_email="fbda@nfi.nl",
     packages=find_packages(),
     install_requires=["matplotlib", "numpy", "scipy", "scikit-learn", "tqdm"],
+    tests_require=["pytest"],
     classifiers=[
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3 :: Only",

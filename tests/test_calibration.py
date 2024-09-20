@@ -2,6 +2,10 @@ import numpy as np
 import unittest
 import warnings
 
+import pytest
+import sklearn
+from packaging.version import Version
+
 from lir.calibration import IsotonicCalibrator
 from lir.calibration import KDECalibrator
 from lir.calibration import GaussianCalibrator
@@ -136,21 +140,25 @@ class TestLogitCalibrator(unittest.TestCase):
     score_class1 = [2.42776744e+05, 5.35255527e+03, 1.50355963e+03, 1.08776892e+03, 2.19083530e+01, 7.13508826e+02,
                     2.23486401e+03, 5.52239060e+03, 1.12077833e+07]
 
+    @pytest.mark.skipif(Version(sklearn.__version__) < Version("1.4"), reason="breaks for implementation of LogisticRegression in sklearn 1.3 or older")
     def test_prob_version(self):
         X, y = Xn_to_Xy(self.score_class0, self.score_class1)
         X = to_probability(X)
         X = to_log_odds(X)
-        desired = [1.79732352e-01, 4.16251897e-04, 2.90464504e-04, 2.58097514e-04, 8.75801433e-02, 1.36880766e-01, 1.19709662e-02, 2.54277585e-05, 5.87902757e-04, 5.83462439e+02, 7.25669320e+01, 3.62580218e+01, 3.03795948e+01, 3.59619089e+00, 2.41271821e+01, 4.50261471e+01, 7.38162334e+01, 4.73670703e+03]
+        desired = [1.79412197e-01, 4.14660464e-04, 2.89318855e-04, 2.57069278e-04, 8.74029311e-02, 1.36624384e-01, 1.19387234e-02, 2.53066575e-05, 5.85723303e-04, 5.84014422e+02, 7.25845076e+01, 3.62583127e+01, 3.03780250e+01, 3.59341649e+00, 2.41240595e+01, 4.50297993e+01, 7.38345369e+01, 4.74453988e+03]
+
         calibrator = LogitCalibrator()
         calibrator.fit(X, y)
         lrs_cal = calibrator.transform(X)
         np.testing.assert_allclose(lrs_cal, desired)
 
+    @pytest.mark.skipif(Version(sklearn.__version__) < Version("1.4"), reason="breaks for implementation of LogisticRegression in sklearn 1.3 or older")
     def test_on_extreme_values(self):
         X = np.array([8.34714300e-002, 1.37045206e-006, 7.09420198e-007, 5.71489187e-007, 2.38531254e-002, 5.24259542e-002, 6.39928887e-004, 8.22553304e-009, 2.57792061e-006, 0.00000000e+000, 9.88131292e-324, 0.00000000e+000, 9.99995881e-001, 9.99813208e-001, 9.99335354e-001, 9.99081531e-001, 9.56347800e-001, 9.98600437e-001, 9.99552746e-001, 9.99818952e-001, 9.99999911e-001, 1.00000000e+000, 1 - np.float_power(10, -16), 1.00000000e+000])
         X = to_log_odds(X)
         y = np.concatenate((np.zeros(12), np.ones(12)))
-        desired = [1.79732355e-001, 4.16251962e-004, 2.90464552e-004, 2.58097558e-004, 8.75801462e-002, 1.36880769e-001, 1.19709672e-002, 2.54277642e-005, 5.87902845e-004, 0.00000000e+000, 2.07535143e-177, 0.00000000e+000, 5.83462338e+002, 7.25669230e+001, 3.62580179e+001, 3.03795916e+001, 3.59619069e+000, 2.41271798e+001, 4.50261420e+001, 7.38162243e+001, 4.73670598e+003, np.inf, 3.48058077e+008, np.inf]
+        desired = [0.17938619741047357, 0.00041454239887702495, 0.00028923408006262664, 0.0002569932531617985, 0.0873888170020169, 0.13660372753636074, 0.011936248051671832, 2.52978222130045e-05, 0.0005855611924232705, 0.0, 1.7898780873341496e-177, 0.0, 584.0381138155662, 72.58397448484948, 36.25750145609919, 30.377205489827194, 3.5931438149999715, 24.12328565793142, 45.02902685404331, 73.83412361274338, 4751.481164586009, np.inf, 350076322.00372607, np.inf]
+
         calibrator = LogitCalibrator()
         calibrator.fit(X, y)
         lrs_cal = calibrator.transform(X)
