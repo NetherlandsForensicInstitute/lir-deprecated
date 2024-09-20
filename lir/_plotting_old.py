@@ -372,7 +372,7 @@ def plot_pav(lrs, y, add_misleading=0, show_scatter=True, savefig=None, show=Non
         pav_llrs = np.log10(pav_lrs)
 
     fig = plt.figure(**kw_figure)
-    xrange = yrange = [llrs[llrs != -np.Inf].min() - .5, llrs[llrs != np.Inf].max() + .5]
+    xrange = yrange = [llrs[llrs != -np.inf].min() - .5, llrs[llrs != np.inf].max() + .5]
 
     # plot line through origin
     plt.plot(xrange, yrange)
