@@ -29,7 +29,7 @@ class TestFourParameterLogisticCalibrator(unittest.TestCase):
         y = np.concatenate([np.zeros(len(self.X_diff)), np.ones(len(self.X_same))])
         four_pl_model = FourParameterLogisticCalibrator()
         four_pl_model.fit(X, y)
-        
+
         logistic = LogisticRegression(penalty=None, class_weight='balanced')
         logistic.fit(X[:, None], y)
         logistic_coef = [logistic.coef_[0][0], logistic.intercept_[0]]
