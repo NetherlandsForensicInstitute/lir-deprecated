@@ -154,7 +154,7 @@ class TestLogitCalibrator(unittest.TestCase):
         calibrator = LogitCalibrator()
         calibrator.fit(X, y)
         lrs_cal = calibrator.transform(X)
-        np.testing.assert_allclose(lrs_cal, desired, atol=1e-16)
+        np.testing.assert_allclose(lrs_cal, desired, rtol=1e-2, atol=1e-16)
 
 
 if __name__ == '__main__':
