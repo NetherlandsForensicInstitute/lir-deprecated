@@ -20,8 +20,8 @@ def read_data(path):
 
 class TestFourParameterLogisticCalibrator(unittest.TestCase):
     dirname = os.path.dirname(__file__)
-    X_diff = read_data(os.path.join(dirname, 'data/LRsdifferentnormalLLRdistribmu_s=1N_ss=300.csv'))
-    X_same = read_data(os.path.join(dirname, 'data/LRssamenormalLLRdistribmu_s=1N_ss=300.csv'))
+    X_diff = read_data(os.path.join(dirname, 'resources/LRsdifferentnormalLLRdistribmu_s=1N_ss=300.csv'))
+    X_same = read_data(os.path.join(dirname, 'resources/LRssamenormalLLRdistribmu_s=1N_ss=300.csv'))
 
     def test_compare_to_logistic(self):
         X = np.concatenate([self.X_diff, self.X_same])
