@@ -66,7 +66,6 @@ class TestLR(unittest.TestCase):
         self.assertTrue(np.isnan(metrics.cllr(*Xn_to_Xy([1, 1], [1, np.nan]))))
         self.assertTrue(np.isnan(metrics.cllr(*Xn_to_Xy([np.nan, np.nan], [np.nan, np.nan]))))
 
-    @pytest.mark.skipif(Version(sklearn.__version__) < Version("1.4"), reason="breaks for implementation of LogisticRegression in sklearn 1.3 or older")
     def test_classifier_cllr(self):
         np.random.seed(0)
         clf = LogisticRegression(solver='lbfgs')

@@ -17,6 +17,8 @@ plt.set_xlabel = plt.xlabel
 plt.set_ylabel = plt.ylabel
 plt.set_xlim = plt.xlim
 plt.set_ylim = plt.ylim
+plt.get_xlim = lambda: plt.gca().get_xlim()
+plt.get_ylim = lambda: plt.gca().get_ylim()
 
 
 class Canvas:

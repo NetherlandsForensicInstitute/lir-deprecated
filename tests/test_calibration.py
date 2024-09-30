@@ -140,7 +140,6 @@ class TestLogitCalibrator(unittest.TestCase):
     score_class1 = [2.42776744e+05, 5.35255527e+03, 1.50355963e+03, 1.08776892e+03, 2.19083530e+01, 7.13508826e+02,
                     2.23486401e+03, 5.52239060e+03, 1.12077833e+07]
 
-    @pytest.mark.skipif(Version(sklearn.__version__) < Version("1.4"), reason="breaks for implementation of LogisticRegression in sklearn 1.3 or older")
     def test_prob_version(self):
         X, y = Xn_to_Xy(self.score_class0, self.score_class1)
         X = to_probability(X)
@@ -152,7 +151,6 @@ class TestLogitCalibrator(unittest.TestCase):
         lrs_cal = calibrator.transform(X)
         np.testing.assert_allclose(lrs_cal, desired)
 
-    @pytest.mark.skipif(Version(sklearn.__version__) < Version("1.4"), reason="breaks for implementation of LogisticRegression in sklearn 1.3 or older")
     def test_on_extreme_values(self):
         X = np.array([8.34714300e-002, 1.37045206e-006, 7.09420198e-007, 5.71489187e-007, 2.38531254e-002, 5.24259542e-002, 6.39928887e-004, 8.22553304e-009, 2.57792061e-006, 0.00000000e+000, 9.88131292e-324, 0.00000000e+000, 9.99995881e-001, 9.99813208e-001, 9.99335354e-001, 9.99081531e-001, 9.56347800e-001, 9.98600437e-001, 9.99552746e-001, 9.99818952e-001, 9.99999911e-001, 1.00000000e+000, 1 - np.float_power(10, -16), 1.00000000e+000])
         X = to_log_odds(X)
