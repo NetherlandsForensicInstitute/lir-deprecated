@@ -63,6 +63,9 @@ def to_odds(p):
 
 
 def to_log_odds(p):
+    """
+    Converts probability values to their log odds with base 10.
+    """
     with np.errstate(divide='ignore'):
         complement = 1 - p
         return np.log10(p) - np.log10(complement)

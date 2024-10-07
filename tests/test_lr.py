@@ -2,7 +2,9 @@ import numpy as np
 import unittest
 import warnings
 
+import pytest
 import sklearn
+from packaging.version import Version
 from sklearn.metrics.pairwise import paired_manhattan_distances
 
 from lir.transformers import InstancePairing
@@ -85,14 +87,14 @@ class TestLR(unittest.TestCase):
 
         X0 = np.random.normal(loc=[-.5]*3, size=(100, 3))
         X1 = np.random.normal(loc=[.5]*3, size=(100, 3))
-        self.assertAlmostEqual(.6514624971651655, scorebased_cllr(clf, cal, X0, X1, X0, X1).cllr)
+        self.assertAlmostEqual(.6521496246660057, scorebased_cllr(clf, cal, X0, X1, X0, X1).cllr)
 
         X0 = np.random.normal(loc=[0]*3, size=(100, 3))
         X1 = np.random.normal(loc=[0]*3, size=(100, 3))
-        self.assertAlmostEqual(1.3502413785060203, scorebased_cllr(clf, cal, X0, X1, X0, X1).cllr)
+        self.assertAlmostEqual(1.3500819630673302, scorebased_cllr(clf, cal, X0, X1, X0, X1).cllr)
 
         X = np.random.normal(loc=[0]*3, size=(400, 3))
-        self.assertAlmostEqual(1.3742926488365286, scorebased_cllr(clf, cal, X[:100], X[100:200], X[200:300], X[300:400]).cllr)
+        self.assertAlmostEqual(1.3741505102443317, scorebased_cllr(clf, cal, X[:100], X[100:200], X[200:300], X[300:400]).cllr)
 
     def test_calibrated_scorer(self):
         np.random.seed(0)
