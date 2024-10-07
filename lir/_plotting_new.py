@@ -17,6 +17,8 @@ plt.set_xlabel = plt.xlabel
 plt.set_ylabel = plt.ylabel
 plt.set_xlim = plt.xlim
 plt.set_ylim = plt.ylim
+plt.get_xlim = lambda: plt.gca().get_xlim()
+plt.get_ylim = lambda: plt.gca().get_ylim()
 
 
 class Canvas:
@@ -121,7 +123,7 @@ def pav(lrs, y, add_misleading=0, show_scatter=True, ax=plt):
         llrs = np.log10(lrs)
         pav_llrs = np.log10(pav_lrs)
 
-    xrange = yrange = [llrs[llrs != -np.Inf].min() - .5, llrs[llrs != np.Inf].max() + .5]
+    xrange = yrange = [llrs[llrs != -np.inf].min() - .5, llrs[llrs != np.inf].max() + .5]
 
     # plot line through origin
     ax.plot(xrange, yrange)
@@ -238,8 +240,8 @@ def tippett(lrs, y, plot_type=1, ax=plt):
     else:
         raise ValueError("plot_type must be either 1 or 2.")
 
-    ax.plot(xplot1, perc1, color='b', label='LRs given $\mathregular{H_1}$')
-    ax.plot(xplot0, perc0, color='r', label='LRs given $\mathregular{H_2}$')
+    ax.plot(xplot1, perc1, color='b', label=r'LRs given $\mathregular{H_1}$')
+    ax.plot(xplot0, perc0, color='r', label=r'LRs given $\mathregular{H_2}$')
     ax.axvline(x=0, color='k', linestyle='--')
     ax.set_xlabel('log$_{10}$(LR)')
     ax.set_ylabel('Cumulative proportion')

@@ -257,7 +257,8 @@ class KDECalibrator(BaseEstimator, TransformerMixin):
         # apply correction for fraction of negInf and Inf data
         log10_compensator = np.log10(self.numerator / self.denominator)
         LLRs_output[el] = log10_compensator + log10_dif
-        return np.float_power(10, LLRs_output)
+        with np.errstate(over='ignore'):
+            return np.float_power(10, LLRs_output)
 
     @staticmethod
     def _parse_bandwidth(bandwidth: Union[Callable, float, Tuple[float, float]]) \
@@ -663,7 +664,8 @@ class DummyLogOddsCalibrator(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, log_odds: np.ndarray):
-        odds = 10 ** log_odds
+        with np.errstate(over='ignore'):
+            odds = np.float_power(10, log_odds)
         self.p1 = to_probability(odds)
         self.p0 = 1 - self.p1
         return odds

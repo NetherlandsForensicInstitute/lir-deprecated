@@ -14,7 +14,14 @@ setup(
     packages=find_packages(),
     setup_requires=["pytest-runner"],
     tests_require=['pytest'],
-    install_requires=["matplotlib", "numpy", "scipy", "scikit-learn", "tqdm", "pandas"],
+    install_requires=[
+        "matplotlib",
+        "numpy",
+        "scipy",
+        "scikit-learn>=1.4",  # tests break for implementation of LogisticRegression in sklearn 1.3 or older
+        "tqdm",
+        "pandas",
+    ],
     classifiers=[
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3 :: Only",
