@@ -12,6 +12,8 @@ setup(
     author="Netherlands Forensic Institute",
     author_email="fbda@nfi.nl",
     packages=find_packages(),
+    setup_requires=["pytest-runner"],
+    tests_require=['pytest'],
     install_requires=["matplotlib", "numpy", "scipy", "scikit-learn", "tqdm", "pandas"],
     classifiers=[
         "License :: OSI Approved :: Apache Software License",
