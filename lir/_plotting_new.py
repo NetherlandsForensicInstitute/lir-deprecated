@@ -181,7 +181,9 @@ def pav(lrs, y, add_misleading=0, show_scatter=True, ax=plt):
     # pre-/post-calibrated lr fit
 
     if show_scatter:
-        ax.scatter(llrs, pav_llrs)  # scatter plot of measured lrs
+        # scatter plot of measured lrs
+        for label in np.unique(y):
+            ax.scatter(llrs[y==label], pav_llrs[y==label])
 
     ax.set_xlabel("pre-calibrated log$_{10}$(LR)")
     ax.set_ylabel("post-calibrated log$_{10}$(LR)")
