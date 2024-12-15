@@ -116,6 +116,7 @@ def pav(lrs, y, add_misleading=0, show_scatter=True, ax=plt):
         defaults to `matplotlib.pyplot`
     ----------
     """
+    lrs = lrs[~np.isnan(lrs)]
     pav = IsotonicCalibrator(add_misleading=add_misleading)
     pav_lrs = pav.fit_transform(lrs, y)
 
@@ -123,13 +124,17 @@ def pav(lrs, y, add_misleading=0, show_scatter=True, ax=plt):
         llrs = np.log10(lrs)
         pav_llrs = np.log10(pav_lrs)
 
-    xrange = yrange = [llrs[llrs != -np.inf].min() - .5, llrs[llrs != np.inf].max() + .5]
+    range_low = min(llrs[(y==1) & ~np.isinf(llrs)].min(initial=0), pav_llrs[(y==1) & ~np.isinf(pav_llrs)].min(initial=0)) - .5
+    range_high = max(llrs[(y==0) & ~np.isinf(llrs)].max(initial=0), pav_llrs[(y==0) & ~np.isinf(pav_llrs)].max(initial=0)) + .5
+    xrange = yrange = [range_low, range_high]
+    if np.isnan(xrange[0]) or np.isinf(xrange[0]) or np.isnan(xrange[1]) or np.isinf(xrange[1]) or xrange[1] <= xrange[0]:
+        raise ValueError(f"illegal input; range={xrange}")
 
     # plot line through origin
     ax.plot(xrange, yrange)
 
     # line pre pav llrs x and post pav llrs y
-    line_x = np.arange(*xrange, .01)
+    line_x = np.arange(*xrange, (xrange[1]-xrange[0])/100)
     with np.errstate(divide='ignore'):
         line_y = np.log10(pav.transform(10 ** line_x))
 
