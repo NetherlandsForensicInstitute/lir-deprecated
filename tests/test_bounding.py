@@ -1,8 +1,7 @@
 import numpy as np
 import unittest
 
-# import lir.bounding as bounding
-import bounding
+import lir.bounding as bounding
 from lir.data import AlcoholBreathAnalyser
 
 
