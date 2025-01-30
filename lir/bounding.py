@@ -9,7 +9,18 @@ See:
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot_delta_functions(lrs, y, llr_threshold_range=None, step_size=.001, ax=plt):
+def plot_delta_functions(lrs: np.ndarray, y: np.ndarray, llr_threshold_range: tuple[float, float] = None,
+                         step_size: float = .001, ax: plt.Axes = plt) -> None:
+    """
+    Returns a figure of the delta functions along with the upper and lower bounds of the LRs.
+
+    :param lrs: an array of LRs
+    :param y: an array of ground-truth labels (values 0 for Hd or 1 for Hp);
+        must be of the same length as `lrs`
+    :param llr_threshold_range: lower limit and upper limit for the LLRs to include in the figure
+    :param step_size: required accuracy on a base-10 logarithmic scale
+    :param ax: matplotlib axes
+    """
 
     if llr_threshold_range is None:
         llrs = np.log10(lrs)
@@ -17,25 +28,21 @@ def plot_delta_functions(lrs, y, llr_threshold_range=None, step_size=.001, ax=pl
 
     llr_threshold = np.arange(*llr_threshold_range, step_size)
 
-    lower_bound, upper_bound, delta_low, delta_high = (calculate_bounds(lrs, y, llr_threshold=llr_threshold))
+    lower_bound, upper_bound, delta_low, delta_high = calculate_bounds(lrs, y, llr_threshold=llr_threshold)
 
     # plot the delta-functions and the 0-line
     lower_llr = np.round(np.log10(lower_bound),2)
     upper_llr = np.round(np.log10(upper_bound),2)
-    ax.plot(llr_threshold, delta_low, '--', label="$\Delta_{lower}$ is 0 at " + str(lower_llr))
-    ax.plot(llr_threshold, delta_high, '-', label="$\Delta_{upper}$ is 0 at " + str(upper_llr))
-    ax.axhline(y=0, color='k', linestyle='dotted')
+    ax.plot(llr_threshold, delta_low, '--', label=r"$\Delta_{lower}$ is 0 at " + str(lower_llr))
+    ax.plot(llr_threshold, delta_high, '-', label=r"$\Delta_{upper}$ is 0 at " + str(upper_llr))
+    ax.axhline(color='k', linestyle='dotted')
     # Some more formatting
     ax.legend(loc="upper left")
     ax.xlabel("log10(LR)")
     ax.ylabel("$\Delta$-value")
-    ax.xlim(llr_threshold_range)
-    ax.grid(True, linestyle=':')
-    ax.show()
 
-    return lower_bound, upper_bound
-
-def calculate_bounds(lrs, y, llr_threshold=None, step_size=.001, substitute_extremes=(np.exp(-20), np.exp(20))):
+def calculate_bounds(lrs: np.ndarray, y: np.ndarray, llr_threshold: np.ndarray = None, step_size: float = .001,
+                     substitute_extremes: tuple[float, float] = (np.exp(-20), np.exp(20))) -> tuple[float, float, np.ndarray, np.ndarray]:
     """
     Returns the upper and lower bounds of the LRs.
 
@@ -64,17 +71,17 @@ def calculate_bounds(lrs, y, llr_threshold=None, step_size=.001, substitute_extr
 
     # find the LLRs closest to LLR=0 where the functions become negative & convert them to LRs
     # if no negatives are found, use the maximum H1-LR in case of upper bound & minimum H2-LR in case of lower bound
-    delta_high_negative = np.where(delta_high < 0)
-    if not any(delta_high_negative[0]):
+    delta_high_negative = np.where(delta_high < 0)[0]
+    if not any(delta_high_negative):
         upper_bound = np.max(lrs[y==1])
     else:
-        pst_upper_bound = delta_high_negative[0][0] - 1
+        pst_upper_bound = delta_high_negative[0] - 1
         upper_bound = 10 ** llr_threshold[pst_upper_bound]
-    delta_low_negative = np.where(delta_low < 0)
-    if not any(delta_low_negative[0]):
+    delta_low_negative = np.where(delta_low < 0)[0]
+    if not any(delta_low_negative):
         lower_bound = np.min(lrs[y==0])
     else:
-        pst_lower_bound = delta_low_negative[0][-1] + 1
+        pst_lower_bound = delta_low_negative[-1] + 1
         lower_bound = 10 ** llr_threshold[pst_lower_bound]
 
     # Check for bounds on the wrong side of 1. This may occur for badly
@@ -84,7 +91,7 @@ def calculate_bounds(lrs, y, llr_threshold=None, step_size=.001, substitute_extr
 
     return lower_bound, upper_bound, delta_low, delta_high
 
-def calculate_delta_functions(lrs, y, llr_threshold):
+def calculate_delta_functions(lrs: np.ndarray, y: np.ndarray, llr_threshold: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     Calculates the delta functions for a set of LRs at given threshold values.
 
