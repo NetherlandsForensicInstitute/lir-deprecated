@@ -4,7 +4,7 @@ from sklearn.linear_model import LogisticRegression
 
 import lir.bayeserror
 from lir.data import AlcoholBreathAnalyser
-from lir.calibration import KDECalibrator, ELUBbounder
+from lir.calibration import LogitCalibrator, ELUBbounder
 from lir.lr import CalibratedScorer
 from lir.util import Xn_to_Xy
 
@@ -66,10 +66,10 @@ class TestElub(unittest.TestCase):
         X1 = rng.normal(loc=+1, scale=1, size=(1000, 1))
         X, y = Xn_to_Xy(X0, X1)
 
-        bounded_calibrated_scorer = CalibratedScorer(LogisticRegression(), ELUBbounder(KDECalibrator(bandwidth=(1, 1))))
+        bounded_calibrated_scorer = CalibratedScorer(LogisticRegression(), ELUBbounder(LogitCalibrator()))
         bounded_calibrated_scorer.fit(X, y)
         bounds = (bounded_calibrated_scorer.calibrator._lower_lr_bound, bounded_calibrated_scorer.calibrator._upper_lr_bound)
-        np.testing.assert_almost_equal((0.063251, 17.6256669), bounds)
+        np.testing.assert_almost_equal((0.0293941, 104.9032605), bounds)
 
 if __name__ == '__main__':
     unittest.main()
