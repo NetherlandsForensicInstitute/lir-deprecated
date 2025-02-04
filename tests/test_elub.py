@@ -60,16 +60,16 @@ class TestElub(unittest.TestCase):
 
     def test_bounded_calibrated_scorer(self):
 
-        np.random.seed(0)
+        rng = np.random.default_rng(0)
 
-        X0 = np.random.normal(loc=-1, scale=1, size=(1000, 1))
-        X1 = np.random.normal(loc=+1, scale=1, size=(1000, 1))
+        X0 = rng.normal(loc=-1, scale=1, size=(1000, 1))
+        X1 = rng.normal(loc=+1, scale=1, size=(1000, 1))
         X, y = Xn_to_Xy(X0, X1)
 
         bounded_calibrated_scorer = CalibratedScorer(LogisticRegression(), ELUBbounder(KDECalibrator(bandwidth=(1, 1))))
         bounded_calibrated_scorer.fit(X, y)
         bounds = (bounded_calibrated_scorer.calibrator._lower_lr_bound, bounded_calibrated_scorer.calibrator._upper_lr_bound)
-        np.testing.assert_almost_equal((0.0497761, 17.9893586), bounds)
+        np.testing.assert_almost_equal((0.063251, 17.6256669), bounds)
 
 if __name__ == '__main__':
     unittest.main()
