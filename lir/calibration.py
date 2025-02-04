@@ -11,6 +11,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.mixture import GaussianMixture
 from sklearn.neighbors import KernelDensity
 from typing import Optional, Tuple, Union, Callable, Sized
+from abc import ABC, abstractmethod
 
 from .bayeserror import elub
 from .loss_functions import negative_log_likelihood_balanced
@@ -671,7 +672,53 @@ class DummyLogOddsCalibrator(BaseEstimator, TransformerMixin):
         return odds
 
 
-class ELUBbounder(BaseEstimator, TransformerMixin):
+class LRbounder(ABC, BaseEstimator, TransformerMixin):
+    """
+    Class that, given an LR system, outputs the same LRs as the system but bounded by lower and upper bounds.
+    """
+
+    def __init__(self, first_step_calibrator, also_fit_calibrator=True):
+        """
+        a calibrator should be provided (optionally already fitted to data). This calibrator is called on scores,
+        the resulting LRs are then bounded. If also_fit_calibrator, the first step calibrator will be fit on the same
+        data used to derive the bounds
+        :param first_step_calibrator: the calibrator to use. Should already have been fitted if also_fit_calibrator is False
+        :param also_fit_calibrator: whether to also fit the first step calibrator when calling fit
+        """
+
+        self.first_step_calibrator = first_step_calibrator
+        self.also_fit_calibrator = also_fit_calibrator
+        self._lower_lr_bound = None
+        self._upper_lr_bound = None
+        if not also_fit_calibrator:
+            # check the model was fitted.
+            try:
+                first_step_calibrator.transform(np.array([0.5]))
+            except NotFittedError:
+                print('calibrator should have been fit when setting also_fit_calibrator = False!')
+
+    @abstractmethod
+    def fit(self, X, y):
+        pass
+
+    def transform(self, X):
+        """
+        a transform entails calling the first step calibrator and applying the bounds found
+        """
+        unadjusted_lrs = np.array(self.first_step_calibrator.transform(X))
+        lower_adjusted_lrs = np.where(self._lower_lr_bound < unadjusted_lrs, unadjusted_lrs, self._lower_lr_bound)
+        adjusted_lrs = np.where(self._upper_lr_bound > lower_adjusted_lrs, lower_adjusted_lrs, self._upper_lr_bound)
+        return adjusted_lrs
+
+    @property
+    def p0(self):
+        return self.first_step_calibrator.p0
+
+    @property
+    def p1(self):
+        return self.first_step_calibrator.p1
+
+class ELUBbounder(LRbounder):
     """
     Class that, given an LR system, outputs the same LRs as the system but bounded by the Empirical Upper and Lower
     Bounds as described in
@@ -705,51 +752,14 @@ class ELUBbounder(BaseEstimator, TransformerMixin):
     # empirical_bounds=[min(a) max(a)]
     """
 
-    def __init__(self, first_step_calibrator, also_fit_calibrator=True):
-        """
-        a calibrator should be provided (optionally already fitted to data). This calibrator is called on scores,
-        the resulting LRs are then bounded. If also_fit_calibrator, the first step calibrator will be fit on the same
-        data used to derive the ELUB bounds
-        :param first_step_calibrator: the calibrator to use. Should already have been fitted if also_fit_calibrator is False
-        :param also_fit_calibrator: whether to also fit the first step calibrator when calling fit
-        """
-
-        self.first_step_calibrator = first_step_calibrator
-        self.also_fit_calibrator = also_fit_calibrator
-        self._lower_lr_bound = None
-        self._upper_lr_bound = None
-        if not also_fit_calibrator:
-            # check the model was fitted.
-            try:
-                first_step_calibrator.transform(np.array([0.5]))
-            except NotFittedError:
-                print('calibrator should have been fit when setting also_fit_calibrator = False!')
-
     def fit(self, X, y):
         """
         assuming that y=1 corresponds to Hp, y=0 to Hd
         """
         if self.also_fit_calibrator:
-            self.first_step_calibrator.fit(X,y)
-        lrs  = self.first_step_calibrator.transform(X)
+            self.first_step_calibrator.fit(X, y)
+        lrs = self.first_step_calibrator.transform(X)
 
         y = np.asarray(y).squeeze()
         self._lower_lr_bound, self._upper_lr_bound = elub(lrs, y, add_misleading=1)
         return self
-
-    def transform(self, X):
-        """
-        a transform entails calling the first step calibrator and applying the bounds found
-        """
-        unadjusted_lrs = np.array(self.first_step_calibrator.transform(X))
-        lower_adjusted_lrs = np.where(self._lower_lr_bound < unadjusted_lrs, unadjusted_lrs, self._lower_lr_bound)
-        adjusted_lrs = np.where(self._upper_lr_bound > lower_adjusted_lrs, lower_adjusted_lrs, self._upper_lr_bound)
-        return adjusted_lrs
-
-    @property
-    def p0(self):
-        return self.first_step_calibrator.p0
-
-    @property
-    def p1(self):
-        return self.first_step_calibrator.p1
