@@ -1,18 +1,18 @@
 """
-Extrapolation bounds on LRs using the method by Alberink et al. (2025)
+Extrapolation bounds on LRs using the Invariance Verification method by Alberink et al. (2025)
 
 See:
-[-] Ivo Alberink, Jeannette Leegwater, Jonas Malmborg, Anders Nordgaard, Marjan Sjerps, Leen van der Ham
-    A transparent method to determine limit values for Likelihood Ratio systems
-    In: to be submitted for publication.
+[-] A transparent method to determine limit values for Likelihood Ratio systems, by
+    Ivo Alberink, Jeannette Leegwater, Jonas Malmborg, Anders Nordgaard, Marjan Sjerps, Leen van der Ham
+    In: Submitted for publication in 2025.
 """
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot_delta_functions(lrs: np.ndarray, y: np.ndarray, llr_threshold_range: tuple[float, float] = None,
-                         step_size: float = .001, ax: plt.Axes = plt) -> None:
+def plot_invariance_delta_functions(lrs: np.ndarray, y: np.ndarray, llr_threshold_range: tuple[float, float] = None,
+                         step_size: float = .001, ax: plt.Axes = plt):
     """
-    Returns a figure of the delta functions along with the upper and lower bounds of the LRs.
+    Returns a figure of the Invariance Verification delta functions along with the upper and lower bounds of the LRs.
 
     :param lrs: an array of LRs
     :param y: an array of ground-truth labels (values 0 for Hd or 1 for Hp);
@@ -28,7 +28,7 @@ def plot_delta_functions(lrs: np.ndarray, y: np.ndarray, llr_threshold_range: tu
 
     llr_threshold = np.arange(*llr_threshold_range, step_size)
 
-    lower_bound, upper_bound, delta_low, delta_high = calculate_bounds(lrs, y, llr_threshold=llr_threshold)
+    lower_bound, upper_bound, delta_low, delta_high = calculate_invariance_bounds(lrs, y, llr_threshold=llr_threshold)
 
     # plot the delta-functions and the 0-line
     lower_llr = np.round(np.log10(lower_bound),2)
@@ -41,10 +41,10 @@ def plot_delta_functions(lrs: np.ndarray, y: np.ndarray, llr_threshold_range: tu
     ax.xlabel("log10(LR)")
     ax.ylabel("$\Delta$-value")
 
-def calculate_bounds(lrs: np.ndarray, y: np.ndarray, llr_threshold: np.ndarray = None, step_size: float = .001,
+def calculate_invariance_bounds(lrs: np.ndarray, y: np.ndarray, llr_threshold: np.ndarray = None, step_size: float = .001,
                      substitute_extremes: tuple[float, float] = (np.exp(-20), np.exp(20))) -> tuple[float, float, np.ndarray, np.ndarray]:
     """
-    Returns the upper and lower bounds of the LRs.
+    Returns the upper and lower Invariance Verification bounds of the LRs.
 
     :param lrs: an array of LRs
     :param y: an array of ground-truth labels (values 0 for Hd or 1 for Hp);
@@ -67,7 +67,7 @@ def calculate_bounds(lrs: np.ndarray, y: np.ndarray, llr_threshold: np.ndarray =
         llr_threshold = np.arange(*llr_threshold_range, step_size)
 
     # calculate the two delta functions
-    delta_low, delta_high = calculate_delta_functions(lrs, y, llr_threshold)
+    delta_low, delta_high = calculate_invariance_delta_functions(lrs, y, llr_threshold)
 
     # find the LLRs closest to LLR=0 where the functions become negative & convert them to LRs
     # if no negatives are found, use the maximum H1-LR in case of upper bound & minimum H2-LR in case of lower bound
@@ -91,9 +91,9 @@ def calculate_bounds(lrs: np.ndarray, y: np.ndarray, llr_threshold: np.ndarray =
 
     return lower_bound, upper_bound, delta_low, delta_high
 
-def calculate_delta_functions(lrs: np.ndarray, y: np.ndarray, llr_threshold: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def calculate_invariance_delta_functions(lrs: np.ndarray, y: np.ndarray, llr_threshold: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
-    Calculates the delta functions for a set of LRs at given threshold values.
+    Calculates the Invariance Verification delta functions for a set of LRs at given threshold values.
 
     :param lrs: an array of LRs
     :param y: an array of ground-truth labels (values 0 for Hd or 1 for Hp);

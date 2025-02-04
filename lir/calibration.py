@@ -14,6 +14,7 @@ from typing import Optional, Tuple, Union, Callable, Sized
 from abc import ABC, abstractmethod
 
 from .bayeserror import elub
+from .bounding import calculate_invariance_bounds
 from .loss_functions import negative_log_likelihood_balanced
 from .regression import IsotonicRegressionInf
 from .util import Xy_to_Xn, to_odds, ln_to_log10, Bind, to_probability
@@ -762,4 +763,25 @@ class ELUBbounder(LRbounder):
 
         y = np.asarray(y).squeeze()
         self._lower_lr_bound, self._upper_lr_bound = elub(lrs, y, add_misleading=1)
+        return self
+
+class IVbounder(LRbounder):
+    """
+    Class that, given an LR system, outputs the same LRs as the system but bounded by the Invariance Verification
+    bounds as described in:
+    A transparent method to determine limit values for Likelihood Ratio systems, by
+    Ivo Alberink, Jeannette Leegwater, Jonas Malmborg, Anders Nordgaard, Marjan Sjerps, Leen van der Ham
+    In: Submitted for publication in 2025.
+    """
+
+    def fit(self, X, y):
+        """
+        assuming that y=1 corresponds to Hp, y=0 to Hd
+        """
+        if self.also_fit_calibrator:
+            self.first_step_calibrator.fit(X, y)
+        lrs = self.first_step_calibrator.transform(X)
+
+        y = np.asarray(y).squeeze()
+        self._lower_lr_bound, self._upper_lr_bound = calculate_invariance_bounds(lrs, y)[:2]
         return self
