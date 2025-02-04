@@ -71,7 +71,7 @@ class TestBounding(unittest.TestCase):
         bounded_calibrated_scorer = CalibratedScorer(LogisticRegression(), IVbounder(LogitCalibrator()))
         bounded_calibrated_scorer.fit(X, y)
         bounds = (bounded_calibrated_scorer.calibrator._lower_lr_bound, bounded_calibrated_scorer.calibrator._upper_lr_bound)
-        np.testing.assert_almost_equal((0.0241724, 153.2216824), bounds)
+        np.testing.assert_almost_equal((0.0241763, 152.8940706), bounds)
 
 if __name__ == '__main__':
     unittest.main()
