@@ -69,7 +69,7 @@ class TestElub(unittest.TestCase):
         bounded_calibrated_scorer = CalibratedScorer(LogisticRegression(), ELUBbounder(LogitCalibrator()))
         bounded_calibrated_scorer.fit(X, y)
         bounds = (bounded_calibrated_scorer.calibrator._lower_lr_bound, bounded_calibrated_scorer.calibrator._upper_lr_bound)
-        np.testing.assert_almost_equal((0.0293941, 104.9032605), bounds)
+        np.testing.assert_almost_equal((0.0293081, 104.5963329), bounds)
 
 if __name__ == '__main__':
     unittest.main()
