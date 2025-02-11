@@ -699,8 +699,20 @@ class LRbounder(ABC, BaseEstimator, TransformerMixin):
                 print('calibrator should have been fit when setting also_fit_calibrator = False!')
 
     @abstractmethod
-    def fit(self, X, y):
+    def calculate_bounds(self, lrs, y):
         pass
+
+    def fit(self, X, y):
+        """
+        assuming that y=1 corresponds to Hp, y=0 to Hd
+        """
+        if self.also_fit_calibrator:
+            self.first_step_calibrator.fit(X, y)
+        lrs = self.first_step_calibrator.transform(X)
+
+        y = np.asarray(y).squeeze()
+        self._lower_lr_bound, self._upper_lr_bound = self.calculate_bounds(lrs, y)
+        return self
 
     def transform(self, X):
         """
@@ -753,17 +765,10 @@ class ELUBbounder(LRbounder):
     # empirical_bounds=[min(a) max(a)]
     """
 
-    def fit(self, X, y):
-        """
-        assuming that y=1 corresponds to Hp, y=0 to Hd
-        """
-        if self.also_fit_calibrator:
-            self.first_step_calibrator.fit(X, y)
-        lrs = self.first_step_calibrator.transform(X)
+    def calculate_bounds(self, lrs, y):
 
-        y = np.asarray(y).squeeze()
-        self._lower_lr_bound, self._upper_lr_bound = elub(lrs, y, add_misleading=1)
-        return self
+        lower_lr_bound, upper_lr_bound = elub(lrs, y, add_misleading=1)
+        return lower_lr_bound, upper_lr_bound
 
 class IVbounder(LRbounder):
     """
@@ -774,14 +779,7 @@ class IVbounder(LRbounder):
     In: Submitted for publication in 2025.
     """
 
-    def fit(self, X, y):
-        """
-        assuming that y=1 corresponds to Hp, y=0 to Hd
-        """
-        if self.also_fit_calibrator:
-            self.first_step_calibrator.fit(X, y)
-        lrs = self.first_step_calibrator.transform(X)
+    def calculate_bounds(self, lrs, y):
 
-        y = np.asarray(y).squeeze()
-        self._lower_lr_bound, self._upper_lr_bound = calculate_invariance_bounds(lrs, y)[:2]
-        return self
+        lower_lr_bound, upper_lr_bound = calculate_invariance_bounds(lrs, y)[:2]
+        return lower_lr_bound, upper_lr_bound
