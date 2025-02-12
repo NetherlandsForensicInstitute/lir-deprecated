@@ -1,8 +1,12 @@
 import numpy as np
 import unittest
+from sklearn.linear_model import LogisticRegression
 
 import lir.bayeserror
 from lir.data import AlcoholBreathAnalyser
+from lir.calibration import LogitCalibrator, ELUBbounder
+from lir.lr import CalibratedScorer
+from lir.util import Xn_to_Xy
 
 
 class TestElub(unittest.TestCase):
@@ -54,6 +58,18 @@ class TestElub(unittest.TestCase):
         y = np.concatenate([np.ones(10), np.zeros(1)])
         np.testing.assert_almost_equal((1, 1), lir.bayeserror.elub(lrs, y, add_misleading=1))
 
+    def test_bounded_calibrated_scorer(self):
+
+        rng = np.random.default_rng(0)
+
+        X0 = rng.normal(loc=-1, scale=1, size=(1000, 1))
+        X1 = rng.normal(loc=+1, scale=1, size=(1000, 1))
+        X, y = Xn_to_Xy(X0, X1)
+
+        bounded_calibrated_scorer = CalibratedScorer(LogisticRegression(), ELUBbounder(LogitCalibrator()))
+        bounded_calibrated_scorer.fit(X, y)
+        bounds = (bounded_calibrated_scorer.calibrator._lower_lr_bound, bounded_calibrated_scorer.calibrator._upper_lr_bound)
+        np.testing.assert_almost_equal((0.0293081, 104.5963329), bounds)
 
 if __name__ == '__main__':
     unittest.main()
