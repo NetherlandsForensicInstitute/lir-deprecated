@@ -700,7 +700,7 @@ class LRbounder(ABC, BaseEstimator, TransformerMixin):
 
     @abstractmethod
     def calculate_bounds(self, lrs, y):
-        pass
+        raise NotImplementedError
 
     def fit(self, X, y):
         """
