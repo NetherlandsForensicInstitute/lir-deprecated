@@ -154,8 +154,8 @@ def pav(lrs, y, add_misleading=0, show_scatter=True, ax=plt):
             step_size = ticks[2] - ticks[1]
 
             axis_range = [axis_range[0] - (step_size * neg_inf), axis_range[1] + (step_size * pos_inf)]
-            ticks = [axis_range[0]] * neg_inf + ticks + [axis_range[1]] * pos_inf
-            tick_labels = ['-∞'] * neg_inf + tick_labels + ['+∞'] * pos_inf
+            ticks = [axis_range[0]] * int(neg_inf) + ticks + [axis_range[1]] * int(pos_inf)
+            tick_labels = ['-∞'] * int(neg_inf) + tick_labels + ['+∞'] * int(pos_inf)
 
             return axis_range, ticks, tick_labels
 
@@ -172,23 +172,23 @@ def pav(lrs, y, add_misleading=0, show_scatter=True, ax=plt):
                                                                        np.isposinf(llrs).any(),
                                                                        xrange)
 
-        mask_not_inf = np.logical_or(np.isinf(llrs), np.isinf(pav_llrs))
-        x_inf = replace_values_out_of_range(llrs[mask_not_inf], xrange[0], xrange[1])
-        y_inf = replace_values_out_of_range(pav_llrs[mask_not_inf], yrange[0], yrange[1])
-
         ax.yticks(ticks_y, tick_labels_y)
         ax.xticks(ticks_x, tick_labels_x)
 
-        ax.scatter(x_inf,
-                   y_inf, facecolors='none', edgecolors='#1f77b4', linestyle=':')
+        mask_not_inf = np.logical_or(np.isinf(llrs), np.isinf(pav_llrs))
+        colors = iter(ax.rcParams["axes.prop_cycle"].by_key()["color"])
+        for i, label in enumerate(np.unique(y)):
+            x_inf = replace_values_out_of_range(llrs[mask_not_inf & (y==label)], xrange[0], xrange[1])
+            y_inf = replace_values_out_of_range(pav_llrs[mask_not_inf & (y==label)], yrange[0], yrange[1])
+            ax.scatter(x_inf, y_inf, facecolors='none', edgecolors=next(colors), linestyle=':')
 
     ax.axis(xrange + yrange)
-    # pre-/post-calibrated lr fit
 
     if show_scatter:
         # scatter plot of measured lrs
+        colors = iter(ax.rcParams["axes.prop_cycle"].by_key()["color"])
         for label in np.unique(y):
-            ax.scatter(llrs[y==label], pav_llrs[y==label])
+            ax.scatter(llrs[y==label], pav_llrs[y==label], facecolors='none', edgecolors=next(colors))
 
     ax.set_xlabel("pre-calibrated log$_{10}$(LR)")
     ax.set_ylabel("post-calibrated log$_{10}$(LR)")
