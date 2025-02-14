@@ -1,6 +1,7 @@
 import logging
 from contextlib import contextmanager
 from functools import partial
+from typing import Optional, ContextManager
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -37,7 +38,7 @@ class Canvas:
         return getattr(self.ax, attr)
 
 
-def savefig(path):
+def savefig(path) -> ContextManager[Canvas]:
     """
     Creates a plotting context, write plot when closed.
 
@@ -55,10 +56,10 @@ def savefig(path):
     path : str
         write a PNG image to this path
     """
-    return axes(savefig=path)
+    return axes(savefig=path, show=False)
 
 
-def show():
+def show() -> ContextManager[Canvas]:
     """
     Creates a plotting context, show plot when closed.
 
@@ -71,11 +72,11 @@ def show():
 
     A call to `show()` is identical to `axes(show=True)`.
     """
-    return axes(show=True)
+    return axes(show=True, savefig=None)
 
 
 @contextmanager
-def axes(savefig=None, show=None):
+def axes(savefig: Optional[str] = None, show: bool = False) -> ContextManager[Canvas]:
     """
     Creates a plotting context.
 
@@ -116,6 +117,7 @@ def pav(lrs, y, add_misleading=0, show_scatter=True, ax=plt):
         defaults to `matplotlib.pyplot`
     ----------
     """
+    lrs = lrs[~np.isnan(lrs)]
     pav = IsotonicCalibrator(add_misleading=add_misleading)
     pav_lrs = pav.fit_transform(lrs, y)
 
@@ -123,13 +125,17 @@ def pav(lrs, y, add_misleading=0, show_scatter=True, ax=plt):
         llrs = np.log10(lrs)
         pav_llrs = np.log10(pav_lrs)
 
-    xrange = yrange = [llrs[llrs != -np.inf].min() - .5, llrs[llrs != np.inf].max() + .5]
+    range_low = min(llrs[(y==1) & ~np.isinf(llrs)].min(initial=0), pav_llrs[(y==1) & ~np.isinf(pav_llrs)].min(initial=0)) - .5
+    range_high = max(llrs[(y==0) & ~np.isinf(llrs)].max(initial=0), pav_llrs[(y==0) & ~np.isinf(pav_llrs)].max(initial=0)) + .5
+    xrange = yrange = [range_low, range_high]
+    if np.isnan(xrange[0]) or np.isinf(xrange[0]) or np.isnan(xrange[1]) or np.isinf(xrange[1]) or xrange[1] <= xrange[0]:
+        raise ValueError(f"illegal input; range={xrange}")
 
     # plot line through origin
     ax.plot(xrange, yrange)
 
     # line pre pav llrs x and post pav llrs y
-    line_x = np.arange(*xrange, .01)
+    line_x = np.arange(*xrange, (xrange[1]-xrange[0])/100)
     with np.errstate(divide='ignore'):
         line_y = np.log10(pav.transform(10 ** line_x))
 
@@ -141,16 +147,16 @@ def pav(lrs, y, add_misleading=0, show_scatter=True, ax=plt):
     mask_out_of_range = np.logical_and(line_y >= yrange[0], line_y <= yrange[1])
     ax.plot(line_x[mask_out_of_range], line_y[mask_out_of_range])
 
-    # add points for infinite values
-    if np.logical_or(np.isinf(pav_llrs), np.isinf(llrs)).any():
+    # scatter plot for infinite values
+    if show_scatter and np.logical_or(np.isinf(pav_llrs), np.isinf(llrs)).any():
         def adjust_ticks_labels_and_range(neg_inf, pos_inf, axis_range):
             ticks = np.linspace(axis_range[0], axis_range[1], 6).tolist()
             tick_labels = [str(round(tick, 1)) for tick in ticks]
             step_size = ticks[2] - ticks[1]
 
             axis_range = [axis_range[0] - (step_size * neg_inf), axis_range[1] + (step_size * pos_inf)]
-            ticks = [axis_range[0]] * neg_inf + ticks + [axis_range[1]] * pos_inf
-            tick_labels = ['-∞'] * neg_inf + tick_labels + ['+∞'] * pos_inf
+            ticks = [axis_range[0]] * int(neg_inf) + ticks + [axis_range[1]] * int(pos_inf)
+            tick_labels = ['-∞'] * int(neg_inf) + tick_labels + ['+∞'] * int(pos_inf)
 
             return axis_range, ticks, tick_labels
 
@@ -167,21 +173,23 @@ def pav(lrs, y, add_misleading=0, show_scatter=True, ax=plt):
                                                                        np.isposinf(llrs).any(),
                                                                        xrange)
 
-        mask_not_inf = np.logical_or(np.isinf(llrs), np.isinf(pav_llrs))
-        x_inf = replace_values_out_of_range(llrs[mask_not_inf], xrange[0], xrange[1])
-        y_inf = replace_values_out_of_range(pav_llrs[mask_not_inf], yrange[0], yrange[1])
-
         ax.yticks(ticks_y, tick_labels_y)
         ax.xticks(ticks_x, tick_labels_x)
 
-        ax.scatter(x_inf,
-                   y_inf, facecolors='none', edgecolors='#1f77b4', linestyle=':')
+        mask_not_inf = np.logical_or(np.isinf(llrs), np.isinf(pav_llrs))
+        colors = iter(ax.rcParams["axes.prop_cycle"].by_key()["color"])
+        for i, label in enumerate(np.unique(y)):
+            x_inf = replace_values_out_of_range(llrs[mask_not_inf & (y==label)], xrange[0], xrange[1])
+            y_inf = replace_values_out_of_range(pav_llrs[mask_not_inf & (y==label)], yrange[0], yrange[1])
+            ax.scatter(x_inf, y_inf, facecolors='none', edgecolors=next(colors), linestyle=':')
+
+    # scatter plot of measured lrs
+    if show_scatter:
+        colors = iter(ax.rcParams["axes.prop_cycle"].by_key()["color"])
+        for label in np.unique(y):
+            ax.scatter(llrs[y==label], pav_llrs[y==label], facecolors='none', edgecolors=next(colors))
 
     ax.axis(xrange + yrange)
-    # pre-/post-calibrated lr fit
-
-    if show_scatter:
-        ax.scatter(llrs, pav_llrs)  # scatter plot of measured lrs
 
     ax.set_xlabel("pre-calibrated log$_{10}$(LR)")
     ax.set_ylabel("post-calibrated log$_{10}$(LR)")
@@ -206,8 +214,8 @@ def lr_histogram(lrs, y, bins=20, weighted=True, ax=plt):
     points0, points1 = util.Xy_to_Xn(log_lrs, y)
     weights0, weights1 = (np.ones_like(points) / len(points) if weighted else None
                           for points in (points0, points1))
-    ax.hist(points1, bins=bins, alpha=.25, weights=weights1)
     ax.hist(points0, bins=bins, alpha=.25, weights=weights0)
+    ax.hist(points1, bins=bins, alpha=.25, weights=weights1)
     ax.set_xlabel('log$_{10}$(LR)')
     ax.set_ylabel('count' if not weighted else 'relative frequency')
 

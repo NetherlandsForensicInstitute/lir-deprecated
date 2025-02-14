@@ -34,7 +34,7 @@ class IsotonicRegressionInf(IsotonicRegression):
         X is stored for future use, as :meth:`transform` needs X to interpolate
         new input data.
         """
-        check_params = dict(accept_sparse=False, ensure_2d=False, force_all_finite=False)
+        check_params = dict(accept_sparse=False, ensure_2d=False, ensure_all_finite=False)
         X = check_array(X, dtype=[np.float64, np.float32], **check_params)
         y = check_array(y, dtype=X.dtype, **check_params)
         check_consistent_length(X, y, sample_weight)
@@ -72,7 +72,7 @@ class IsotonicRegressionInf(IsotonicRegression):
         else:
             dtype = np.float64
 
-        T = check_array(T, dtype=dtype, ensure_2d=False, force_all_finite=False)
+        T = check_array(T, dtype=dtype, ensure_2d=False, ensure_all_finite=False)
 
         if len(T.shape) != 1:
             raise ValueError("Isotonic regression input should be a 1d array")
