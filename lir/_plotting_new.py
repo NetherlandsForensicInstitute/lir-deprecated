@@ -1,7 +1,7 @@
 import logging
 from contextlib import contextmanager
 from functools import partial
-from typing import Optional, List, Any, Mapping
+from typing import Optional, Any, Mapping, ContextManager, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -38,7 +38,7 @@ class Canvas:
         return getattr(self.ax, attr)
 
 
-def savefig(path: str, *args, **kwargs):
+def savefig(path: str, *args: Any, **kwargs) -> ContextManager[Canvas]:
     """
     Creates a plotting context, write plot when closed.
 
@@ -61,7 +61,7 @@ def savefig(path: str, *args, **kwargs):
     return axes(savefig=path, savefig_args=args, savefig_kwargs=kwargs)
 
 
-def show():
+def show() -> ContextManager[Canvas]:
     """
     Creates a plotting context, show plot when closed.
 
@@ -78,7 +78,8 @@ def show():
 
 
 @contextmanager
-def axes(savefig: Optional[str] = None, show: bool = False, savefig_args: Optional[List[Any]] = None, savefig_kwargs: Optional[Mapping[str, Any]] = None):
+def axes(show: bool = False, savefig: Optional[str] = None, savefig_args: Optional[Tuple[Any, ...]] = None,
+         savefig_kwargs: Optional[Mapping[str, Any]] = None) -> ContextManager[Canvas]:
     """
     Creates a plotting context.
 
