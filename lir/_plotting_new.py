@@ -146,8 +146,8 @@ def pav(lrs, y, add_misleading=0, show_scatter=True, ax=plt):
     mask_out_of_range = np.logical_and(line_y >= yrange[0], line_y <= yrange[1])
     ax.plot(line_x[mask_out_of_range], line_y[mask_out_of_range])
 
-    # add points for infinite values
-    if np.logical_or(np.isinf(pav_llrs), np.isinf(llrs)).any():
+    # scatter plot for infinite values
+    if show_scatter and np.logical_or(np.isinf(pav_llrs), np.isinf(llrs)).any():
         def adjust_ticks_labels_and_range(neg_inf, pos_inf, axis_range):
             ticks = np.linspace(axis_range[0], axis_range[1], 6).tolist()
             tick_labels = [str(round(tick, 1)) for tick in ticks]
@@ -182,13 +182,13 @@ def pav(lrs, y, add_misleading=0, show_scatter=True, ax=plt):
             y_inf = replace_values_out_of_range(pav_llrs[mask_not_inf & (y==label)], yrange[0], yrange[1])
             ax.scatter(x_inf, y_inf, facecolors='none', edgecolors=next(colors), linestyle=':')
 
-    ax.axis(xrange + yrange)
-
+    # scatter plot of measured lrs
     if show_scatter:
-        # scatter plot of measured lrs
         colors = iter(ax.rcParams["axes.prop_cycle"].by_key()["color"])
         for label in np.unique(y):
             ax.scatter(llrs[y==label], pav_llrs[y==label], facecolors='none', edgecolors=next(colors))
+
+    ax.axis(xrange + yrange)
 
     ax.set_xlabel("pre-calibrated log$_{10}$(LR)")
     ax.set_ylabel("post-calibrated log$_{10}$(LR)")
