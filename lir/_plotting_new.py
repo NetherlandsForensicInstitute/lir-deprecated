@@ -55,8 +55,10 @@ def savefig(path: str, *args: Any, **kwargs) -> ContextManager[Canvas]:
 
     Parameters
     ----------
-    path : str
-        write a PNG image to this path
+    :param path: path name of the output file
+    :param args: positional arguments passed to the pyplot `savefig()` function
+    :param kwargs: keyword arguments passed to the pyplot `savefig()` function
+    :return: a context manager with a `Canvas` object
     """
     return axes(savefig=path, savefig_args=args, savefig_kwargs=kwargs)
 
@@ -73,6 +75,10 @@ def show() -> ContextManager[Canvas]:
     ```
 
     A call to `show()` is identical to `axes(show=True)`.
+
+    Parameters
+    ----------
+    :return: a context manager with a `Canvas` object
     """
     return axes(show=True)
 
@@ -89,17 +95,21 @@ def axes(show: bool = False, savefig: Optional[str] = None, savefig_args: Option
     with axes() as ax:
         ax.pav(lrs, y)
     ```
+
+    Parameters
+    ----------
+    :param show: if True, show the plot on screen
+    :param savefig: path name of the output file
+    :param savefig_args: positional arguments passed to the pyplot `savefig()` function
+    :param savefig_kwargs: keyword arguments passed to the pyplot `savefig()` function
+    :return: a context manager with a `Canvas` object
     """
     fig = plt.figure()
     try:
         yield Canvas(ax=plt)
     finally:
-        if savefig_args is None:
-            savefig_args = []
-        if savefig_kwargs is None:
-            savefig_kwargs = {}
         if savefig:
-            fig.savefig(savefig, *savefig_args, **savefig_kwargs)
+            fig.savefig(savefig, *(savefig_args or []), **(savefig_kwargs or {}))
         if show:
             plt.show()
         plt.close(fig)
