@@ -1,6 +1,7 @@
 import logging
 from contextlib import contextmanager
 from functools import partial
+from typing import Optional, ContextManager
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -37,7 +38,7 @@ class Canvas:
         return getattr(self.ax, attr)
 
 
-def savefig(path):
+def savefig(path) -> ContextManager[Canvas]:
     """
     Creates a plotting context, write plot when closed.
 
@@ -55,10 +56,10 @@ def savefig(path):
     path : str
         write a PNG image to this path
     """
-    return axes(savefig=path)
+    return axes(savefig=path, show=False)
 
 
-def show():
+def show() -> ContextManager[Canvas]:
     """
     Creates a plotting context, show plot when closed.
 
@@ -71,11 +72,11 @@ def show():
 
     A call to `show()` is identical to `axes(show=True)`.
     """
-    return axes(show=True)
+    return axes(show=True, savefig=None)
 
 
 @contextmanager
-def axes(savefig=None, show=None):
+def axes(savefig: Optional[str] = None, show: bool = False) -> ContextManager[Canvas]:
     """
     Creates a plotting context.
 
@@ -213,8 +214,8 @@ def lr_histogram(lrs, y, bins=20, weighted=True, ax=plt):
     points0, points1 = util.Xy_to_Xn(log_lrs, y)
     weights0, weights1 = (np.ones_like(points) / len(points) if weighted else None
                           for points in (points0, points1))
-    ax.hist(points1, bins=bins, alpha=.25, weights=weights1)
     ax.hist(points0, bins=bins, alpha=.25, weights=weights0)
+    ax.hist(points1, bins=bins, alpha=.25, weights=weights1)
     ax.set_xlabel('log$_{10}$(LR)')
     ax.set_ylabel('count' if not weighted else 'relative frequency')
 
