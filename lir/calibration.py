@@ -537,7 +537,7 @@ class IsotonicCalibrator(BaseEstimator, TransformerMixin):
             warnings.warn('parameter `add_one` is deprecated; use `add_misleading=1` instead')
 
         self.add_misleading = (1 if add_one else 0) + add_misleading
-        self._ir = IsotonicRegressionInf(out_of_bounds='clip')
+        self._ir = None
 
     def fit(self, X, y, **fit_params):
         assert np.all(np.unique(y) == np.arange(2)), 'y labels must be 0 and 1'
@@ -557,11 +557,13 @@ class IsotonicCalibrator(BaseEstimator, TransformerMixin):
 
         prior = np.sum(y) / y.size
         weight = y * (1 - prior) + (1 - y) * prior
+        self._ir = IsotonicRegressionInf(out_of_bounds='clip')
         self._ir.fit(X, y, sample_weight=weight)
 
         return self
 
     def transform(self, X):
+        assert self._ir is not None, 'fit() called before transform()'
         self.p1 = self._ir.transform(X)
         self.p0 = 1 - self.p1
         return to_odds(self.p1)
