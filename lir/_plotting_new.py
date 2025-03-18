@@ -143,14 +143,14 @@ def pav(lrs, y, add_misleading=0, show_scatter=True, ax=plt):
 
     # add points for infinite values
     if np.logical_or(np.isinf(pav_llrs), np.isinf(llrs)).any():
-        def adjust_ticks_labels_and_range(neg_inf, pos_inf, axis_range):
+        def adjust_ticks_labels_and_range(have_neg_inf, have_pos_inf, axis_range):
             ticks = np.linspace(axis_range[0], axis_range[1], 6).tolist()
             tick_labels = [str(round(tick, 1)) for tick in ticks]
             step_size = ticks[2] - ticks[1]
 
-            axis_range = [axis_range[0] - (step_size * neg_inf), axis_range[1] + (step_size * pos_inf)]
-            ticks = [axis_range[0]] * neg_inf + ticks + [axis_range[1]] * pos_inf
-            tick_labels = ['-∞'] * neg_inf + tick_labels + ['+∞'] * pos_inf
+            axis_range = [axis_range[0] - (step_size if have_neg_inf else 0), axis_range[1] + (step_size if have_pos_inf else 0)]
+            ticks = ([axis_range[0]] if have_neg_inf else []) + ticks + ([axis_range[1]] if have_pos_inf else [])
+            tick_labels = (['-∞'] if have_neg_inf else []) + tick_labels + (['+∞'] if have_pos_inf else [])
 
             return axis_range, ticks, tick_labels
 
