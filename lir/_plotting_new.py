@@ -1,6 +1,7 @@
 import logging
 from contextlib import contextmanager
 from functools import partial
+from typing import Optional, Any, Mapping, ContextManager, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -37,7 +38,7 @@ class Canvas:
         return getattr(self.ax, attr)
 
 
-def savefig(path):
+def savefig(path: str, *args: Any, **kwargs) -> ContextManager[Canvas]:
     """
     Creates a plotting context, write plot when closed.
 
@@ -48,17 +49,21 @@ def savefig(path):
         ax.pav(lrs, y)
     ```
 
+    This will call `matplotlib.pyplot.savefig()` and pass on any parameter other than `path`.
+
     A call to `savefig(path)` is identical to `axes(savefig=path)`.
 
     Parameters
     ----------
-    path : str
-        write a PNG image to this path
+    :param path: path name of the output file
+    :param args: positional arguments passed to the pyplot `savefig()` function
+    :param kwargs: keyword arguments passed to the pyplot `savefig()` function
+    :return: a context manager with a `Canvas` object
     """
-    return axes(savefig=path)
+    return axes(savefig=path, savefig_args=args, savefig_kwargs=kwargs)
 
 
-def show():
+def show() -> ContextManager[Canvas]:
     """
     Creates a plotting context, show plot when closed.
 
@@ -70,12 +75,17 @@ def show():
     ```
 
     A call to `show()` is identical to `axes(show=True)`.
+
+    Parameters
+    ----------
+    :return: a context manager with a `Canvas` object
     """
     return axes(show=True)
 
 
 @contextmanager
-def axes(savefig=None, show=None):
+def axes(show: bool = False, savefig: Optional[str] = None, savefig_args: Optional[Tuple[Any, ...]] = None,
+         savefig_kwargs: Optional[Mapping[str, Any]] = None) -> ContextManager[Canvas]:
     """
     Creates a plotting context.
 
@@ -85,13 +95,21 @@ def axes(savefig=None, show=None):
     with axes() as ax:
         ax.pav(lrs, y)
     ```
+
+    Parameters
+    ----------
+    :param show: if True, show the plot on screen
+    :param savefig: path name of the output file
+    :param savefig_args: positional arguments passed to the pyplot `savefig()` function
+    :param savefig_kwargs: keyword arguments passed to the pyplot `savefig()` function
+    :return: a context manager with a `Canvas` object
     """
     fig = plt.figure()
     try:
         yield Canvas(ax=plt)
     finally:
         if savefig:
-            fig.savefig(savefig)
+            fig.savefig(savefig, *(savefig_args or []), **(savefig_kwargs or {}))
         if show:
             plt.show()
         plt.close(fig)
