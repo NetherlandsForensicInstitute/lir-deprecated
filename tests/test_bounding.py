@@ -3,7 +3,7 @@ import unittest
 from sklearn.linear_model import LogisticRegression
 
 import lir.bounding as bounding
-from lir.data import AlcoholBreathAnalyser
+from lir.data import AlcoholBreathAnalyser, UnboundedLRs
 from lir.calibration import LogitCalibrator, IVbounder
 from lir.lr import CalibratedScorer
 from lir.util import Xn_to_Xy
@@ -15,6 +15,17 @@ class TestBounding(unittest.TestCase):
         lrs, y = AlcoholBreathAnalyser(ill_calibrated=True).sample_lrs()
         bounds = bounding.calculate_invariance_bounds(lrs, y)
         np.testing.assert_almost_equal((0.1052741, 85.3731634), bounds[:2])
+
+    def test_iv_paper_examples(self):
+        llr_threshold = np.arange(-2, 3, 0.001)
+
+        lrs, y = UnboundedLRs(example=4).sample_lrs()
+        bounds = bounding.calculate_invariance_bounds(lrs, y, llr_threshold)
+        np.testing.assert_almost_equal((0.2382319, 2.7861212), bounds[:2])
+
+        lrs, y = UnboundedLRs(example=5).sample_lrs()
+        bounds = bounding.calculate_invariance_bounds(lrs, y, llr_threshold)
+        np.testing.assert_almost_equal((0.1412538, 38.1944271), bounds[:2])
 
     def test_extreme_smallset(self):
         lrs = np.array([np.inf, 0])
