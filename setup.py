@@ -21,6 +21,7 @@ setup(
         "scikit-learn>=1.4",
         "tqdm",
         "pandas",
+        "KDEpy",
     ],
     classifiers=[
         "License :: OSI Approved :: Apache Software License",
