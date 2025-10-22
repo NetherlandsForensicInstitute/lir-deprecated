@@ -1,6 +1,15 @@
 LIR Python Likelihood Ratio Library
 ===================================
 
+**NB: This repository has been deprecated and has been replaced by https://github.com/NetherlandsForensicInstitute/lir.**
+
+
+
+
+---
+
+
+
 This library provides a collection of scripts to aid calibration, and
 calculation and evaluation of Likelihood Ratios.
 
