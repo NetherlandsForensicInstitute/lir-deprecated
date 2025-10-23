@@ -5,6 +5,7 @@ from typing import List
 import numpy as np
 
 from .calibration import IsotonicCalibrator
+from .llr_overestimation import calc_llr_overestimation
 from .util import Xn_to_Xy, Xy_to_Xn, to_probability, LR
 
 
@@ -182,6 +183,14 @@ def devpav(lrs: np.ndarray, y: np.ndarray) -> float:
     cal = IsotonicCalibrator()
     pavlrs = cal.fit_transform(lrs, y)
     return _devpavcalculator(lrs, pavlrs, y)
+
+
+def llr_overestimation(lrs: np.ndarray, y: np.ndarray, **kwargs) -> float:
+    """
+    Calculates the mean absolute value of the LLR-overestimation.
+    """
+    llr_overestimation_grid = calc_llr_overestimation(lrs, y, num_fids=0, **kwargs)[1]
+    return np.mean(np.abs(llr_overestimation_grid))
 
 
 def calculate_lr_statistics(lr_class0: List[LR], lr_class1: List[LR]) -> LrStats:
